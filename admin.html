@@ -1,0 +1,41 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>White Pack — Admin</title>
+<style>*{box-sizing:border-box}body{margin:0;font-family:Arial;background:#f3f4f6;color:#111827}.wrap{max-width:850px;margin:auto;padding:14px}.panel{background:#fff;padding:16px;border-radius:16px;margin-bottom:14px}h1{margin:0 0 10px}label{display:block;font-weight:700;margin:11px 0 5px}input,textarea{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:16px}textarea{min-height:75px}.photo{height:190px;border:2px dashed #cbd5e1;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden}.photo img{width:100%;height:100%;object-fit:contain;display:none}.row{display:flex;gap:8px;flex-wrap:wrap}button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:8px}.primary{background:#111827;color:#fff}.secondary{background:#e5e7eb}.danger{background:#fee2e2;color:#991b1b}.item{display:flex;gap:10px;align-items:center;background:#fff;padding:9px;border-radius:12px;margin:8px 0}.item img{width:65px;height:65px;object-fit:contain}.item div{flex:1}.hint{color:#667085;font-size:14px;line-height:1.5}.ok{padding:12px;border-radius:10px;background:#ecfdf3;color:#166534;margin-top:10px;display:none}</style></head>
+<body><div class="wrap">
+<div class="panel"><h1>📦 White Pack — Phone Editor</h1>
+<div class="hint">One-time setup: enter your GitHub repository details and a GitHub token. The token is stored only in this browser. After setup, you can add products and press <b>Publish</b>; the customer catalogue updates at the same link.</div>
+<label>GitHub Username</label><input id="ghuser" placeholder="your-github-username">
+<label>Repository</label><input id="ghrepo" placeholder="example: whitepack-catalogue">
+<label>Branch</label><input id="branch" value="main">
+<label>GitHub Token</label><input id="token" type="password" placeholder="ghp_... or github_pat_...">
+<button class="secondary" onclick="saveSettings()">💾 Save settings</button>
+</div>
+<div class="panel"><label>Business Name</label><input id="biz" value="White Pack">
+<label>Product Photo</label><div class="photo" onclick="file.click()"><img id="preview"><span id="pt">📷 Tap to choose from Gallery</span></div><input id="file" type="file" accept="image/*" hidden>
+<label>Product Name</label><input id="name">
+<label>Description</label><textarea id="desc"></textarea>
+<label>Price (USD)</label><input id="price" inputmode="decimal" placeholder="12.50">
+<label>Category</label><input id="cat" placeholder="Paper Bags">
+<div class="row"><button class="primary" onclick="add()">➕ Add Product</button><button class="secondary" onclick="clearForm()">Clear</button></div></div>
+<div class="panel"><h2>Products</h2><div id="list"></div><div class="row"><button class="primary" onclick="publish()">🚀 Publish to Website</button><button class="secondary" onclick="exportBackup()">⬇️ Backup</button></div><div id="status" class="ok"></div></div>
+</div>
+<script>
+let data=JSON.parse(localStorage.getItem('wpData')||'{"businessName":"White Pack","products":[]}'),photo='';
+let settings=JSON.parse(localStorage.getItem('wpSettings')||'{}');
+ghuser.value=settings.user||'';ghrepo.value=settings.repo||'';branch.value=settings.branch||'main';token.value=settings.token||'';biz.value=data.businessName||'White Pack';
+file.onchange=e=>{let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=x=>{photo=x.target.result;preview.src=photo;preview.style.display='block';pt.style.display='none'};r.readAsDataURL(f)};
+function saveSettings(){localStorage.setItem('wpSettings',JSON.stringify({user:ghuser.value.trim(),repo:ghrepo.value.trim(),branch:branch.value.trim()||'main',token:token.value.trim()}));show('Settings saved on this phone.')}
+function add(){let n=name.value.trim(),p=price.value.replace(/[^0-9.]/g,'');if(!n||!photo){alert('Add a product name and photo.');return}data.businessName=biz.value.trim()||'White Pack';data.products.push({name:n,description:desc.value.trim(),price:p,category:cat.value.trim()||'Products',photo});localStorage.setItem('wpData',JSON.stringify(data));clearForm();render()}
+function clearForm(){name.value=desc.value=price.value=cat.value='';photo='';preview.style.display='none';pt.style.display='block';file.value=''}
+function del(i){data.products.splice(i,1);localStorage.setItem('wpData',JSON.stringify(data));render()}
+function render(){list.innerHTML=data.products.map((p,i)=>`<div class="item"><img src="${p.photo}"><div><b>${esc(p.name)}</b><br>$${esc(p.price)}</div><button class="danger" onclick="del(${i})">Delete</button></div>`).join('')||'<div class="hint">No products yet.</div>'}
+async function api(path,method,body){let r=await fetch('https://api.github.com/repos/'+encodeURIComponent(ghuser.value.trim())+'/'+encodeURIComponent(ghrepo.value.trim())+'/contents/'+path,{method,headers:{Authorization:'Bearer '+token.value.trim(),'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw new Error((await r.json()).message||r.status);return r.json()}
+async function putFile(path,content,message){let sha;try{let x=await api(path,'GET');sha=x.sha}catch(e){}let b64=content instanceof Uint8Array?bytesToB64(content):btoa(unescape(encodeURIComponent(content)));let body={message,content:b64,branch:branch.value.trim()||'main'};if(sha)body.sha=sha;return api(path,'PUT',body)}
+function bytesToB64(bytes){let s='';for(let i=0;i<bytes.length;i+=0x8000)s+=String.fromCharCode(...bytes.subarray(i,i+0x8000));return btoa(s)}
+async function publish(){try{if(!ghuser.value||!ghrepo.value||!token.value){alert('Enter GitHub username, repository and token first.');return}saveSettings();show('Publishing…');let out={businessName:data.businessName,products:[]};
+for(let i=0;i<data.products.length;i++){let p=data.products[i],src=p.photo;if(src.startsWith('data:')){let m=src.match(/^data:(.*?);base64,(.*)$/),ext=(m[1].split('/')[1]||'jpg').replace('jpeg','jpg');let file='images/product_'+Date.now()+'_'+i+'.'+ext;let bin=Uint8Array.from(atob(m[2]),c=>c.charCodeAt(0));await putFile(file,bin,'Update product image');src=file}out.products.push({...p,photo:src})}
+await putFile('products.json',JSON.stringify(out,null,2),'Update catalogue');data=out;localStorage.setItem('wpData',JSON.stringify(data));show('✅ Published! Your customer link is now updated.');render()}catch(e){show('❌ '+e.message)}}
+function exportBackup(){let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download='whitepack-backup.json';a.click()}
+function show(t){status.style.display='block';status.textContent=t}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}render();
+</script></body></html>
