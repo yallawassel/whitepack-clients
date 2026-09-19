@@ -1,21 +1,66 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
 <title>White Pack Catalogue</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f5f6f8;color:#111827}
-header{background:#111827;color:#fff;padding:22px 16px}.wrap{max-width:1100px;margin:auto;padding:14px}h1{margin:0;font-size:26px}.sub{opacity:.75;margin-top:5px}
-.toolbar{display:flex;gap:8px;margin:14px 0}.toolbar input{width:100%;padding:13px;border:1px solid #ddd;border-radius:12px;font-size:16px}
-.categories{display:flex;gap:8px;overflow:auto;padding-bottom:10px}.cat{border:0;border-radius:20px;padding:9px 13px;background:#e5e7eb;white-space:nowrap}.active{background:#111827;color:white}
-.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}.card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px #0001}.card img{width:100%;aspect-ratio:1;object-fit:contain}.body{padding:12px}.name{font-weight:800;font-size:17px}.desc{color:#596273;font-size:13px;line-height:1.4;margin-top:5px}.price{font-size:20px;font-weight:900;margin-top:9px}.empty{text-align:center;padding:50px;color:#6b7280}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f6f8;color:#111827}
+header{background:#111827;color:#fff;padding:18px 14px;position:sticky;top:0;z-index:20}
+.wrap{max-width:1100px;margin:auto;padding:12px}
+h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
+.toolbar{position:sticky;top:76px;z-index:15;background:#f5f6f8;padding:8px 0}
+.search{width:100%;padding:14px 15px;border:1px solid #ddd;border-radius:14px;font-size:16px;background:#fff;outline:none}
+.title{font-size:22px;font-weight:900;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.category{background:#fff;border:0;border-radius:18px;overflow:hidden;padding:0;text-align:left;box-shadow:0 2px 12px #0001}
+.category img,.placeholder{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#fff}
+.placeholder{display:grid;place-items:center;font-size:42px;background:#e5e7eb}
+.info{padding:12px}.name{font-size:17px;font-weight:900}.count{color:#6b7280;font-size:13px;margin-top:4px}
+#products{display:none}
+.back{border:0;background:#111827;color:#fff;border-radius:12px;padding:11px 15px;font-size:15px;font-weight:700;margin:3px 0 10px}
+.product{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px #0001}
+.product img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:#fff}
+.body{padding:12px}.desc{color:#596273;font-size:13px;line-height:1.4;margin-top:5px}.price{font-size:20px;font-weight:900;margin-top:9px}
+.empty{text-align:center;padding:45px 20px;color:#6b7280;background:#fff;border-radius:16px}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
-</style></head><body>
-<header><div class="wrap"><h1 id="title">White Pack</h1><div class="sub">Product Catalogue</div></div></header>
-<main class="wrap"><div class="toolbar"><input id="search" placeholder="🔍 Search products..."></div><div id="cats" class="categories"></div><div id="grid" class="grid"></div></main>
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1 id="business">White Pack</h1><div class="sub">Product Catalogue</div></div></header>
+<main class="wrap">
+<div class="toolbar"><input id="search" class="search" autocomplete="off" placeholder="🔍 Search products or categories..."></div>
+<section id="categories"><div class="title">Choose a Category</div><div id="categoryGrid" class="grid"></div></section>
+<section id="products"><button id="back" class="back">← All Categories</button><div id="categoryTitle" class="title"></div><div id="productGrid" class="grid"></div></section>
+</main>
 <script>
-let products=[],active='All';
-fetch('products.json?'+Date.now()).then(r=>r.json()).then(d=>{products=d.products||[];title.textContent=d.businessName||'White Pack';document.title=d.businessName||'Catalogue';render()}).catch(()=>grid.innerHTML='<div class="empty">Catalogue unavailable.</div>');
-search.oninput=render;
-function render(){let q=search.value.toLowerCase(),cats=['All',...new Set(products.map(x=>x.category).filter(Boolean))];catsEl=cats;catsDiv=document.getElementById('cats');catsDiv.innerHTML=cats.map(c=>`<button class="cat ${c==active?'active':''}" onclick="active=${JSON.stringify(c)};render()">${esc(c)}</button>`).join('');
-let a=products.filter(p=>(active==='All'||p.category===active)&&(`${p.name} ${p.description||''}`).toLowerCase().includes(q));grid.innerHTML=a.length?a.map(p=>`<article class="card"><img src="${p.photo}" alt=""><div class="body"><div class="name">${esc(p.name)}</div><div class="desc">${esc(p.description)}</div><div class="price">$${String(p.price||'').replace(/^\$/,'')}</div></div></article>`).join(''):'<div class="empty">No products found.</div>'}
-function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
-</script></body></html>
+let products=[],active="";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+function cats(){return [...new Set(products.map(p=>String(p.category||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b))}
+function photo(c){return products.find(p=>String(p.category||"").trim()===c&&p.photo)?.photo||""}
+function renderCats(){
+ $("categories").style.display="block";$("products").style.display="none";
+ const q=$("search").value.toLowerCase().trim();
+ const html=cats().map(c=>{
+  const items=products.filter(p=>String(p.category||"").trim()===c);
+  if(q&&!(`${c} ${items.map(p=>p.name+" "+(p.description||"")).join(" ")}`.toLowerCase().includes(q)))return"";
+  const im=photo(c);
+  return `<button class="category" data-c="${esc(c)}">${im?`<img src="${esc(im)}" loading="lazy" alt="">`:`<div class="placeholder">📦</div>`}<div class="info"><div class="name">${esc(c)}</div><div class="count">${items.length} product${items.length===1?"":"s"}</div></div></button>`;
+ }).join("");
+ $("categoryGrid").innerHTML=html||'<div class="empty">No categories found.</div>';
+ document.querySelectorAll(".category").forEach(b=>b.onclick=()=>openCat(b.dataset.c));
+}
+function openCat(c){active=c;$("search").value="";$("categories").style.display="none";$("products").style.display="block";$("categoryTitle").textContent=c;renderProducts();scrollTo(0,0)}
+function renderProducts(){
+ const q=$("search").value.toLowerCase().trim();
+ const a=products.filter(p=>String(p.category||"").trim()===active&&`${p.name||""} ${p.description||""}`.toLowerCase().includes(q));
+ $("productGrid").innerHTML=a.length?a.map(p=>`<article class="product"><img src="${esc(p.photo||"")}" loading="lazy" alt="${esc(p.name)}"><div class="body"><div class="name">${esc(p.name)}</div>${p.description?`<div class="desc">${esc(p.description)}</div>`:""}${p.price!==undefined&&p.price!==""?`<div class="price">$${esc(String(p.price).replace(/^\$/,""))}</div>`:""}</div></article>`).join(""):'<div class="empty">No products found.</div>';
+}
+$("search").oninput=()=>{$("products").style.display==="block"?renderProducts():renderCats()};
+$("back").onclick=()=>{active="";$("search").value="";renderCats();scrollTo(0,0)};
+fetch("products.json?"+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{products=Array.isArray(d)?d:(d.products||[]);$("business").textContent=d.businessName||"White Pack";document.title=d.businessName||"Catalogue";renderCats()}).catch(()=>{$("categoryGrid").innerHTML='<div class="empty">Catalogue unavailable.<br><br>Make sure <b>products.json</b> is in the same GitHub folder.</div>'});
+</script>
+</body></html>
