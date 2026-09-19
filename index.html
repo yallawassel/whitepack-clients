@@ -23,15 +23,6 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 .back{border:0;background:#111827;color:#fff;border-radius:12px;padding:11px 15px;font-size:15px;font-weight:700;margin:3px 0 10px}
 .product{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px #0001}
 .product img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:#fff}
-.product img{cursor:zoom-in}
-#photoModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:1000;align-items:center;justify-content:center;padding:18px;touch-action:none}
-#photoModal.open{display:flex}
-#zoomPhoto{max-width:96vw;max-height:90vh;width:auto;height:auto;object-fit:contain;transform-origin:center;cursor:grab;user-select:none;-webkit-user-drag:none}
-#zoomPhoto.dragging{cursor:grabbing}
-.photoClose{position:absolute;right:14px;top:12px;width:44px;height:44px;border:0;border-radius:50%;background:#fff;color:#111827;font-size:28px;font-weight:700;z-index:2}
-.photoHint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);color:#fff;background:#0009;padding:8px 12px;border-radius:12px;font-size:13px;text-align:center;white-space:nowrap}
-.photoZoomBtns{position:absolute;bottom:14px;right:14px;display:flex;gap:8px}
-.photoZoomBtns button{width:44px;height:44px;border:0;border-radius:12px;background:#fff;color:#111827;font-size:22px;font-weight:700}
 .body{padding:12px}.desc{color:#596273;font-size:13px;line-height:1.4;margin-top:5px}.price{font-size:20px;font-weight:900;margin-top:9px}
 .empty{text-align:center;padding:45px 20px;color:#6b7280;background:#fff;border-radius:16px}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
@@ -64,39 +55,10 @@ function renderCats(){
 }
 function openCat(c){active=c;$("search").value="";$("categories").style.display="none";$("products").style.display="block";$("categoryTitle").textContent=c;renderProducts();scrollTo(0,0)}
 function renderProducts(){
-  const q=$("search").value.toLowerCase().trim();
-  const a=products.filter(p=>String(p.category||"").trim()===active&&`${p.name||""} ${p.description||""}`.toLowerCase().includes(q));
-  $("productGrid").innerHTML=a.length?a.map((p,i)=>`<article class="product"><img src="${esc(p.photo||"")}" loading="lazy" alt="${esc(p.name)}" data-photo-index="${i}"><div class="body"><div class="name">${esc(p.name)}</div>${p.description?`<div class="desc">${esc(p.description)}</div>`:""}${p.price!==undefined&&p.price!==""?`<div class="price">$${esc(String(p.price).replace(/^\$/,""))}</div>`:""}</div></article>`).join(""):'<div class="empty">No products found.</div>';
-  document.querySelectorAll("#productGrid img").forEach((img,i)=>{
-    img.onclick=()=>openPhoto(a[i]?.photo||"",a[i]?.name||"");
-  });
+ const q=$("search").value.toLowerCase().trim();
+ const a=products.filter(p=>String(p.category||"").trim()===active&&`${p.name||""} ${p.description||""}`.toLowerCase().includes(q));
+ $("productGrid").innerHTML=a.length?a.map(p=>`<article class="product"><img src="${esc(p.photo||"")}" loading="lazy" alt="${esc(p.name)}"><div class="body"><div class="name">${esc(p.name)}</div>${p.description?`<div class="desc">${esc(p.description)}</div>`:""}${p.price!==undefined&&p.price!==""?`<div class="price">$${esc(String(p.price).replace(/^\$/,""))}</div>`:""}</div></article>`).join(""):'<div class="empty">No products found.</div>';
 }
-
-
-let zoomScale=1,panX=0,panY=0,dragging=false,startX=0,startY=0,lastTap=0;
-function applyZoom(){ $("zoomPhoto").style.transform=`translate(${panX}px,${panY}px) scale(${zoomScale})`; }
-function resetZoom(){ zoomScale=1;panX=0;panY=0;applyZoom(); }
-function openPhoto(src,alt){
-  if(!src)return;
-  $("zoomPhoto").src=src;$("zoomPhoto").alt=alt;resetZoom();
-  $("photoModal").classList.add("open");$("photoModal").setAttribute("aria-hidden","false");
-  document.body.style.overflow="hidden";
-}
-function closePhoto(){
-  $("photoModal").classList.remove("open");$("photoModal").setAttribute("aria-hidden","true");
-  document.body.style.overflow="";$("zoomPhoto").src="";
-}
-$("photoClose").onclick=closePhoto;
-$("photoModal").onclick=e=>{if(e.target===$("photoModal"))closePhoto()};
-$("zoomIn").onclick=e=>{e.stopPropagation();zoomScale=Math.min(5,zoomScale+.5);applyZoom()};
-$("zoomOut").onclick=e=>{e.stopPropagation();zoomScale=Math.max(1,zoomScale-.5);if(zoomScale===1){panX=0;panY=0}applyZoom()};
-$("zoomPhoto").addEventListener("wheel",e=>{e.preventDefault();zoomScale=Math.min(5,Math.max(1,zoomScale+(e.deltaY<0?.25:-.25)));if(zoomScale===1){panX=0;panY=0}applyZoom()},{passive:false});
-$("zoomPhoto").addEventListener("pointerdown",e=>{dragging=true;startX=e.clientX-panX;startY=e.clientY-panY;$("zoomPhoto").classList.add("dragging");});
-$("zoomPhoto").addEventListener("pointermove",e=>{if(dragging&&zoomScale>1){panX=e.clientX-startX;panY=e.clientY-startY;applyZoom();}});
-$("zoomPhoto").addEventListener("pointerup",()=>{dragging=false;$("zoomPhoto").classList.remove("dragging")});
-$("zoomPhoto").addEventListener("touchend",()=>{const now=Date.now();if(now-lastTap<300){zoomScale=zoomScale===1?2.5:1;if(zoomScale===1){panX=0;panY=0}applyZoom()}lastTap=now});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closePhoto()});
-
 $("search").oninput=()=>{$("products").style.display==="block"?renderProducts():renderCats()};
 $("back").onclick=()=>{active="";$("search").value="";renderCats();scrollTo(0,0)};
 fetch("products.json?"+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{products=Array.isArray(d)?d:(d.products||[]);$("business").textContent=d.businessName||"White Pack";document.title=d.businessName||"Catalogue";renderCats()}).catch(()=>{$("categoryGrid").innerHTML='<div class="empty">Catalogue unavailable.<br><br>Make sure <b>products.json</b> is in the same GitHub folder.</div>'});
