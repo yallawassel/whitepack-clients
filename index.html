@@ -26,6 +26,27 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 .body{padding:12px}.desc{color:#596273;font-size:13px;line-height:1.4;margin-top:5px}.price{font-size:20px;font-weight:900;margin-top:9px}
 .empty{text-align:center;padding:45px 20px;color:#6b7280;background:#fff;border-radius:16px}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
+
+/* Shopping cart */
+.cartbar{position:fixed;right:16px;bottom:16px;z-index:50;background:#111827;color:#fff;border:0;border-radius:999px;padding:13px 18px;font-size:16px;font-weight:900;box-shadow:0 5px 20px #0003}
+.cartbar span{background:#fff;color:#111827;border-radius:999px;padding:2px 7px;margin-left:5px}
+.qtyrow{display:flex;align-items:center;gap:8px;margin-top:10px}
+.qtybtn{width:38px;height:38px;border:0;border-radius:10px;background:#e5e7eb;font-size:21px;font-weight:900}
+.qty{min-width:32px;text-align:center;font-weight:900}
+.addbtn{width:100%;margin-top:10px;border:0;border-radius:11px;padding:11px;background:#111827;color:#fff;font-size:15px;font-weight:900}
+.cartmodal{display:none;position:fixed;inset:0;background:#0008;z-index:100;padding:18px;align-items:flex-end;justify-content:center}
+.cartmodal.open{display:flex}
+.cartbox{width:min(650px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:20px;padding:18px}
+.carthead{display:flex;justify-content:space-between;align-items:center;font-size:21px;font-weight:900}
+.closecart{border:0;background:#e5e7eb;border-radius:10px;padding:8px 12px;font-size:18px}
+.cartitem{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #eee}
+.cartitem img{width:64px;height:64px;object-fit:contain;border-radius:10px;background:#f8f8f8}
+.cartname{font-weight:800}
+.cartprice{font-size:13px;color:#6b7280;margin-top:3px}
+.remove{border:0;background:#fee2e2;color:#991b1b;border-radius:8px;padding:7px}
+.carttotal{font-size:20px;font-weight:900;text-align:right;margin:15px 0}
+.sendwa{width:100%;border:0;border-radius:13px;padding:14px;background:#16a34a;color:#fff;font-size:17px;font-weight:900}
+.cartempty{text-align:center;color:#6b7280;padding:30px 10px}
 </style>
 </head>
 <body>
@@ -35,12 +56,25 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 <section id="categories"><div class="title">Choose a Category</div><div id="categoryGrid" class="grid"></div></section>
 <section id="products"><button id="back" class="back">← All Categories</button><div id="categoryTitle" class="title"></div><div id="productGrid" class="grid"></div></section>
 </main>
+<button id="cartBar" class="cartbar">🛒 Order <span id="cartCount">0</span></button>
+<div id="cartModal" class="cartmodal">
+  <div class="cartbox">
+    <div class="carthead"><div>🛒 Your Order</div><button id="closeCart" class="closecart">✕</button></div>
+    <div id="cartItems"></div>
+    <div id="cartTotal" class="carttotal"></div>
+    <button id="sendWhatsApp" class="sendwa">📲 Send Order to WhatsApp</button>
+  </div>
+</div>
+
 <script>
 let products=[],active="";
+let cart=[];
+
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 function cats(){return [...new Set(products.map(p=>String(p.category||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b))}
 function photo(c){return products.find(p=>String(p.category||"").trim()===c&&p.photo)?.photo||""}
+
 function renderCats(){
  $("categories").style.display="block";$("products").style.display="none";
  const q=$("search").value.toLowerCase().trim();
@@ -53,14 +87,89 @@ function renderCats(){
  $("categoryGrid").innerHTML=html||'<div class="empty">No categories found.</div>';
  document.querySelectorAll(".category").forEach(b=>b.onclick=()=>openCat(b.dataset.c));
 }
+
 function openCat(c){active=c;$("search").value="";$("categories").style.display="none";$("products").style.display="block";$("categoryTitle").textContent=c;renderProducts();scrollTo(0,0)}
+
 function renderProducts(){
  const q=$("search").value.toLowerCase().trim();
  const a=products.filter(p=>String(p.category||"").trim()===active&&`${p.name||""} ${p.description||""}`.toLowerCase().includes(q));
- $("productGrid").innerHTML=a.length?a.map(p=>`<article class="product"><img src="${esc(p.photo||"")}" loading="lazy" alt="${esc(p.name)}"><div class="body"><div class="name">${esc(p.name)}</div>${p.description?`<div class="desc">${esc(p.description)}</div>`:""}${p.price!==undefined&&p.price!==""?`<div class="price">$${esc(String(p.price).replace(/^\$/,""))}</div>`:""}</div></article>`).join(""):'<div class="empty">No products found.</div>';
+ $("productGrid").innerHTML=a.length?a.map((p,i)=>`
+ <article class="product">
+  <img src="${esc(p.photo||"")}" loading="lazy" alt="${esc(p.name)}">
+  <div class="body">
+   <div class="name">${esc(p.name)}</div>
+   ${p.description?`<div class="desc">${esc(p.description)}</div>`:""}
+   ${p.price!==undefined&&p.price!==""?`<div class="price">$${esc(String(p.price).replace(/^\$/,""))}</div>`:""}
+   <div class="qtyrow">
+    <button class="qtybtn" onclick="changeQty(${i},-1)">−</button>
+    <div class="qty" id="q_${i}">1</div>
+    <button class="qtybtn" onclick="changeQty(${i},1)">+</button>
+   </div>
+   <button class="addbtn" onclick="addToCart(${i})">🛒 Add to Order</button>
+  </div>
+ </article>`).join(""):'<div class="empty">No products found.</div>';
 }
+
+function changeQty(i,n){
+ const el=$("q_"+i);
+ let q=Math.max(1,(parseInt(el.textContent)||1)+n);
+ el.textContent=q;
+}
+
+function addToCart(i){
+ const q=Math.max(1,parseInt($("q_"+i)?.textContent)||1);
+ const list=products.filter(p=>String(p.category||"").trim()===active&&`${p.name||""} ${p.description||""}`.toLowerCase().includes($("search").value.toLowerCase().trim()));
+ const p=list[i];
+ if(!p)return;
+ const key=String(p.id??p.barcode??p.name);
+ const found=cart.find(x=>x.key===key);
+ if(found)found.qty+=q; else cart.push({key,p,qty:q});
+ renderCart();
+ $("cartBar").animate([{transform:"scale(1)"},{transform:"scale(1.08)"},{transform:"scale(1)"}],{duration:250});
+}
+
+function renderCart(){
+ const count=cart.reduce((s,x)=>s+x.qty,0);
+ $("cartCount").textContent=count;
+ if(!cart.length){
+  $("cartItems").innerHTML='<div class="cartempty">Your order is empty.</div>';
+  $("cartTotal").textContent="";
+  return;
+ }
+ $("cartItems").innerHTML=cart.map((x,i)=>`
+  <div class="cartitem">
+   <img src="${esc(x.p.photo||"")}" alt="">
+   <div>
+    <div class="cartname">${esc(x.p.name)}</div>
+    <div class="cartprice">Quantity: ${x.qty}${x.p.price!==undefined&&x.p.price!==""?` · $${esc(String(x.p.price).replace(/^\$/,""))} each`:""}</div>
+   </div>
+   <button class="remove" onclick="removeCart(${i})">Remove</button>
+  </div>`).join("");
+ const total=cart.reduce((s,x)=>s+(parseFloat(String(x.p.price??"").replace(/[^0-9.-]/g,""))||0)*x.qty,0);
+ $("cartTotal").textContent=total>0?`Total: $${total.toFixed(2)}`:`${count} item${count===1?"":"s"}`;
+}
+
+function removeCart(i){cart.splice(i,1);renderCart()}
+
+$("cartBar").onclick=()=>{$("cartModal").classList.add("open");renderCart()};
+$("closeCart").onclick=()=>$("cartModal").classList.remove("open");
+$("cartModal").onclick=e=>{if(e.target===$("cartModal"))$("cartModal").classList.remove("open")};
+
+$("sendWhatsApp").onclick=()=>{
+ if(!cart.length){alert("Please add products to your order first.");return;}
+ let msg="Hello White Pack, I would like to place this order:%0A%0A";
+ cart.forEach((x,i)=>{
+   const price=x.p.price!==undefined&&x.p.price!==""?` - $${String(x.p.price).replace(/^\$/,"")}`:"";
+   msg+=`${i+1}. ${x.p.name} - Qty: ${x.qty}${price}%0A`;
+ });
+ const total=cart.reduce((s,x)=>s+(parseFloat(String(x.p.price??"").replace(/[^0-9.-]/g,""))||0)*x.qty,0);
+ if(total>0)msg+=`%0ATotal: $${total.toFixed(2)}`;
+ window.open("https://wa.me/96181085811?text="+msg,"_blank");
+};
+
 $("search").oninput=()=>{$("products").style.display==="block"?renderProducts():renderCats()};
 $("back").onclick=()=>{active="";$("search").value="";renderCats();scrollTo(0,0)};
+renderCart();
 fetch("products.json?"+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{products=Array.isArray(d)?d:(d.products||[]);$("business").textContent=d.businessName||"White Pack";document.title=d.businessName||"Catalogue";renderCats()}).catch(()=>{$("categoryGrid").innerHTML='<div class="empty">Catalogue unavailable.<br><br>Make sure <b>products.json</b> is in the same GitHub folder.</div>'});
 </script>
 </body></html>
