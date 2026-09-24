@@ -266,10 +266,37 @@ function render(){
   `).join('');
 }
 
+async function optimizeAllPhotos(){
+  for(const p of (data.products||[])){
+    if(!p.photo || !p.photo.startsWith('data:image')) continue;
+    p.photo = await compressDataUrl(p.photo,400,0.55);
+  }
+}
+function compressDataUrl(dataUrl,maxSize=400,quality=0.55){
+  return new Promise(resolve=>{
+    if(!dataUrl || !dataUrl.startsWith('data:image')){resolve(dataUrl);return;}
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+      const scale=Math.min(1,maxSize/Math.max(w,h));
+      w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+      const c=document.createElement('canvas'); c.width=maxSize; c.height=maxSize;
+      const ctx=c.getContext('2d',{alpha:false});
+      if(!ctx){resolve(dataUrl);return;}
+      ctx.fillStyle='#fff'; ctx.fillRect(0,0,maxSize,maxSize);
+      ctx.drawImage(img,Math.round((maxSize-w)/2),Math.round((maxSize-h)/2),w,h);
+      resolve(c.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=()=>resolve(dataUrl);
+    img.src=dataUrl;
+  });
+}
 async function downloadJSON(){
   data.businessName=biz.value.trim()||'White Pack';
+  show('⏳ Optimizing existing photos…');
+  await optimizeAllPhotos();
   try{await dbPut(data);}catch(e){}
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download='products.json';
@@ -277,7 +304,7 @@ async function downloadJSON(){
   a.click();
   a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  show('✅ products.json downloaded. Upload it to GitHub.');
+  show('✅ Optimized products.json downloaded. No photo re-upload needed.');
 }
 
 document.getElementById('importFile').onchange=async e=>{

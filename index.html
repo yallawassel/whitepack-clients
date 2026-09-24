@@ -170,6 +170,6 @@ $("sendWhatsApp").onclick=()=>{
 $("search").oninput=()=>{$("products").style.display==="block"?renderProducts():renderCats()};
 $("back").onclick=()=>{active="";$("search").value="";renderCats();scrollTo(0,0)};
 renderCart();
-fetch("products.json?"+Date.now(),{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{products=Array.isArray(d)?d:(d.products||[]);$("business").textContent=d.businessName||"White Pack";document.title=d.businessName||"Catalogue";renderCats()}).catch(()=>{$("categoryGrid").innerHTML='<div class="empty">Catalogue unavailable.<br><br>Make sure <b>products.json</b> is in the same GitHub folder.</div>'});
+fetch("products.json",{cache:"default"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{products=Array.isArray(d)?d:(d.products||[]);$("business").textContent=d.businessName||"White Pack";document.title=d.businessName||"Catalogue";renderCats()}).catch(()=>{$("categoryGrid").innerHTML='<div class="empty">Catalogue unavailable.<br><br>Make sure <b>products.json</b> is in the same GitHub folder.</div>'});
 </script>
 </body></html>
