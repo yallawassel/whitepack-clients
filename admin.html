@@ -43,7 +43,7 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
   <div class="hint">
     <b>No GitHub token required.</b> Add or edit products on your phone, then download
     <b>products.json</b> and upload that single file to your GitHub repository.
-    Product photos are compressed and stored inside the JSON file, so you do not need to upload an images folder.
+    Product photos are compressed before saving. This version uses browser IndexedDB instead of the smaller localStorage limit, so it is designed for large catalogues such as 1,000 products.
   </div>
 </div>
 
@@ -79,7 +79,7 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
 </div>
 
 <div class="panel">
-  <h2>Products <span id="count" class="badge">0</span></h2>
+  <h2>Products <span id="count" class="badge">0</span></h2><div class="hint">Designed for up to 1,000 products. Download products.json regularly as a backup.</div>
   <div id="list"></div>
   <div class="row">
     <button class="primary" onclick="downloadJSON()">⬇️ Download products.json</button>
@@ -95,9 +95,11 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem('wpNoTokenData') || '{"businessName":"White Pack","products":[]}');
+let data = {businessName:'White Pack', products:[]};
 let photo = '';
 let editIndex = -1;
+const DB_NAME='WhitePackAdminDB', DB_VERSION=1, STORE='catalogue';
+const dbReady=openDB();
 
 const biz = document.getElementById('biz');
 const file = document.getElementById('file');
@@ -113,7 +115,7 @@ const count = document.getElementById('count');
 const status = document.getElementById('status');
 const addBtn = document.getElementById('addBtn');
 
-biz.value = data.businessName || 'White Pack';
+dbReady.then(async()=>{ const saved=await dbGet(); if(saved&&Array.isArray(saved.products)) data=saved; biz.value=data.businessName||'White Pack'; render(); });
 
 file.addEventListener('change', async function(e){
   const f = e.target.files && e.target.files[0];
@@ -125,7 +127,7 @@ file.addEventListener('change', async function(e){
   }
   try {
     show('⏳ Processing photo...');
-    photo = await compressImage(f, 700, 0.68);
+    photo = await compressImage(f, 600, 0.58);
     preview.src = photo;
     preview.style.display = 'block';
     pt.style.display = 'none';
@@ -178,7 +180,7 @@ function compressImage(file,maxSize,quality){
   });
 }
 
-function saveProduct(){
+async function saveProduct(){
   const n=nameEl.value.trim();
   if(!n){alert('Enter a product name.');return;}
   if(!photo && editIndex<0){alert('Choose a product photo.');return;}
@@ -197,10 +199,7 @@ function saveProduct(){
   if(editIndex>=0) data.products[editIndex]=product;
   else data.products.push(product);
 
-  if(!persist()){
-    data.products=oldProducts;
-    return;
-  }
+  try{ await dbPut(data); }catch(err){ data.products=oldProducts; alert('Could not save the catalogue.'); return; }
 
   show(editIndex>=0 ? '✅ Product updated.' : '✅ Product added.');
   clearForm();
@@ -221,10 +220,10 @@ function editProduct(i){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
-function del(i){
+async function del(i){
   if(!confirm('Delete this product?')) return;
   data.products.splice(i,1);
-  persist();
+  try{ await dbPut(data); }catch(err){ alert('Could not save the catalogue.'); return; }
   render();
   show('Product deleted.');
 }
@@ -243,15 +242,10 @@ function clearForm(){
   addBtn.textContent='➕ Add Product';
 }
 
-function persist(){
-  try{
-    localStorage.setItem('wpNoTokenData',JSON.stringify(data));
-    return true;
-  }catch(err){
-    alert('Phone storage is full. Try a smaller photo or delete some products.');
-    return false;
-  }
-}
+function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,DB_VERSION);r.onupgradeneeded=()=>r.result.createObjectStore(STORE);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+async function dbGet(){const db=await dbReady;return new Promise((resolve,reject)=>{const r=db.transaction(STORE,'readonly').objectStore(STORE).get('catalogue');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+async function dbPut(v){const db=await dbReady;return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(v,'catalogue');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}
+async function persist(){try{await dbPut(data);return true;}catch(e){return false;}}
 
 function render(){
   count.textContent=data.products.length;
@@ -272,9 +266,9 @@ function render(){
   `).join('');
 }
 
-function downloadJSON(){
+async function downloadJSON(){
   data.businessName=biz.value.trim()||'White Pack';
-  persist();
+  try{await dbPut(data);}catch(e){}
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -286,7 +280,7 @@ function downloadJSON(){
   show('✅ products.json downloaded. Upload it to GitHub.');
 }
 
-document.getElementById('importFile').onchange=e=>{
+document.getElementById('importFile').onchange=async e=>{
   const f=e.target.files[0];
   if(!f)return;
   const r=new FileReader();
@@ -317,7 +311,6 @@ function esc(s){
   }[m]));
 }
 
-render();
 </script>
 </body>
 </html>
