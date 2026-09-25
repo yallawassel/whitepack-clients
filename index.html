@@ -5,10 +5,26 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#111827">
 <title>White Pack Catalogue</title>
+<link rel="icon" type="image/png" href="logo.png">
+<link rel="apple-touch-icon" href="logo.png">
+<meta name="description" content="White Pack Product Catalogue - Where Quality Meets Affordability">
+<meta property="og:type" content="website">
+<meta property="og:title" content="White Pack Catalogue">
+<meta property="og:description" content="Where Quality Meets Affordability">
+<meta property="og:image" content="logo.png">
+<meta property="og:image:alt" content="White Pack logo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="White Pack Catalogue">
+<meta name="twitter:description" content="Where Quality Meets Affordability">
+<meta name="twitter:image" content="logo.png">
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f5f6f8;color:#111827}
-header{background:#111827;color:#fff;padding:18px 14px;position:sticky;top:0;z-index:20}
+header{background:#111827;color:#fff;padding:10px 14px;position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:12px}
+.site-logo{width:58px;height:58px;object-fit:contain;border-radius:50%;background:#fff}
+
 .wrap{max-width:1100px;margin:auto;padding:12px}
 h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 .toolbar{position:sticky;top:76px;z-index:15;background:#f5f6f8;padding:8px 0}
@@ -26,6 +42,7 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 .body{padding:12px}.desc{color:#596273;font-size:13px;line-height:1.4;margin-top:5px}.price{font-size:20px;font-weight:900;margin-top:9px}
 .empty{text-align:center;padding:45px 20px;color:#6b7280;background:#fff;border-radius:16px}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:420px){.site-logo{width:50px;height:50px}h1{font-size:21px}}
 
 /* Shopping cart */
 .cartbar{position:fixed;right:16px;bottom:16px;z-index:50;background:#111827;color:#fff;border:0;border-radius:999px;padding:13px 18px;font-size:16px;font-weight:900;box-shadow:0 5px 20px #0003}
@@ -50,7 +67,15 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 </style>
 </head>
 <body>
-<header><div class="wrap"><h1 id="business">White Pack</h1><div class="sub">Product Catalogue</div></div></header>
+<header>
+  <div class="wrap brand">
+    <img src="logo.png" class="site-logo" alt="White Pack">
+    <div>
+      <h1 id="business">White Pack</h1>
+      <div class="sub">Product Catalogue</div>
+    </div>
+  </div>
+</header>
 <main class="wrap">
 <div class="toolbar"><input id="search" class="search" autocomplete="off" placeholder="🔍 Search products or categories..."></div>
 <section id="categories"><div class="title">Choose a Category</div><div id="categoryGrid" class="grid"></div></section>
