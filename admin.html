@@ -33,6 +33,10 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
 .small{font-size:12px;color:#667085}
 .note{background:#fff7ed;color:#9a3412;padding:12px;border-radius:10px;font-size:14px;line-height:1.45}
 .badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#e5e7eb;font-size:12px;margin-top:5px}
+.searchBox{display:flex;gap:8px;margin:12px 0 8px;align-items:center}
+.searchBox input{flex:1;min-width:0}
+.searchClear{margin-top:0;white-space:nowrap}
+.searchInfo{margin:4px 0 8px}
 </style>
 </head>
 <body>
@@ -79,7 +83,17 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
 </div>
 
 <div class="panel">
-  <h2>Products <span id="count" class="badge">0</span></h2><div class="hint">Designed for up to 1,000 products. Download products.json regularly as a backup.</div>
+  <h2>Products <span id="count" class="badge">0</span></h2>
+  <div class="hint">Designed for up to 1,000 products. Download products.json regularly as a backup.</div>
+
+  <div class="searchBox">
+    <input id="searchInput" type="search"
+           placeholder="🔎 Search product name, category or description..."
+           autocomplete="off">
+    <button type="button" class="secondary searchClear" id="clearSearch">Clear</button>
+  </div>
+
+  <div id="searchInfo" class="hint searchInfo"></div>
   <div id="list"></div>
   <div class="row">
     <button class="primary" onclick="downloadJSON()">⬇️ Download products.json</button>
@@ -114,6 +128,9 @@ const list = document.getElementById('list');
 const count = document.getElementById('count');
 const status = document.getElementById('status');
 const addBtn = document.getElementById('addBtn');
+const searchInput = document.getElementById('searchInput');
+const clearSearch = document.getElementById('clearSearch');
+const searchInfo = document.getElementById('searchInfo');
 
 dbReady.then(async()=>{ const saved=await dbGet(); if(saved&&Array.isArray(saved.products)) data=saved; biz.value=data.businessName||'White Pack'; render(); });
 
@@ -248,12 +265,39 @@ async function dbPut(v){const db=await dbReady;return new Promise((resolve,rejec
 async function persist(){try{await dbPut(data);return true;}catch(e){return false;}}
 
 function render(){
-  count.textContent=data.products.length;
-  if(!data.products.length){
+  const q=(searchInput ? searchInput.value : '').trim().toLowerCase();
+  const allProducts=data.products||[];
+
+  count.textContent=allProducts.length;
+
+  if(!allProducts.length){
+    if(searchInfo) searchInfo.textContent='';
     list.innerHTML='<div class="hint">No products yet. Add your first product above.</div>';
     return;
   }
-  list.innerHTML=data.products.map((p,i)=>`
+
+  const matches=allProducts.map((p,i)=>({p,i})).filter(({p})=>{
+    if(!q) return true;
+    return [
+      p.name,
+      p.category,
+      p.description,
+      p.price
+    ].some(v=>String(v||'').toLowerCase().includes(q));
+  });
+
+  if(searchInfo){
+    searchInfo.textContent=q
+      ? `Showing ${matches.length} of ${allProducts.length} products`
+      : `${allProducts.length} products`;
+  }
+
+  if(!matches.length){
+    list.innerHTML='<div class="hint">🔎 No products found. Try another search.</div>';
+    return;
+  }
+
+  list.innerHTML=matches.map(({p,i})=>`
     <div class="item">
       <img src="${p.photo||''}" alt="">
       <div>
@@ -337,6 +381,13 @@ function esc(s){
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
   }[m]));
 }
+
+searchInput.addEventListener('input', render);
+clearSearch.addEventListener('click', ()=>{
+  searchInput.value='';
+  render();
+  searchInput.focus();
+});
 
 </script>
 </body>
