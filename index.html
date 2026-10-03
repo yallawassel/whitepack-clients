@@ -92,12 +92,17 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 </div>
 
 <script>
-let products=[],active="";
+let products=[],active="",categoryOrder=[];
 let cart=[];
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
-function cats(){return [...new Set(products.map(p=>String(p.category||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b))}
+function cats(){
+  const actual=[...new Set(products.map(p=>String(p.category||"").trim()).filter(Boolean))];
+  // Use the same category order saved by Admin.
+  const saved=Array.isArray(categoryOrder)?categoryOrder:[];
+  return [...saved.filter(c=>actual.includes(c)), ...actual.filter(c=>!saved.includes(c))];
+}
 function photo(c){return products.find(p=>String(p.category||"").trim()===c&&p.photo)?.photo||""}
 
 function renderCats(){
@@ -195,6 +200,12 @@ $("sendWhatsApp").onclick=()=>{
 $("search").oninput=()=>{$("products").style.display==="block"?renderProducts():renderCats()};
 $("back").onclick=()=>{active="";$("search").value="";renderCats();scrollTo(0,0)};
 renderCart();
-fetch("products.json",{cache:"default"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{products=Array.isArray(d)?d:(d.products||[]);$("business").textContent=d.businessName||"White Pack";document.title=d.businessName||"Catalogue";renderCats()}).catch(()=>{$("categoryGrid").innerHTML='<div class="empty">Catalogue unavailable.<br><br>Make sure <b>products.json</b> is in the same GitHub folder.</div>'});
+fetch("products.json",{cache:"default"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{
+  products=Array.isArray(d)?d:(d.products||[]);
+  categoryOrder=Array.isArray(d.categoryOrder)?d.categoryOrder:[];
+  $("business").textContent=d.businessName||"White Pack";
+  document.title=d.businessName||"Catalogue";
+  renderCats();
+}).catch(()=>{$("categoryGrid").innerHTML='<div class="empty">Catalogue unavailable.<br><br>Make sure <b>products.json</b> is in the same GitHub folder.</div>'});
 </script>
 </body></html>
