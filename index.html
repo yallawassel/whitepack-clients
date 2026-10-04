@@ -64,6 +64,46 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 .carttotal{font-size:20px;font-weight:900;text-align:right;margin:15px 0}
 .sendwa{width:100%;border:0;border-radius:13px;padding:14px;background:#16a34a;color:#fff;font-size:17px;font-weight:900}
 .cartempty{text-align:center;color:#6b7280;padding:30px 10px}
+
+/* Product image zoom */
+.zoommodal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:200;
+  background:rgba(0,0,0,.88);
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  cursor:zoom-out;
+}
+.zoommodal.open{display:flex}
+.zoommodal img{
+  max-width:96vw;
+  max-height:90vh;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  border-radius:12px;
+  box-shadow:0 8px 35px #0008;
+}
+.closezoom{
+  position:absolute;
+  top:14px;
+  right:16px;
+  width:44px;
+  height:44px;
+  border:0;
+  border-radius:50%;
+  background:#fff;
+  color:#111827;
+  font-size:28px;
+  line-height:44px;
+  font-weight:900;
+  cursor:pointer;
+}
+.product img{cursor:zoom-in}
+
 </style>
 </head>
 <body>
@@ -82,6 +122,12 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 <section id="products"><button id="back" class="back">← All Categories</button><div id="categoryTitle" class="title"></div><div id="productGrid" class="grid"></div></section>
 </main>
 <button id="cartBar" class="cartbar">🛒 Order <span id="cartCount">0</span></button>
+
+<div id="zoomModal" class="zoommodal" aria-hidden="true">
+  <button id="closeZoom" class="closezoom" aria-label="Close">×</button>
+  <img id="zoomImage" src="" alt="Product image">
+</div>
+
 <div id="cartModal" class="cartmodal">
   <div class="cartbox">
     <div class="carthead"><div>🛒 Your Order</div><button id="closeCart" class="closecart">✕</button></div>
@@ -125,7 +171,7 @@ function renderProducts(){
  const a=products.filter(p=>String(p.category||"").trim()===active&&`${p.name||""} ${p.description||""}`.toLowerCase().includes(q));
  $("productGrid").innerHTML=a.length?a.map((p,i)=>`
  <article class="product">
-  <img src="${esc(p.photo||"")}" loading="lazy" alt="${esc(p.name)}">
+  <img src="${esc(p.photo||"")}" loading="lazy" alt="${esc(p.name)}" onclick="zoomProduct(this.src,this.alt)">
   <div class="body">
    <div class="name">${esc(p.name)}</div>
    ${p.description?`<div class="desc">${esc(p.description)}</div>`:""}
@@ -157,6 +203,25 @@ function addToCart(i){
  renderCart();
  $("cartBar").animate([{transform:"scale(1)"},{transform:"scale(1.08)"},{transform:"scale(1)"}],{duration:250});
 }
+
+
+function zoomProduct(src,alt="Product image"){
+  if(!src)return;
+  $("zoomImage").src=src;
+  $("zoomImage").alt=alt;
+  $("zoomModal").classList.add("open");
+  $("zoomModal").setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+}
+function closeZoom(){
+  $("zoomModal").classList.remove("open");
+  $("zoomModal").setAttribute("aria-hidden","true");
+  $("zoomImage").src="";
+  document.body.style.overflow="";
+}
+$("closeZoom").onclick=e=>{e.stopPropagation();closeZoom()};
+$("zoomModal").onclick=e=>{if(e.target===$("zoomModal"))closeZoom()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeZoom()});
 
 function renderCart(){
  const count=cart.reduce((s,x)=>s+x.qty,0);
