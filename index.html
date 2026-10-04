@@ -164,7 +164,27 @@ function renderCats(){
  document.querySelectorAll(".category").forEach(b=>b.onclick=()=>openCat(b.dataset.c));
 }
 
-function openCat(c){active=c;$("search").value="";$("categories").style.display="none";$("products").style.display="block";$("categoryTitle").textContent=c;renderProducts();scrollTo(0,0)}
+function showCategory(c){
+  active=c;
+  $("search").value="";
+  $("categories").style.display="none";
+  $("products").style.display="block";
+  $("categoryTitle").textContent=c;
+  renderProducts();
+  scrollTo(0,0);
+}
+
+function showHome(){
+  active="";
+  $("search").value="";
+  renderCats();
+  scrollTo(0,0);
+}
+
+function openCat(c){
+  showCategory(c);
+  history.pushState({page:"category",category:c},"","#category="+encodeURIComponent(c));
+}
 
 function renderProducts(){
  const q=$("search").value.toLowerCase().trim();
@@ -263,13 +283,30 @@ $("sendWhatsApp").onclick=()=>{
 };
 
 $("search").oninput=()=>{$("products").style.display==="block"?renderProducts():renderCats()};
-$("back").onclick=()=>{active="";$("search").value="";renderCats();scrollTo(0,0)};
+
+$("back").onclick=()=>{
+  if(history.state && history.state.page==="category") history.back();
+  else showHome();
+};
+
+window.addEventListener("popstate",()=>{
+  const state=history.state;
+  if(state && state.page==="category" && state.category){
+    showCategory(state.category);
+  }else{
+    showHome();
+  }
+});
+
 renderCart();
 fetch("products.json",{cache:"default"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{
   products=Array.isArray(d)?d:(d.products||[]);
   categoryOrder=Array.isArray(d.categoryOrder)?d.categoryOrder:[];
   $("business").textContent=d.businessName||"White Pack";
   document.title=d.businessName||"Catalogue";
+  if(!history.state || history.state.page!=="home"){
+    history.replaceState({page:"home"},"",location.pathname+location.search);
+  }
   renderCats();
 }).catch(()=>{$("categoryGrid").innerHTML='<div class="empty">Catalogue unavailable.<br><br>Make sure <b>products.json</b> is in the same GitHub folder.</div>'});
 </script>
