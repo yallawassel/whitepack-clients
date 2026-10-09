@@ -75,8 +75,8 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
   <textarea id="desc" placeholder="Size, quantity, material, etc."></textarea>
 
   <div class="priceFields">
-    <div><label>First unit label</label><input id="price1Label" placeholder="Packet"><label>First price (USD)</label><input id="price1" inputmode="decimal" placeholder="12.50"></div>
-    <div><label>Second unit label</label><input id="price2Label" placeholder="Box"><label>Second price (USD)</label><input id="price2" inputmode="decimal" placeholder="120.00"></div>
+    <div><label>First unit label (Box)</label><input id="price1Label" placeholder="Box"><label>First price (USD)</label><input id="price1" inputmode="decimal" placeholder="120.00"></div>
+    <div><label>Second unit label (Packet)</label><input id="price2Label" placeholder="Packet"><label>Second price (USD)</label><input id="price2" inputmode="decimal" placeholder="12.50"></div>
   </div>
   <div class="hint">For older products, the existing price is kept as the first price.</div>
 
@@ -221,9 +221,9 @@ async function saveProduct(){
   if(!photo && editIndex<0){alert('Choose a product photo.');return;}
 
   data.businessName=biz.value.trim() || 'White Pack';
-  const firstLabel=price1Label.value.trim() || 'Packet';
+  const firstLabel=price1Label.value.trim() || 'Box';
   const firstPrice=price1.value.replace(/[^0-9.]/g,'');
-  const secondLabel=price2Label.value.trim() || 'Box';
+  const secondLabel=price2Label.value.trim() || 'Packet';
   const secondPrice=price2.value.replace(/[^0-9.]/g,'');
   const product={
     ...(editIndex>=0 ? data.products[editIndex] : {}),
@@ -256,9 +256,9 @@ function editProduct(i){
   biz.value=data.businessName||'White Pack';
   nameEl.value=p.name||'';
   desc.value=p.description||'';
-  price1Label.value=p.price1Label||'Packet';
+  price1Label.value=p.price1Label||'Box';
   price1.value=p.price1??p.price??'';
-  price2Label.value=p.price2Label||'Box';
+  price2Label.value=p.price2Label||'Packet';
   price2.value=p.price2??'';
   cat.value=p.category||'Products';
   photo=p.photo||'';
@@ -280,9 +280,9 @@ function clearForm(){
   photo='';
   nameEl.value='';
   desc.value='';
-  price1Label.value='Packet';
+  price1Label.value='Box';
   price1.value='';
-  price2Label.value='Box';
+  price2Label.value='Packet';
   price2.value='';
   cat.value='';
   file.value='';
@@ -337,8 +337,8 @@ function render(){
       <img src="${p.photo||''}" alt="">
       <div class="productInfo">
         <b>${esc(p.name)}</b>
-        <span class="productPrice">💰 ${esc(p.price1Label||'Packet')}: $${esc(p.price1??p.price??'0')}</span>
-        ${(p.price2!==undefined&&p.price2!==null&&String(p.price2)!=='')?`<span class="productPrice">💰 ${esc(p.price2Label||'Box')}: $${esc(p.price2)}</span>`:''}
+        <span class="productPrice">💰 ${esc(p.price1Label||'Box')}: $${esc(p.price1??p.price??'0')}</span>
+        ${(p.price2!==undefined&&p.price2!==null&&String(p.price2)!=='')?`<span class="productPrice">💰 ${esc(p.price2Label||'Packet')}: $${esc(p.price2)}</span>`:''}
         <span class="productCategory">📂 ${esc(p.category||'Products')}</span>
       </div>
       <div class="productActions">
