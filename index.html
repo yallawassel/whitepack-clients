@@ -191,8 +191,8 @@ function productKey(p){return String(p.id??p.barcode??p.name??'product');}
 function priceOptions(p){
  const out=[];
  const p1=p.price1??p.price;
- if(p1!==undefined&&p1!==null&&String(p1)!=='')out.push({label:p.price1Label||'Packet',price:p1,key:'1'});
- if(p.price2!==undefined&&p.price2!==null&&String(p.price2)!=='')out.push({label:p.price2Label||'Box',price:p.price2,key:'2'});
+ if(p1!==undefined&&p1!==null&&String(p1)!=='')out.push({label:p.price1Label||'Box',price:p1,key:'1'});
+ if(p.price2!==undefined&&p.price2!==null&&String(p.price2)!=='')out.push({label:p.price2Label||'Packet',price:p.price2,key:'2'});
  return out;
 }
 function selectedOption(p){const opts=priceOptions(p);if(!opts.length)return {label:'',price:'',key:'1'};return opts.find(o=>o.key===selectedUnits[productKey(p)])||opts[0];}
@@ -284,14 +284,14 @@ $("cartModal").onclick=e=>{if(e.target===$("cartModal"))$("cartModal").classList
 
 $("sendWhatsApp").onclick=()=>{
  if(!cart.length){alert("Please add products to your order first.");return;}
- let msg="Hello White Pack, I would like to place this order:%0A%0A";
+ let msg="Hello White Pack, I would like to place this order:\n\n";
  cart.forEach((x,i)=>{
    const price=(x.unitPrice!==undefined&&x.unitPrice!=='')?` - ${x.unit||'Unit'}: $${String(x.unitPrice).replace(/^\$/,'')}`:'';
-   msg+=`${i+1}. ${x.p.name}${price} - Qty: ${x.qty}%0A`;
+   msg+=`${i+1}. ${x.p.name}${price} - Qty: ${x.qty}\n`;
  });
  const total=cart.reduce((s,x)=>s+(parseFloat(String(x.unitPrice??x.p.price??"").replace(/[^0-9.-]/g,""))||0)*x.qty,0);
- if(total>0)msg+=`%0ATotal: $${total.toFixed(2)}`;
- window.open("https://wa.me/96181085811?text="+msg,"_blank");
+ if(total>0)msg+=`\nTotal: $${total.toFixed(2)}`;
+ window.open("https://wa.me/96181085811?text="+encodeURIComponent(msg),"_blank");
 };
 
 $("search").oninput=()=>{$("products").style.display==="block"?renderProducts():renderCats()};

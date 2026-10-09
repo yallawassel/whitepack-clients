@@ -31,6 +31,8 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
 .item img{width:70px;height:70px;object-fit:contain;border-radius:8px;background:#fff;flex:0 0 70px}
 .item .productInfo{flex:1;min-width:0}
 .item .productPrice{display:block;font-size:14px;font-weight:800;color:#111827;margin-top:4px;line-height:1.5}
+.inlinePriceGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px;max-width:440px}.inlinePriceUnit{min-width:0;background:#fff;border:1px solid #dbe2ea;border-radius:9px;padding:6px}.inlinePriceUnit label{font-size:11px;color:#475569;margin:0 0 4px}.inlinePriceUnit input{font-size:13px;padding:7px 6px;margin:0 0 5px;min-width:0}.inlinePriceUnit input:last-child{margin-bottom:0}.inlinePriceUnit .unitLabel{font-weight:700}.inlineSaved{font-size:11px;color:#15803d;min-height:13px;margin-top:3px}
+@media(max-width:560px){.item{align-items:flex-start;flex-wrap:wrap}.item img{width:58px;height:58px;flex-basis:58px}.item .productInfo{flex:1 1 calc(100% - 80px)}.item .productActions{width:100%;justify-content:flex-start;padding-left:66px}.inlinePriceGrid{max-width:none}.inlinePriceUnit input{font-size:14px}}
 .priceFields{display:grid;grid-template-columns:1fr 1fr;gap:10px}.priceFields>div{min-width:0}.priceFields label{margin-top:8px}
 .item .productCategory{display:block;font-size:12px;color:#667085;margin-top:2px}
 .item .productActions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
@@ -98,7 +100,7 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
 
 <div class="panel">
   <h2>Products <span id="count" class="badge">0</span></h2>
-  <div class="hint">Designed for up to 1,000 products. Download products.json regularly as a backup.</div>
+  <div class="hint">Designed for up to 1,000 products. Edit both unit labels and prices directly in each product row; changes save automatically. Use Edit only for name, category, description, or photo.</div>
 
   <div class="searchBox">
     <input id="searchInput" type="search"
@@ -150,7 +152,7 @@ const clearSearch = document.getElementById('clearSearch');
 const searchInfo = document.getElementById('searchInfo');
 const categoryList = document.getElementById('categoryList');
 
-dbReady.then(async()=>{ const saved=await dbGet(); if(saved&&Array.isArray(saved.products)) data=saved; biz.value=data.businessName||'White Pack'; render(); });
+dbReady.then(async()=>{ const saved=await dbGet(); if(saved&&Array.isArray(saved.products)) data=saved; normalizePriceOrder(data.products); biz.value=data.businessName||'White Pack'; await dbPut(data); render(); });
 
 file.addEventListener('change', async function(e){
   const f = e.target.files && e.target.files[0];
@@ -235,7 +237,7 @@ async function saveProduct(){
     price2Label:secondLabel,
     price2:secondPrice,
     category:cat.value.trim() || 'Products',
-    photo: photo || data.products[editIndex].photo
+    photo: photo || (editIndex>=0 ? data.products[editIndex].photo : '')
   };
 
   const oldProducts=data.products.slice();
@@ -337,8 +339,19 @@ function render(){
       <img src="${p.photo||''}" alt="">
       <div class="productInfo">
         <b>${esc(p.name)}</b>
-        <span class="productPrice">💰 ${esc(p.price1Label||'Box')}: $${esc(p.price1??p.price??'0')}</span>
-        ${(p.price2!==undefined&&p.price2!==null&&String(p.price2)!=='')?`<span class="productPrice">💰 ${esc(p.price2Label||'Packet')}: $${esc(p.price2)}</span>`:''}
+        <div class="inlinePriceGrid" aria-label="Inline unit and price editor">
+          <div class="inlinePriceUnit">
+            <label>First unit / price</label>
+            <input class="unitLabel" aria-label="First unit label" value="${esc(p.price1Label||'Box')}" onchange="updateInlinePrice(${i},'price1Label',this.value)" placeholder="Box">
+            <input aria-label="First price in USD" inputmode="decimal" value="${esc(p.price1??p.price??'')}" onchange="updateInlinePrice(${i},'price1',this.value)" placeholder="Price USD">
+          </div>
+          <div class="inlinePriceUnit">
+            <label>Second unit / price</label>
+            <input class="unitLabel" aria-label="Second unit label" value="${esc(p.price2Label||'Packet')}" onchange="updateInlinePrice(${i},'price2Label',this.value)" placeholder="Packet">
+            <input aria-label="Second price in USD" inputmode="decimal" value="${esc(p.price2??'')}" onchange="updateInlinePrice(${i},'price2',this.value)" placeholder="Price USD">
+          </div>
+        </div>
+        <div class="inlineSaved" id="inlineSaved_${i}"></div>
         <span class="productCategory">📂 ${esc(p.category||'Products')}</span>
       </div>
       <div class="productActions">
@@ -349,6 +362,30 @@ function render(){
       </div>
     </div>
   `).join('');
+}
+
+async function updateInlinePrice(i, field, value){
+  const p=data.products[i];
+  if(!p || !['price1Label','price1','price2Label','price2'].includes(field)) return;
+  const previous={...p};
+  if(field==='price1Label') p.price1Label=value.trim()||'Box';
+  else if(field==='price2Label') p.price2Label=value.trim()||'Packet';
+  else {
+    const cleaned=String(value).replace(/[^0-9.]/g,'');
+    if((cleaned.match(/\./g)||[]).length>1){alert('Enter a valid price.');render();return;}
+    p[field]=cleaned;
+    if(field==='price1') p.price=cleaned; // legacy compatibility
+  }
+  try{
+    await dbPut(data);
+    const indicator=document.getElementById('inlineSaved_'+i);
+    if(indicator) indicator.textContent='✓ Saved locally';
+    show('✅ Price/unit saved in this browser. Download products.json to publish the changes.');
+  }catch(err){
+    data.products[i]=previous;
+    alert('Could not save this price. Please try again.');
+    render();
+  }
 }
 
 function getCategories(){
@@ -402,7 +439,7 @@ async function downloadJSON(){
   data.businessName=biz.value.trim()||'White Pack';
   show('⏳ Optimizing existing photos…');
   await optimizeAllPhotos();
-  try{await dbPut(data);}catch(e){}
+  try{await dbPut(data);}catch(e){alert('Could not save the catalogue before download. Please retry.');show('❌ Save failed; JSON was not downloaded.');return;}
   const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -411,24 +448,27 @@ async function downloadJSON(){
   a.click();
   a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  show('✅ Optimized products.json downloaded. No photo re-upload needed.');
+  show('✅ products.json downloaded. Upload this file to GitHub to publish your changes.');
 }
 
 document.getElementById('importFile').onchange=async e=>{
   const f=e.target.files[0];
   if(!f)return;
   const r=new FileReader();
-  r.onload=()=>{
+  r.onload=async()=>{
     try{
       const d=JSON.parse(r.result);
       if(!Array.isArray(d.products)) throw new Error('Invalid catalogue');
-      data={businessName:d.businessName||'White Pack',products:d.products,categoryOrder:Array.isArray(d.categoryOrder)?d.categoryOrder:[]};
+      const imported={businessName:d.businessName||'White Pack',products:d.products,categoryOrder:Array.isArray(d.categoryOrder)?d.categoryOrder:[]};
+      normalizePriceOrder(imported.products);
+      const previous=data;
+      data=imported;
       biz.value=data.businessName;
-      persist();
+      await dbPut(data);
       render();
       clearForm();
-      show('✅ Catalogue imported.');
-    }catch(err){alert('This is not a valid products.json file.');}
+      show('✅ Catalogue imported and saved in this browser.');
+    }catch(err){alert('Could not import/save this file. Check that it is a valid products.json and try again.');}
   };
   r.readAsText(f);
 };
@@ -437,6 +477,20 @@ function show(t){
   status.style.display='block';
   status.textContent=t;
   setTimeout(()=>status.style.display='none',3500);
+}
+
+function normalizePriceOrder(products){
+  for(const p of (products||[])){
+    let l1=String(p.price1Label||'').trim(), l2=String(p.price2Label||'').trim();
+    if((p.price1===undefined||p.price1===null||String(p.price1).trim()==='') && p.price!==undefined && p.price!==null && String(p.price).trim()!=='') p.price1=p.price;
+    if(l1.toLowerCase()==='packet' && l2.toLowerCase()==='box' && p.price2!==undefined && p.price2!==null && String(p.price2).trim()!==''){
+      const oldFirst=p.price1??p.price;
+      p.price1=p.price2; p.price2=oldFirst; p.price1Label='Box'; p.price2Label='Packet';
+    }else{
+      p.price1Label=l1||'Box'; p.price2Label=l2||'Packet';
+    }
+    if(p.price1!==undefined && p.price1!==null && String(p.price1).trim()!=='') p.price=p.price1;
+  }
 }
 
 function esc(s){
