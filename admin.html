@@ -30,7 +30,8 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
 .item{display:flex;gap:10px;align-items:center;background:#f8fafc;padding:9px;border-radius:12px;margin:8px 0}
 .item img{width:70px;height:70px;object-fit:contain;border-radius:8px;background:#fff;flex:0 0 70px}
 .item .productInfo{flex:1;min-width:0}
-.item .productPrice{display:block;font-size:17px;font-weight:800;color:#111827;margin-top:4px}
+.item .productPrice{display:block;font-size:14px;font-weight:800;color:#111827;margin-top:4px;line-height:1.5}
+.priceFields{display:grid;grid-template-columns:1fr 1fr;gap:10px}.priceFields>div{min-width:0}.priceFields label{margin-top:8px}
 .item .productCategory{display:block;font-size:12px;color:#667085;margin-top:2px}
 .item .productActions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
 .item .productActions button{margin-top:0}
@@ -73,8 +74,11 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
   <label>Description</label>
   <textarea id="desc" placeholder="Size, quantity, material, etc."></textarea>
 
-  <label>Price (USD)</label>
-  <input id="price" inputmode="decimal" placeholder="12.50">
+  <div class="priceFields">
+    <div><label>First unit label</label><input id="price1Label" placeholder="Packet"><label>First price (USD)</label><input id="price1" inputmode="decimal" placeholder="12.50"></div>
+    <div><label>Second unit label</label><input id="price2Label" placeholder="Box"><label>Second price (USD)</label><input id="price2" inputmode="decimal" placeholder="120.00"></div>
+  </div>
+  <div class="hint">For older products, the existing price is kept as the first price.</div>
 
   <label>Category</label>
   <input id="cat" placeholder="Paper Bags">
@@ -132,7 +136,10 @@ const preview = document.getElementById('preview');
 const pt = document.getElementById('pt');
 const nameEl = document.getElementById('name');
 const desc = document.getElementById('desc');
-const price = document.getElementById('price');
+const price1Label = document.getElementById('price1Label');
+const price1 = document.getElementById('price1');
+const price2Label = document.getElementById('price2Label');
+const price2 = document.getElementById('price2');
 const cat = document.getElementById('cat');
 const list = document.getElementById('list');
 const count = document.getElementById('count');
@@ -214,10 +221,19 @@ async function saveProduct(){
   if(!photo && editIndex<0){alert('Choose a product photo.');return;}
 
   data.businessName=biz.value.trim() || 'White Pack';
+  const firstLabel=price1Label.value.trim() || 'Packet';
+  const firstPrice=price1.value.replace(/[^0-9.]/g,'');
+  const secondLabel=price2Label.value.trim() || 'Box';
+  const secondPrice=price2.value.replace(/[^0-9.]/g,'');
   const product={
+    ...(editIndex>=0 ? data.products[editIndex] : {}),
     name:n,
     description:desc.value.trim(),
-    price:price.value.replace(/[^0-9.]/g,''),
+    price:firstPrice, // backward compatibility with the old catalogue field
+    price1Label:firstLabel,
+    price1:firstPrice,
+    price2Label:secondLabel,
+    price2:secondPrice,
     category:cat.value.trim() || 'Products',
     photo: photo || data.products[editIndex].photo
   };
@@ -240,7 +256,10 @@ function editProduct(i){
   biz.value=data.businessName||'White Pack';
   nameEl.value=p.name||'';
   desc.value=p.description||'';
-  price.value=p.price||'';
+  price1Label.value=p.price1Label||'Packet';
+  price1.value=p.price1??p.price??'';
+  price2Label.value=p.price2Label||'Box';
+  price2.value=p.price2??'';
   cat.value=p.category||'Products';
   photo=p.photo||'';
   if(photo){preview.src=photo;preview.style.display='block';pt.style.display='none';}
@@ -261,7 +280,10 @@ function clearForm(){
   photo='';
   nameEl.value='';
   desc.value='';
-  price.value='';
+  price1Label.value='Packet';
+  price1.value='';
+  price2Label.value='Box';
+  price2.value='';
   cat.value='';
   file.value='';
   preview.src='';
@@ -293,7 +315,7 @@ function render(){
       p.name,
       p.category,
       p.description,
-      p.price
+      p.price, p.price1Label, p.price1, p.price2Label, p.price2
     ].some(v=>String(v||'').toLowerCase().includes(q));
   });
 
@@ -315,7 +337,8 @@ function render(){
       <img src="${p.photo||''}" alt="">
       <div class="productInfo">
         <b>${esc(p.name)}</b>
-        <span class="productPrice">💰 $${esc(p.price||'0')}</span>
+        <span class="productPrice">💰 ${esc(p.price1Label||'Packet')}: $${esc(p.price1??p.price??'0')}</span>
+        ${(p.price2!==undefined&&p.price2!==null&&String(p.price2)!=='')?`<span class="productPrice">💰 ${esc(p.price2Label||'Box')}: $${esc(p.price2)}</span>`:''}
         <span class="productCategory">📂 ${esc(p.category||'Products')}</span>
       </div>
       <div class="productActions">

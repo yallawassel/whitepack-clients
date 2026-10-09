@@ -39,7 +39,7 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 .back{border:0;background:#111827;color:#fff;border-radius:12px;padding:11px 15px;font-size:15px;font-weight:700;margin:3px 0 10px}
 .product{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px #0001}
 .product img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:#fff}
-.body{padding:12px}.desc{color:#596273;font-size:13px;line-height:1.4;margin-top:5px}.price{font-size:20px;font-weight:900;margin-top:9px}
+.body{padding:12px}.desc{color:#596273;font-size:13px;line-height:1.4;margin-top:5px}.price{font-size:20px;font-weight:900;margin-top:9px}.priceChoices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}.priceChoice{border:1px solid #d1d5db;border-radius:10px;background:#fff;color:#111827;padding:9px 6px;font-size:13px;font-weight:800;min-width:0;overflow-wrap:anywhere}.priceChoice.active{background:#111827;color:#fff;border-color:#111827}.priceChoice small{display:block;font-size:15px;margin-top:3px}
 .empty{text-align:center;padding:45px 20px;color:#6b7280;background:#fff;border-radius:16px}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:420px){.site-logo{width:50px;height:50px}h1{font-size:21px}}
@@ -140,6 +140,7 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 <script>
 let products=[],active="",categoryOrder=[];
 let cart=[];
+const selectedUnits={};
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
@@ -186,6 +187,16 @@ function openCat(c){
   history.pushState({page:"category",category:c},"","#category="+encodeURIComponent(c));
 }
 
+function productKey(p){return String(p.id??p.barcode??p.name??'product');}
+function priceOptions(p){
+ const out=[];
+ const p1=p.price1??p.price;
+ if(p1!==undefined&&p1!==null&&String(p1)!=='')out.push({label:p.price1Label||'Packet',price:p1,key:'1'});
+ if(p.price2!==undefined&&p.price2!==null&&String(p.price2)!=='')out.push({label:p.price2Label||'Box',price:p.price2,key:'2'});
+ return out;
+}
+function selectedOption(p){const opts=priceOptions(p);if(!opts.length)return {label:'',price:'',key:'1'};return opts.find(o=>o.key===selectedUnits[productKey(p)])||opts[0];}
+function selectPrice(i,key){const list=products.filter(p=>String(p.category||'').trim()===active&&`${p.name||''} ${p.description||''}`.toLowerCase().includes($('search').value.toLowerCase().trim()));const p=list[i];if(!p)return;selectedUnits[productKey(p)]=key;renderProducts();}
 function renderProducts(){
  const q=$("search").value.toLowerCase().trim();
  const a=products.filter(p=>String(p.category||"").trim()===active&&`${p.name||""} ${p.description||""}`.toLowerCase().includes(q));
@@ -195,7 +206,7 @@ function renderProducts(){
   <div class="body">
    <div class="name">${esc(p.name)}</div>
    ${p.description?`<div class="desc">${esc(p.description)}</div>`:""}
-   ${p.price!==undefined&&p.price!==""?`<div class="price">$${esc(String(p.price).replace(/^\$/,""))}</div>`:""}
+   ${priceOptions(p).length?`<div class="priceChoices">${priceOptions(p).map(o=>`<button type="button" class="priceChoice ${selectedOption(p).key===o.key?'active':''}" onclick="selectPrice(${i},'${o.key}')">${esc(o.label)}<small>$${esc(String(o.price).replace(/^\$/,''))}</small></button>`).join('')}</div>`:''}
    <div class="qtyrow">
     <button class="qtybtn" onclick="changeQty(${i},-1)">−</button>
     <div class="qty" id="q_${i}">1</div>
@@ -217,9 +228,10 @@ function addToCart(i){
  const list=products.filter(p=>String(p.category||"").trim()===active&&`${p.name||""} ${p.description||""}`.toLowerCase().includes($("search").value.toLowerCase().trim()));
  const p=list[i];
  if(!p)return;
- const key=String(p.id??p.barcode??p.name);
+ const option=selectedOption(p);
+ const key=productKey(p)+'::'+option.key;
  const found=cart.find(x=>x.key===key);
- if(found)found.qty+=q; else cart.push({key,p,qty:q});
+ if(found)found.qty+=q; else cart.push({key,p,qty:q,unit:option.label,unitKey:option.key,unitPrice:option.price});
  renderCart();
  $("cartBar").animate([{transform:"scale(1)"},{transform:"scale(1.08)"},{transform:"scale(1)"}],{duration:250});
 }
@@ -256,11 +268,11 @@ function renderCart(){
    <img src="${esc(x.p.photo||"")}" alt="">
    <div>
     <div class="cartname">${esc(x.p.name)}</div>
-    <div class="cartprice">Quantity: ${x.qty}${x.p.price!==undefined&&x.p.price!==""?` · $${esc(String(x.p.price).replace(/^\$/,""))} each`:""}</div>
+    <div class="cartprice">${x.unit?`${esc(x.unit)} · `:''}Quantity: ${x.qty}${x.unitPrice!==undefined&&x.unitPrice!==''?` · $${esc(String(x.unitPrice).replace(/^\$/,''))} each`:''}</div>
    </div>
    <button class="remove" onclick="removeCart(${i})">Remove</button>
   </div>`).join("");
- const total=cart.reduce((s,x)=>s+(parseFloat(String(x.p.price??"").replace(/[^0-9.-]/g,""))||0)*x.qty,0);
+ const total=cart.reduce((s,x)=>s+(parseFloat(String(x.unitPrice??x.p.price??"").replace(/[^0-9.-]/g,""))||0)*x.qty,0);
  $("cartTotal").textContent=total>0?`Total: $${total.toFixed(2)}`:`${count} item${count===1?"":"s"}`;
 }
 
@@ -274,10 +286,10 @@ $("sendWhatsApp").onclick=()=>{
  if(!cart.length){alert("Please add products to your order first.");return;}
  let msg="Hello White Pack, I would like to place this order:%0A%0A";
  cart.forEach((x,i)=>{
-   const price=x.p.price!==undefined&&x.p.price!==""?` - $${String(x.p.price).replace(/^\$/,"")}`:"";
-   msg+=`${i+1}. ${x.p.name} - Qty: ${x.qty}${price}%0A`;
+   const price=(x.unitPrice!==undefined&&x.unitPrice!=='')?` - ${x.unit||'Unit'}: $${String(x.unitPrice).replace(/^\$/,'')}`:'';
+   msg+=`${i+1}. ${x.p.name}${price} - Qty: ${x.qty}%0A`;
  });
- const total=cart.reduce((s,x)=>s+(parseFloat(String(x.p.price??"").replace(/[^0-9.-]/g,""))||0)*x.qty,0);
+ const total=cart.reduce((s,x)=>s+(parseFloat(String(x.unitPrice??x.p.price??"").replace(/[^0-9.-]/g,""))||0)*x.qty,0);
  if(total>0)msg+=`%0ATotal: $${total.toFixed(2)}`;
  window.open("https://wa.me/96181085811?text="+msg,"_blank");
 };
