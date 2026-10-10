@@ -102,12 +102,17 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
   <h2>Products <span id="count" class="badge">0</span></h2>
   <div class="hint">Designed for up to 1,000 products. Edit both unit labels and prices directly in each product row; changes save automatically. Use Edit only for name, category, description, or photo.</div>
 
+  <label for="categoryFilter">Filter products by category</label>
+  <select id="categoryFilter">
+    <option value="">All categories</option>
+  </select>
   <div class="searchBox">
     <input id="searchInput" type="search"
-           placeholder="🔎 Search product name, category or description..."
+           placeholder="🔎 Search product name or description..."
            autocomplete="off">
     <button type="button" class="secondary searchClear" id="clearSearch">Clear</button>
   </div>
+  <div class="hint">Use ⬆️ and ⬇️ to rearrange products within the same category. The order is saved locally and included when you download products.json.</div>
 
   <div id="searchInfo" class="hint searchInfo"></div>
   <div id="list"></div>
@@ -150,6 +155,7 @@ const addBtn = document.getElementById('addBtn');
 const searchInput = document.getElementById('searchInput');
 const clearSearch = document.getElementById('clearSearch');
 const searchInfo = document.getElementById('searchInfo');
+const categoryFilter = document.getElementById('categoryFilter');
 const categoryList = document.getElementById('categoryList');
 
 dbReady.then(async()=>{ const saved=await dbGet(); if(saved&&Array.isArray(saved.products)) data=saved; normalizePriceOrder(data.products); biz.value=data.businessName||'White Pack'; await dbPut(data); render(); });
@@ -301,7 +307,16 @@ async function persist(){try{await dbPut(data);return true;}catch(e){return fals
 
 function render(){
   const q=(searchInput ? searchInput.value : '').trim().toLowerCase();
+  const selectedCategory=(categoryFilter ? categoryFilter.value : '').trim();
   const allProducts=data.products||[];
+
+  // Keep the category filter options up to date without resetting the user's selection.
+  if(categoryFilter){
+    const previous=categoryFilter.value;
+    const cats=getCategories();
+    categoryFilter.innerHTML='<option value="">All categories</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    categoryFilter.value=cats.includes(previous)?previous:'';
+  }
 
   count.textContent=allProducts.length;
 
@@ -311,11 +326,13 @@ function render(){
     return;
   }
 
+  const activeCategory=categoryFilter ? categoryFilter.value.trim() : '';
   const matches=allProducts.map((p,i)=>({p,i})).filter(({p})=>{
+    const productCategory=(p.category||'Products').trim()||'Products';
+    if(activeCategory && productCategory!==activeCategory) return false;
     if(!q) return true;
     return [
       p.name,
-      p.category,
       p.description,
       p.price, p.price1Label, p.price1, p.price2Label, p.price2
     ].some(v=>String(v||'').toLowerCase().includes(q));
@@ -406,8 +423,32 @@ async function moveCategory(i,d){
 }
 
 async function moveProduct(i,d){
-  const j=i+d; if(j<0||j>=data.products.length)return; [data.products[i],data.products[j]]=[data.products[j],data.products[i]];
-  if(await persist()){render();show('✅ Product order saved.');} else alert('Could not save product order.');
+  const products=data.products||[];
+  const product=products[i];
+  if(!product) return;
+  const category=(product.category||'Products').trim()||'Products';
+
+  // Find this product's position among products in its own category.
+  // Swap with the previous/next product in that category, even if other
+  // categories appear between them in the full catalogue.
+  const categoryIndexes=[];
+  products.forEach((p,index)=>{
+    if(((p.category||'Products').trim()||'Products')===category) categoryIndexes.push(index);
+  });
+  const position=categoryIndexes.indexOf(i);
+  const targetPosition=position+d;
+  if(position<0 || targetPosition<0 || targetPosition>=categoryIndexes.length) return;
+  const j=categoryIndexes[targetPosition];
+  [products[i],products[j]]=[products[j],products[i]];
+
+  if(await persist()){
+    render();
+    show('✅ Product order saved within '+category+'. Download products.json to publish the new order.');
+  } else {
+    [products[i],products[j]]=[products[j],products[i]];
+    alert('Could not save product order.');
+    render();
+  }
 }
 
 async function optimizeAllPhotos(){
@@ -500,6 +541,7 @@ function esc(s){
 }
 
 searchInput.addEventListener('input', render);
+categoryFilter.addEventListener('change', render);
 clearSearch.addEventListener('click', ()=>{
   searchInput.value='';
   render();
