@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>White Pack — Driver Tracking</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f4f6;color:#111827}header{background:#111827;color:#fff;padding:18px 16px}header h1{margin:0;font-size:23px}header p{margin:6px 0 0;color:#cbd5e1}.wrap{max-width:850px;margin:auto;padding:16px}.panel{background:#fff;border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px #0000000b}h2{font-size:19px;margin:0 0 12px}label{display:block;font-weight:700;font-size:14px;margin:12px 0 5px}input,select,button{font:inherit}input,select{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff}button,.link{border:0;border-radius:10px;padding:12px 14px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}.primary{background:#111827;color:#fff}.green{background:#15803d;color:#fff}.red{background:#b91c1c;color:#fff}.muted{background:#e5e7eb;color:#111827}.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}.hint{color:#64748b;font-size:13px;line-height:1.5}.status{display:none;padding:10px;border-radius:10px;margin-top:10px;white-space:pre-wrap;overflow-wrap:anywhere}.status.ok{display:block;background:#dcfce7;color:#166534}.status.err{display:block;background:#fee2e2;color:#991b1b}.hidden{display:none!important}.order{border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-top:10px}.orderhead{display:flex;justify-content:space-between;gap:10px;align-items:center}.pill{display:inline-block;padding:5px 8px;border-radius:999px;background:#e5e7eb;font-size:12px;font-weight:800}.driver{border-bottom:1px solid #e5e7eb;padding:12px 0}.driver:last-child{border-bottom:0}.small{font-size:12px;color:#64748b}.danger-note{background:#fff7ed;color:#9a3412;padding:12px;border-radius:10px;font-size:13px;line-height:1.5}
+</style>
+</head>
+<body>
+<header><h1>🚚 White Pack Driver Tracking</h1><p>Share a delivery driver's live location with authorized staff.</p></header>
+<main class="wrap">
+<section id="loginPanel" class="panel">
+<h2>Staff / driver sign in</h2>
+<p class="hint">Use an existing authorized account from your White Pack Orders Supabase project. This page does not create accounts.</p>
+<form id="loginForm">
+<label for="email">Email</label><input id="email" type="email" autocomplete="username" required placeholder="Staff or driver email">
+<label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required placeholder="Password">
+<button class="primary" style="margin-top:12px" type="submit">Sign in</button>
+</form><div id="loginMsg" class="status"></div>
+</section>
+<section id="app" class="hidden">
+<div class="panel">
+<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Tracking controls</h2><div id="signedIn" class="hint"></div></div><button id="refresh" class="muted" type="button">Refresh</button><button id="logout" class="red" type="button">Sign out</button></div>
+<label for="orderSelect">Order to deliver</label><select id="orderSelect"><option value="">Loading eligible orders…</option></select>
+<p class="hint">Start sharing only when you are delivering this order. Keep this page open while sharing.</p>
+<div class="row"><button id="start" class="green" type="button">▶ Start sharing GPS</button><button id="stop" class="red" type="button" disabled>■ Stop sharing GPS</button></div>
+<div id="shareMsg" class="status"></div>
+<div id="ownLocation" class="hint" style="margin-top:10px">GPS is not active.</div>
+</div>
+<div class="panel"><h2>Active driver locations</h2><p class="hint">Latest location reported by each sharing driver. Refreshes every 10 seconds while this page is open.</p><div id="liveList"><div class="hint">Loading…</div></div></div>
+<div class="panel danger-note"><b>Privacy and safety:</b> GPS sharing starts only after the driver taps Start and grants browser permission. Tap Stop to stop updates. Closing the browser or losing signal may stop updates; this page does not guarantee background tracking. Only authenticated users covered by the database policies can view tracking data. Publish over HTTPS.</div>
+</section>
+</main>
+<script>
+(() => {
+  const URL='https://gaphiedcwueunmfssisz.supabase.co';
+  const KEY='sb_publishable_XnMvCbQGs2tGHXQa5Cjbew_vTTM7ubG';
+  const sb=window.supabase.createClient(URL,KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+  const $=id=>document.getElementById(id);
+  let session=null, watchId=null, selectedOrder=null, lastPosition=null, refreshTimer=null;
+  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function msg(id,text,type='ok'){const e=$(id);e.textContent=text;e.className='status '+type}
+  function clearMsg(id){const e=$(id);e.textContent='';e.className='status'}
+  function mapUrl(lat,lng){return 'https://www.google.com/maps?q='+encodeURIComponent(lat+','+lng)}
+  async function onSession(s){
+    session=s;
+    if(!s){stopSharing(false);$('loginPanel').classList.remove('hidden');$('app').classList.add('hidden');return}
+    $('loginPanel').classList.add('hidden');$('app').classList.remove('hidden');$('signedIn').textContent='Signed in as '+(s.user.email||'authorized user');
+    await loadOrders();await loadLive();
+    if(refreshTimer)clearInterval(refreshTimer);
+    refreshTimer=setInterval(()=>{loadLive()},10000);
+  }
+  $('loginForm').addEventListener('submit',async e=>{e.preventDefault();clearMsg('loginMsg');const {error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)msg('loginMsg','Sign-in failed: '+error.message,'err');$('password').value='';});
+  $('logout').onclick=async()=>{stopSharing(false);await sb.auth.signOut();};
+  $('refresh').onclick=async()=>{await loadOrders();await loadLive()};
+  async function loadOrders(){
+    const {data,error}=await sb.from('wp_orders').select('id,order_number,customer_name,order_status').in('order_status',['confirmed','preparing','out_for_delivery']).order('created_at',{ascending:false}).limit(200);
+    if(error){$('orderSelect').innerHTML='<option value="">Could not load orders</option>';msg('shareMsg','Could not load orders: '+error.message,'err');return}
+    const previous=$('orderSelect').value;
+    $('orderSelect').innerHTML='<option value="">Choose an order…</option>'+(data||[]).map(o=>`<option value="${esc(o.id)}">Order #${esc(o.order_number)} — ${esc(o.customer_name||'Customer')} (${esc(o.order_status)})</option>`).join('');
+    if(previous && [...$('orderSelect').options].some(o=>o.value===previous))$('orderSelect').value=previous;
+  }
+  $('orderSelect').addEventListener('change',()=>{const next=$('orderSelect').value;if(watchId!==null&&next!==activeOrder){msg('shareMsg','Stop sharing before changing orders.','err');$('orderSelect').value=activeOrder||'';return}selectedOrder=next;});
+  let activeOrder=null;
+  function startSharing(){
+    clearMsg('shareMsg');
+    if(!session){msg('shareMsg','Please sign in first.','err');return}
+    if(!('geolocation' in navigator)){msg('shareMsg','This device/browser does not support GPS.','err');return}
+    const orderId=$('orderSelect').value;if(!orderId){msg('shareMsg','Choose an order first.','err');return}
+    if(watchId!==null)return;
+    activeOrder=orderId;
+    $('start').disabled=true;$('stop').disabled=false;
+    msg('shareMsg','Requesting GPS permission. Allow location access to begin sharing.');
+    watchId=navigator.geolocation.watchPosition(async pos=>{
+      lastPosition=pos;
+      const row={order_id:activeOrder,driver_id:session.user.id,latitude:pos.coords.latitude,longitude:pos.coords.longitude,accuracy_m:Math.round(pos.coords.accuracy||0),is_sharing:true,updated_at:new Date().toISOString()};
+      const {error}=await sb.from('wp_driver_locations').upsert(row,{onConflict:'order_id'});
+      if(error){msg('shareMsg','Location update failed: '+error.message,'err');return}
+      $('ownLocation').textContent=`Sharing GPS · accuracy about ${row.accuracy_m} m · updated ${new Date(row.updated_at).toLocaleTimeString()}`;
+      msg('shareMsg','GPS sharing is active for Order #'+($('orderSelect').selectedOptions[0]?.textContent||activeOrder)+'. Tap Stop to end sharing.');
+      await loadLive();
+    },err=>{
+      stopSharing(false);
+      const reasons={1:'Location permission denied. Allow location access in your browser settings.',2:'GPS location unavailable. Try again outdoors or check device location settings.',3:'GPS request timed out. Try again.'};
+      msg('shareMsg',reasons[err.code]||err.message,'err');
+    },{enableHighAccuracy:true,maximumAge:5000,timeout:20000});
+  }
+  $('start').onclick=startSharing;
+  async function stopSharing(show=true){
+    if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null}
+    $('start').disabled=false;$('stop').disabled=true;
+    if(activeOrder&&session){
+      const {error}=await sb.from('wp_driver_locations').update({is_sharing:false,updated_at:new Date().toISOString()}).eq('order_id',activeOrder).eq('driver_id',session.user.id);
+      if(error&&show)msg('shareMsg','GPS watch stopped on this device, but the database could not be updated: '+error.message,'err');
+    }
+    activeOrder=null;
+    $('ownLocation').textContent='GPS sharing is stopped on this device.';
+    if(show){msg('shareMsg','GPS sharing stopped.');await loadLive()}
+  }
+  $('stop').onclick=()=>stopSharing(true);
+  async function loadLive(){
+    if(!session)return;
+    const {data,error}=await sb.from('wp_driver_locations').select('order_id,driver_id,latitude,longitude,accuracy_m,is_sharing,updated_at').eq('is_sharing',true).order('updated_at',{ascending:false}).limit(100);
+    if(error){$('liveList').innerHTML='<div class="hint">Could not load live locations. Apply the SQL setup file and verify RLS policies. '+esc(error.message)+'</div>';return}
+    if(!data?.length){$('liveList').innerHTML='<div class="hint">No drivers are sharing their location right now.</div>';return}
+    $('liveList').innerHTML=data.map(d=>`<div class="driver"><b>Order ID:</b> ${esc(d.order_id)}<br><b>Coordinates:</b> ${Number(d.latitude).toFixed(6)}, ${Number(d.longitude).toFixed(6)}<br><span class="small">Accuracy ±${esc(d.accuracy_m)} m · Updated ${esc(new Date(d.updated_at).toLocaleString())}</span><br><a class="link muted" target="_blank" rel="noopener" href="${esc(mapUrl(d.latitude,d.longitude))}">📍 Open latest driver location</a></div>`).join('');
+  }
+  sb.auth.onAuthStateChange((_event,s)=>{setTimeout(()=>onSession(s),0)});
+  sb.auth.getSession().then(({data})=>onSession(data.session));
+})();
+</script>
+</body></html>
