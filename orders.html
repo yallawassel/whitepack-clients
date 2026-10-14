@@ -19,7 +19,7 @@
 <div id="loginMsg" class="status"></div>
 </section>
 <section id="dashboard" class="hidden">
-<div class="panel"><div class="row"><div><h2 style="margin-bottom:4px">Order overview</h2><div id="signedIn" class="hint"></div></div><button id="refreshBtn" class="muted" type="button">↻ Refresh</button><button id="logoutBtn" class="danger" type="button">Sign out</button></div><div class="stats" style="margin-top:15px"><div class="stat"><strong id="totalCount">0</strong><span>Total orders</span></div><div class="stat"><strong id="newCount">0</strong><span>New</span></div><div class="stat"><strong id="deliveryCount">0</strong><span>Out for delivery</span></div><div class="stat"><strong id="doneCount">0</strong><span>Delivered</span></div></div><div id="dashMsg" class="status"></div></div>
+<div class="panel"><div class="row"><div><h2 style="margin-bottom:4px">Order overview</h2><div id="signedIn" class="hint"></div></div><button id="refreshBtn" class="muted" type="button">↻ Refresh</button><button id="logoutBtn" class="danger" type="button">Sign out</button></div><div class="stats" style="margin-top:15px"><div class="stat"><strong id="totalCount">0</strong><span>Total orders</span></div><div class="stat"><strong id="newCount">0</strong><span>New</span></div><div class="stat"><strong id="deliveryCount">0</strong><span>Out for delivery</span></div><div class="stat"><strong id="doneCount">0</strong><span>Delivered</span></div></div><div id="dashMsg" class="status"></div><div class="small" style="margin-top:10px">Auto-refresh: every 10 seconds while this dashboard is open.</div></div>
 <div class="panel"><h2>Find orders</h2><div class="toolbar"><input id="search" placeholder="Search order, customer, phone…"><select id="statusFilter"><option value="">All order statuses</option><option value="new">New</option><option value="confirmed">Confirmed</option><option value="preparing">Preparing</option><option value="out_for_delivery">Out for delivery</option><option value="delivered">Delivered</option><option value="cancelled">Cancelled</option></select><select id="paymentFilter"><option value="">All payment statuses</option><option value="unpaid">Unpaid</option><option value="partial">Partial</option><option value="paid">Paid</option></select></div><div id="ordersList"></div></div>
 </section>
 <div class="panel hint"><b>Security note:</b> This page uses only the Supabase publishable key and relies on database Row Level Security. Never put a Supabase secret/service-role key in this file. Publish over HTTPS.</div>
@@ -31,6 +31,8 @@
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   const $ = id => document.getElementById(id);
   let orders = [];
+  let refreshTimer = null;
+  let loadingOrders = false;
   const orderStatuses = [['new','New'],['confirmed','Confirmed'],['preparing','Preparing'],['out_for_delivery','Out for delivery'],['delivered','Delivered'],['cancelled','Cancelled']];
   const paymentStatuses = [['unpaid','Unpaid'],['partial','Partial'],['paid','Paid']];
   const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -39,12 +41,52 @@
   function money(n,c){const v=Number(n||0);return (c==='LBP'?'LBP ':'$')+v.toLocaleString(undefined,{maximumFractionDigits:2});}
   function labelOf(list,v){return (list.find(x=>x[0]===v)||[v||'unknown',v||'Unknown'])[1];}
   function mapsLink(o){if(o.delivery_lat!=null&&o.delivery_lng!=null)return 'https://www.google.com/maps?q='+encodeURIComponent(o.delivery_lat+','+o.delivery_lng);if(o.delivery_address)return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(o.delivery_address);return '';}
-  async function sessionChanged(session){if(session){$('loginPanel').classList.add('hidden');$('dashboard').classList.remove('hidden');$('signedIn').textContent='Signed in as '+(session.user.email||'staff');await loadOrders();}else{$('loginPanel').classList.remove('hidden');$('dashboard').classList.add('hidden');}}
+  function startAutoRefresh(){
+    if(refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = setInterval(() => {
+      if (!document.hidden && !$('dashboard').classList.contains('hidden')) loadOrders(true);
+    }, 10000);
+  }
+  function stopAutoRefresh(){
+    if(refreshTimer) clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+  async function sessionChanged(session){
+    if(session){
+      $('loginPanel').classList.add('hidden');
+      $('dashboard').classList.remove('hidden');
+      $('signedIn').textContent='Signed in as '+(session.user.email||'staff');
+      await loadOrders();
+      startAutoRefresh();
+    }else{
+      stopAutoRefresh();
+      $('loginPanel').classList.remove('hidden');
+      $('dashboard').classList.add('hidden');
+    }
+  }
   $('loginForm').addEventListener('submit',async e=>{e.preventDefault();clearMessage('loginMsg');const {error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){message('loginMsg','Sign-in failed: '+error.message,'err');return;} $('password').value='';});
   $('logoutBtn').onclick=async()=>{await sb.auth.signOut();orders=[];};
   $('refreshBtn').onclick=loadOrders;
   $('search').addEventListener('input',renderOrders);$('statusFilter').addEventListener('change',renderOrders);$('paymentFilter').addEventListener('change',renderOrders);
-  async function loadOrders(){clearMessage('dashMsg');$('ordersList').innerHTML='<div class="empty">Loading orders…</div>';const {data,error}=await sb.from('wp_orders').select('*').order('created_at',{ascending:false}).limit(500);if(error){orders=[];renderOrders();message('dashMsg','Could not load orders. Check that this user is in wp_staff and that the wp_orders RLS policies are installed. Details: '+error.message,'err');return;}orders=data||[];updateStats();renderOrders();}
+  async function loadOrders(silent=false){
+    if(loadingOrders) return;
+    loadingOrders = true;
+    if(!silent){clearMessage('dashMsg');$('ordersList').innerHTML='<div class="empty">Loading orders…</div>';}
+    try{
+      const {data,error}=await sb.from('wp_orders').select('*').order('created_at',{ascending:false}).limit(500);
+      if(error){
+        message('dashMsg','Could not load orders. Check that this user is in wp_staff and that the wp_orders RLS policies are installed. Details: '+error.message,'err');
+        if(!orders.length) renderOrders();
+        return;
+      }
+      orders=data||[];
+      updateStats();
+      renderOrders();
+      if(silent) clearMessage('dashMsg');
+    } finally {
+      loadingOrders = false;
+    }
+  }
   function updateStats(){$('totalCount').textContent=orders.length;$('newCount').textContent=orders.filter(o=>o.order_status==='new').length;$('deliveryCount').textContent=orders.filter(o=>o.order_status==='out_for_delivery').length;$('doneCount').textContent=orders.filter(o=>o.order_status==='delivered').length;}
   function renderOrders(){const q=$('search').value.trim().toLowerCase(),s=$('statusFilter').value,pay=$('paymentFilter').value;const filtered=orders.filter(o=>(!s||o.order_status===s)&&(!pay||o.payment_status===pay)&&(!q||[o.order_number,o.customer_name,o.customer_phone,o.delivery_address,o.id].some(v=>String(v??'').toLowerCase().includes(q))));if(!filtered.length){$('ordersList').innerHTML='<div class="empty">No matching orders yet.</div>';return;} $('ordersList').innerHTML=filtered.map(o=>{const map=mapsLink(o);const items=Array.isArray(o.items)?o.items.map(it=>`${it.name||it.product_name||'Item'} × ${it.qty??it.quantity??1}${it.unit?' ('+it.unit+')':''}${it.price!=null?' — '+money(it.price,o.currency):''}`).join('\n'):JSON.stringify(o.items||[]);const phone=String(o.customer_phone||'').replace(/[^+\d]/g,'');return `<article class="order" data-id="${esc(o.id)}"><div class="orderhead"><div><div class="ordernum">Order #${esc(o.order_number??'—')}</div><div class="date">${esc(o.created_at?new Date(o.created_at).toLocaleString():'')}</div></div><span class="pill">${esc(labelOf(orderStatuses,o.order_status))}</span></div><div class="details"><div class="detail"><b>CUSTOMER</b>${esc(o.customer_name)}<br>${esc(o.customer_phone)}</div><div class="detail"><b>TOTAL</b><strong>${esc(money(o.total,o.currency))}</strong><br>Payment: ${esc(labelOf(paymentStatuses,o.payment_status))}</div><div class="detail"><b>DELIVERY LOCATION</b>${esc(o.delivery_address||'No written address')}${o.location_shared?'<br><span class="pill">GPS shared</span>':''}${map?`<br><a class="linkbtn muted" style="margin-top:8px" href="${esc(map)}" target="_blank" rel="noopener">📍 Open Google Maps</a>`:'<br><span class="small">No location provided</span>'}</div><div class="detail"><b>ORDER ITEMS</b><div class="items">${esc(items)}</div>${o.notes?`<div class="small" style="margin-top:8px">Notes: ${esc(o.notes)}</div>`:''}</div></div><div class="actions"><div><label>Order status</label><select class="order-status">${orderStatuses.map(([v,l])=>`<option value="${v}" ${o.order_status===v?'selected':''}>${l}</option>`).join('')}</select></div><div><label>Payment status</label><select class="payment-status">${paymentStatuses.map(([v,l])=>`<option value="${v}" ${o.payment_status===v?'selected':''}>${l}</option>`).join('')}</select></div><button type="button" class="primary save-order">Save status</button><button type="button" class="green contact-customer">WhatsApp customer</button></div><div class="status save-msg"></div></article>`}).join('');$('ordersList').querySelectorAll('.order').forEach(card=>{card.querySelector('.save-order').onclick=()=>saveOrder(card);card.querySelector('.contact-customer').onclick=()=>{const o=orders.find(x=>x.id===card.dataset.id);if(!o)return;const phone=String(o.customer_phone||'').replace(/\D/g,'');if(!phone){alert('No valid customer phone number.');return;}window.open('https://wa.me/'+phone+'?text='+encodeURIComponent('Hello '+(o.customer_name||'')+', regarding your White Pack order #'+o.order_number+'.'),'_blank','noopener');};});}
   async function saveOrder(card){const id=card.dataset.id;const status=card.querySelector('.order-status').value;const payment=card.querySelector('.payment-status').value;const btn=card.querySelector('.save-order');btn.disabled=true;const {error}=await sb.from('wp_orders').update({order_status:status,payment_status:payment,updated_at:new Date().toISOString()}).eq('id',id);btn.disabled=false;const msg=card.querySelector('.save-msg');if(error){msg.textContent='Save failed: '+error.message;msg.className='status err';return;}msg.textContent='Saved successfully.';msg.className='status ok';const o=orders.find(x=>x.id===id);if(o){o.order_status=status;o.payment_status=payment;o.updated_at=new Date().toISOString();}updateStats();card.querySelector('.pill').textContent=labelOf(orderStatuses,status);}
