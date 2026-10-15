@@ -366,15 +366,66 @@ window.addEventListener("popstate",()=>{
 });
 
 renderCart();
-fetch("products.json",{cache:"default"}).then(r=>{if(!r.ok)throw 0;return r.json()}).then(d=>{
-  products=Array.isArray(d)?d:(d.products||[]);
-  categoryOrder=Array.isArray(d.categoryOrder)?d.categoryOrder:[];
-  $("business").textContent=d.businessName||"White Pack";
-  document.title=d.businessName||"Catalogue";
-  if(!history.state || history.state.page!=="home"){
-    history.replaceState({page:"home"},"",location.pathname+location.search);
+
+// Load the live catalogue from the same Supabase table used by admin.html.
+// products.json remains a fallback if the public read policy is not enabled yet.
+const CATALOGUE_SUPABASE_URL = 'https://gaphiedcwueunmfssisz.supabase.co';
+const CATALOGUE_SUPABASE_KEY = 'sb_publishable_XnMvCbQGs2tGHXQa5Cjbew_vTTM7ubG';
+const CATALOGUE_META_ID = '00000000-0000-4000-8000-000000000001';
+async function loadCatalogueFromSupabase(){
+  const response = await fetch(
+    CATALOGUE_SUPABASE_URL + '/rest/v1/wp_products?select=id,product_data,sort_order&order=sort_order.asc',
+    {headers:{'apikey':CATALOGUE_SUPABASE_KEY,'Authorization':'Bearer '+CATALOGUE_SUPABASE_KEY},cache:'no-store'}
+  );
+  if(!response.ok) throw new Error('Supabase catalogue request failed ('+response.status+').');
+  const rows = await response.json();
+  if(!Array.isArray(rows)) throw new Error('Unexpected Supabase catalogue response.');
+  const meta = rows.find(r=>r.id===CATALOGUE_META_ID || (r.product_data && r.product_data._wp_meta===true));
+  const liveProducts = rows
+    .filter(r=>r.id!==CATALOGUE_META_ID && !(r.product_data && r.product_data._wp_meta===true))
+    .map(r=>r.product_data)
+    .filter(p=>p && typeof p==='object');
+  if(liveProducts.length===0) throw new Error('Supabase returned no products.');
+  return {
+    products:liveProducts,
+    categoryOrder:meta && meta.product_data && Array.isArray(meta.product_data.categoryOrder) ? meta.product_data.categoryOrder : [],
+    businessName:meta && meta.product_data && meta.product_data.businessName ? meta.product_data.businessName : 'White Pack'
+  };
+}
+async function loadCatalogueFallback(){
+  const response=await fetch('products.json?updated='+Date.now(),{cache:'no-store'});
+  if(!response.ok) throw new Error('Could not load products.json ('+response.status+').');
+  const d=await response.json();
+  const list=Array.isArray(d)?d:d.products;
+  if(!Array.isArray(list)||!list.length) throw new Error('products.json contains no products.');
+  return {products:list,categoryOrder:Array.isArray(d.categoryOrder)?d.categoryOrder:[],businessName:d.businessName||'White Pack'};
+}
+async function loadCatalogue(){
+  let source='Supabase';
+  try{
+    const d=await loadCatalogueFromSupabase();
+    products=d.products; categoryOrder=d.categoryOrder;
+    $('business').textContent=d.businessName||'White Pack';
+    document.title=d.businessName||'White Pack Catalogue';
+  }catch(supabaseError){
+    console.warn('Live Supabase catalogue could not be loaded; using products.json fallback.',supabaseError);
+    source='backup products.json';
+    try{
+      const d=await loadCatalogueFallback();
+      products=d.products; categoryOrder=d.categoryOrder;
+      $('business').textContent=d.businessName||'White Pack';
+      document.title=d.businessName||'White Pack Catalogue';
+      console.warn('Catalogue is using the backup file, so recent admin changes may not appear until public Supabase read access is enabled.');
+    }catch(fileError){
+      $('categoryGrid').innerHTML='<div class="empty">Catalogue unavailable.<br><br>Could not load products from Supabase or products.json. Please check the public read policy for <b>wp_products</b>.</div>';
+      console.error(fileError);
+      return;
+    }
   }
+  if(!history.state || history.state.page!=='home') history.replaceState({page:'home'},'',location.pathname+location.search);
   renderCats();
-}).catch(()=>{$("categoryGrid").innerHTML='<div class="empty">Catalogue unavailable.<br><br>Make sure <b>products.json</b> is in the same GitHub folder.</div>'});
+  console.info('White Pack catalogue loaded from '+source+': '+products.length+' products.');
+}
+loadCatalogue();
 </script>
 </body></html>
