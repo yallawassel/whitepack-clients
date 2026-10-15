@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111827">
+<meta name="theme-color" content="#087cf4">
 <title>White Pack Catalogue</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="48x48" href="icon-48.png">
@@ -111,6 +111,207 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 
 /* Delivery checkout */
 .checkout{display:grid;gap:10px;margin:16px 0}.checkout label{font-size:14px;font-weight:700}.checkout input,.checkout textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit}.locationbtn{border:1px solid #111827;background:#fff;border-radius:10px;padding:12px;font-weight:700}.locationhint{font-size:13px;color:#475569}.ordererror{color:#b91c1c;font-size:14px;white-space:pre-wrap}.sendwa:disabled{opacity:.6}
+
+/* White Pack premium enterprise redesign */
+:root{
+  --wp-ink:#10243a;
+  --wp-ink-2:#1b3550;
+  --wp-blue:#176b87;
+  --wp-blue-dark:#10536b;
+  --wp-accent:#e7a94b;
+  --wp-paper:#f4f7fa;
+  --wp-muted:#637487;
+  --wp-line:#e2e9ef;
+  --wp-card:#ffffff;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
+  background:var(--wp-paper);
+  color:var(--wp-ink);
+  -webkit-font-smoothing:antialiased;
+}
+header{
+  background:linear-gradient(112deg,#0c2035 0%,#153b56 62%,#176b87 100%);
+  padding:13px 18px;
+  box-shadow:0 8px 28px rgba(10,31,51,.16);
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+header .wrap{max-width:1280px;padding:0}
+.brand{gap:14px}
+.site-logo{
+  width:60px;height:60px;border-radius:15px;
+  padding:4px;background:#fff;box-shadow:0 3px 14px #0002;
+}
+h1{font-size:clamp(22px,3vw,28px);font-weight:850;letter-spacing:-.6px}
+.sub{font-size:13px;letter-spacing:.8px;text-transform:uppercase;opacity:.76;margin-top:5px}
+.wrap{max-width:1280px;padding:22px}
+main.wrap{padding-top:22px}
+.toolbar{
+  top:84px;background:rgba(244,247,250,.94);
+  backdrop-filter:blur(12px);padding:12px 0 16px;
+}
+.search{
+  min-height:54px;padding:16px 18px 16px 48px;
+  border:1px solid #dce5ec;border-radius:15px;
+  box-shadow:0 5px 18px rgba(16,36,58,.045);
+  background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23637487' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E") no-repeat 17px center;
+  transition:border-color .2s,box-shadow .2s;
+}
+.search:focus{border-color:var(--wp-blue);box-shadow:0 0 0 4px rgba(23,107,135,.11)}
+.title{font-size:clamp(22px,3vw,29px);letter-spacing:-.7px;color:var(--wp-ink);margin:18px 0 18px}
+.category,.product{
+  border:1px solid var(--wp-line);border-radius:18px;
+  box-shadow:0 5px 18px rgba(16,36,58,.045);
+  transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease;
+}
+.category:hover,.product:hover{
+  transform:translateY(-3px);border-color:#c8d9e4;
+  box-shadow:0 13px 28px rgba(16,36,58,.10);
+}
+.category img,.placeholder{aspect-ratio:1.12;background:#fff}
+.category .info{padding:15px 16px 17px}
+.name{font-size:16px;line-height:1.35;color:var(--wp-ink);letter-spacing:-.15px}
+.count{font-size:13px;color:var(--wp-muted);margin-top:6px}
+.product{display:flex;flex-direction:column}
+.product img{aspect-ratio:1.06;background:#fff;padding:8px}
+.product .body{padding:15px;display:flex;flex-direction:column;flex:1}
+.desc{font-size:13px;line-height:1.55;color:var(--wp-muted)}
+.priceChoices{gap:8px}
+.priceChoice{border:1px solid #dbe4eb;border-radius:11px;padding:10px 7px;color:var(--wp-ink);transition:all .18s}
+.priceChoice.active{background:var(--wp-ink);border-color:var(--wp-ink);color:#fff}
+.priceChoice small{font-size:16px;margin-top:5px}
+.qtyrow{margin-top:14px}
+.qtybtn{background:#edf2f6;color:var(--wp-ink);border:1px solid #e0e8ef;cursor:pointer}
+.addbtn{
+  margin-top:auto;margin-top:12px;padding:13px;border-radius:11px;
+  background:var(--wp-blue);color:#fff;cursor:pointer;
+  box-shadow:0 4px 10px rgba(23,107,135,.12);transition:background .2s,transform .2s;
+}
+.addbtn:hover{background:var(--wp-blue-dark);transform:translateY(-1px)}
+.back{background:var(--wp-ink);border-radius:11px;padding:12px 16px;cursor:pointer}
+.cartbar{
+  right:22px;bottom:22px;padding:15px 21px;
+  background:var(--wp-blue);box-shadow:0 10px 28px rgba(16,36,58,.28);
+  border:1px solid rgba(255,255,255,.2);cursor:pointer;
+}
+.cartbar span{color:var(--wp-ink);font-size:14px}
+.cartbox{border:1px solid var(--wp-line);box-shadow:0 20px 60px #0003}
+.sendwa{background:#15845b;cursor:pointer;transition:background .2s}
+.sendwa:hover{background:#116d4b}
+.locationbtn{border-color:#d2dee7;color:var(--wp-ink)}
+.empty{border:1px solid var(--wp-line);box-shadow:0 4px 15px #10243a08}
+.hero{
+  position:relative;overflow:hidden;isolation:isolate;
+  display:grid;grid-template-columns:minmax(0,1.25fr) minmax(230px,.75fr);
+  align-items:center;gap:28px;
+  padding:clamp(26px,5vw,54px);
+  border-radius:25px;
+  color:#fff;
+  background:radial-gradient(circle at 88% 20%,rgba(73,167,190,.34),transparent 30%),
+             linear-gradient(118deg,#10243a 0%,#173f59 64%,#176b87 100%);
+  box-shadow:0 15px 38px rgba(16,36,58,.14);
+}
+.hero:after{
+  content:"";position:absolute;z-index:-1;width:300px;height:300px;right:-85px;bottom:-170px;
+  border:1px solid rgba(255,255,255,.16);border-radius:50%;
+  box-shadow:0 0 0 28px rgba(255,255,255,.035),0 0 0 58px rgba(255,255,255,.025);
+}
+.hero-copy{max-width:690px}
+.hero-kicker{
+  display:inline-flex;align-items:center;gap:9px;
+  font-size:11px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;
+  color:#f3c779;margin-bottom:16px;
+}
+.hero-kicker:before{content:"";width:25px;height:2px;background:var(--wp-accent)}
+.hero h2{font-size:clamp(32px,5vw,55px);line-height:1.04;letter-spacing:-1.8px;margin:0;max-width:680px}
+.hero h2 span{color:#80d1df}
+.hero p{max-width:570px;color:rgba(255,255,255,.77);font-size:15px;line-height:1.75;margin:18px 0 0}
+.hero-side{justify-self:end;width:100%;max-width:300px}
+.hero-panel{
+  padding:22px;border:1px solid rgba(255,255,255,.19);
+  border-radius:18px;background:rgba(255,255,255,.075);backdrop-filter:blur(8px)
+}
+.hero-panel-label{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:#b8d4e0;font-weight:800}
+.hero-panel-title{font-size:22px;font-weight:850;line-height:1.25;margin-top:9px}
+.hero-panel-note{font-size:13px;line-height:1.6;color:rgba(255,255,255,.72);margin-top:9px}
+.hero-bullets{display:grid;gap:12px;margin-top:20px}
+.hero-bullet{display:flex;gap:10px;align-items:center;font-size:13px;color:rgba(255,255,255,.9)}
+.hero-check{display:grid;place-items:center;width:22px;height:22px;flex:0 0 22px;border-radius:50%;background:rgba(128,209,223,.16);color:#8ee0e9;font-weight:900}
+.section-intro{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-top:32px}
+.section-intro .title{margin:0 0 6px}
+.section-intro p{margin:0;color:var(--wp-muted);font-size:14px;line-height:1.5}
+.section-tag{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--wp-blue);background:#e3f1f5;padding:9px 12px;border-radius:999px;white-space:nowrap}
+.site-footer{margin-top:42px;padding:24px 0 8px;border-top:1px solid var(--wp-line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;color:var(--wp-muted);font-size:12px}
+.site-footer strong{color:var(--wp-ink)}
+@media(max-width:700px){
+  header{padding:11px 15px}
+  .site-logo{width:51px;height:51px;border-radius:13px}
+  .wrap{padding:15px}
+  main.wrap{padding-top:15px}
+  .toolbar{top:73px;padding:9px 0 13px}
+  .hero{grid-template-columns:1fr;gap:22px;padding:27px 23px;border-radius:20px}
+  .hero h2{font-size:clamp(31px,9vw,43px);letter-spacing:-1.1px}
+  .hero p{font-size:14px;margin-top:14px}
+  .hero-side{justify-self:stretch;max-width:none}
+  .hero-panel{padding:17px}
+  .hero-panel-title{font-size:19px}
+  .hero-bullets{grid-template-columns:1fr 1fr;gap:10px}
+  .hero-bullet{font-size:12px;align-items:flex-start}
+  .section-intro{align-items:flex-start;flex-direction:column;margin-top:27px}
+  .section-tag{white-space:normal}
+  .grid{gap:11px}
+  .category,.product{border-radius:15px}
+  .category .info{padding:12px}
+  .product .body{padding:11px}
+  .priceChoice{font-size:12px}
+  .priceChoice small{font-size:14px}
+  .cartbar{right:14px;bottom:14px;padding:13px 17px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
+}
+
+
+/* New White Pack landing design inspired by the selected concept */
+:root{--wp-ink:#092b5c;--wp-blue:#087cf4;--wp-blue-dark:#0649ae;--wp-accent:#08b93d;--wp-paper:#f5fbff;--wp-muted:#536b86;--wp-line:#dceaf5}
+body{background:linear-gradient(180deg,#f4fbff 0%,#fff 55%,#edf8ff 100%);color:var(--wp-ink)}
+header{background:linear-gradient(110deg,#0755bd 0%,#08b93d 48%,#087cf4 100%);border:0;padding:13px 18px;box-shadow:0 8px 26px #0755bd24}
+.site-logo{border-radius:50%;border:3px solid white;width:62px;height:62px}
+.hero-photo{position:relative;min-height:440px;margin:0 -22px 0;padding:42px 32px;display:flex;align-items:flex-start;background:#dcecf8 url('whitepack-handshake-hero.jpg') center 46%/cover no-repeat;border-radius:0 0 30px 30px;overflow:hidden;isolation:isolate;box-shadow:0 15px 35px #0755bd20}
+.hero-photo-shade{position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(255,255,255,.96) 0%,rgba(255,255,255,.88) 42%,rgba(255,255,255,.13) 82%),linear-gradient(0deg,rgba(0,72,160,.1),transparent 45%)}
+.hero-photo-copy{max-width:700px;color:var(--wp-ink);padding:8px 0}
+.hero-photo .hero-kicker{color:#079d39}
+.hero-photo .hero-kicker:before{background:#08b93d}
+.hero-photo h2{font-size:clamp(34px,5vw,58px);line-height:1.04;letter-spacing:-1.7px;color:#092b5c;text-shadow:0 1px 0 #fff8}
+.hero-photo h2 span{background:linear-gradient(90deg,#08ae37,#0780f5);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-photo p{font-size:clamp(14px,2vw,19px);font-weight:650;color:#183d6d;line-height:1.6;margin-top:17px}
+.hero-photo p b{color:#08b93d;padding:0 4px}
+.trust-points{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;max-width:640px}
+.trust-points span{padding:9px 12px;border-radius:999px;background:#fffdf0;border:1px solid #d9e9f5;box-shadow:0 4px 14px #09305d12;font-size:12px;font-weight:800;color:#123969}
+.section-intro{margin:30px 0 20px;align-items:center;text-align:center;flex-direction:column;gap:8px}
+.section-intro .title{font-size:clamp(23px,3vw,30px);letter-spacing:1.3px;color:#092b5c;margin:0}
+.section-intro p{max-width:800px;font-size:14px;line-height:1.7;color:#536b86}
+.section-tag{display:none}
+#categoryGrid{gap:15px}
+.category{border-radius:17px;border:1px solid #e2edf6;overflow:hidden;box-shadow:0 8px 22px #0b4c8c0d}
+.category img,.placeholder{aspect-ratio:1.02;object-fit:contain;background:linear-gradient(145deg,#f3f8fd,#fff);padding:5px}
+.category .info{background:linear-gradient(105deg,#08a93c,#087cf4);color:white;padding:13px 14px 15px;min-height:68px}
+.category .name{color:white;font-size:14px;font-weight:900}
+.category .count{color:#e7f7ff;font-size:12px}
+.order-now-wrap{display:flex;align-items:center;flex-direction:column;gap:12px;padding:26px 10px 16px;margin:0 -4px 12px;background:radial-gradient(ellipse at center,#d8f7ff 0%,#f5fbff 65%,transparent 100%)}
+.order-now{display:flex;align-items:center;justify-content:center;gap:16px;width:min(560px,100%);padding:18px 24px;border:3px solid #55e4a0;border-radius:999px;background:linear-gradient(105deg,#08b934 0%,#00a99a 42%,#087cf4 100%);color:#fff;font-size:clamp(23px,4vw,36px);font-weight:950;letter-spacing:.3px;box-shadow:0 12px 28px #087cf43b;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.order-now:hover{transform:translateY(-2px);box-shadow:0 16px 32px #087cf448}
+.order-cart{font-size:1.05em}.order-arrow{font-size:1.4em;line-height:.7}
+.order-caption{font-size:11px;letter-spacing:2.4px;color:#23547d;font-weight:800;text-align:center}
+#products .back{background:linear-gradient(100deg,#087cf4,#08ae37)}
+.product{border-radius:17px;border-color:#e2edf6}
+.addbtn{background:linear-gradient(100deg,#08a93c,#087cf4)}
+.priceChoice.active{background:linear-gradient(100deg,#087cf4,#08a93c);border-color:transparent}
+.cartbar{background:linear-gradient(100deg,#08b93d,#087cf4)}
+@media(min-width:700px){.hero-photo{min-height:490px;background-position:center 48%}.hero-photo-shade{background:linear-gradient(90deg,rgba(255,255,255,.97) 0%,rgba(255,255,255,.87) 39%,rgba(255,255,255,.05) 78%)}}
+@media(max-width:700px){.hero-photo{margin:0 -15px;padding:27px 20px;min-height:430px;background-position:58% center;border-radius:0 0 24px 24px;align-items:flex-start}.hero-photo-shade{background:linear-gradient(90deg,rgba(255,255,255,.96) 0%,rgba(255,255,255,.82) 52%,rgba(255,255,255,.18) 100%),linear-gradient(0deg,rgba(255,255,255,.03),rgba(255,255,255,.1))}.hero-photo h2{font-size:clamp(32px,9vw,43px);letter-spacing:-1.1px}.hero-photo p{max-width:300px;font-size:14px}.trust-points{gap:7px;max-width:300px}.trust-points span{font-size:11px;padding:8px 10px}.section-intro{margin-top:25px}.category .info{min-height:65px;padding:11px 10px}.category .name{font-size:12px}.order-now{padding:16px 16px;gap:10px}.order-caption{font-size:9px;letter-spacing:1.8px}}
+
 </style>
 </head>
 <body>
@@ -124,9 +325,34 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
   </div>
 </header>
 <main class="wrap">
+
+<section class="hero hero-photo" aria-label="White Pack introduction">
+  <div class="hero-photo-shade"></div>
+  <div class="hero-copy hero-photo-copy">
+    <div class="hero-kicker">Packaging • Hygiene • Food service</div>
+    <h2>Your Trusted<br><span>Packaging Partner</span></h2>
+    <p>Quality Products <b>•</b> Competitive Prices <b>•</b> Fast Supply</p>
+    <div class="trust-points"><span>✓ High Quality Products</span><span>✓ Competitive Prices</span><span>✓ Trusted Business Partner</span></div>
+  </div>
+</section>
+<div class="section-intro">
+  <div>
+    <div class="title">OUR CATALOGUE</div>
+    <p>Everything you need for your business — packaging, hygiene and food-service supplies for restaurants, cafés, hotels, supermarkets and more.</p>
+  </div>
+  <div class="section-tag">Professional supplies, made simple</div>
+</div>
+
 <div class="toolbar"><input id="search" class="search" autocomplete="off" placeholder="🔍 Search products or categories..."></div>
-<section id="categories"><div class="title">Choose a Category</div><div id="categoryGrid" class="grid"></div></section>
+<section id="categories"><div id="categoryGrid" class="grid"></div></section>
+<div class="order-now-wrap" id="orderNowWrap"><button id="orderNow" class="order-now"><span class="order-cart">🛒</span> Order Now <span class="order-arrow">›</span></button><div class="order-caption">BROWSE OUR COMPLETE CATALOGUE</div></div>
 <section id="products"><button id="back" class="back">← All Categories</button><div id="categoryTitle" class="title"></div><div id="productGrid" class="grid"></div></section>
+
+<footer class="site-footer">
+  <div><strong>White Pack</strong> · Packaging, hygiene & food-service supplies</div>
+  <div>Browse the catalogue and place your order through WhatsApp.</div>
+</footer>
+
 </main>
 <button id="cartBar" class="cartbar">🛒 Order <span id="cartCount">0</span></button>
 
@@ -366,6 +592,11 @@ window.addEventListener("popstate",()=>{
 });
 
 renderCart();
+
+const orderNowButton=document.getElementById('orderNow');
+if(orderNowButton){orderNowButton.addEventListener('click',()=>{
+  document.getElementById('categories').scrollIntoView({behavior:'smooth',block:'start'});
+});}
 
 // Load the live catalogue from the same Supabase table used by admin.html.
 // products.json remains a fallback if the public read policy is not enabled yet.
