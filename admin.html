@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>White Pack — Admin (No Token)</title>
+<title>White Pack — Admin</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:#f3f4f6;color:#111827}
@@ -52,12 +52,22 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
 <div class="panel">
   <h1>📦 White Pack — Phone Editor</h1>
   <div class="hint">
-    <b>No GitHub token required.</b> Add or edit products on your phone, then download
-    <b>products.json</b> and upload that single file to your GitHub repository.
-    Product photos are compressed before saving. This version uses browser IndexedDB instead of the smaller localStorage limit, so it is designed for large catalogues such as 1,000 products.
+Sign in with your authorized White Pack admin account. Products and product photos save to Supabase automatically. JSON import/export remains available as a backup and publishing option.
   </div>
 </div>
 
+<div class="panel" id="authPanel">
+  <h2>🔐 Supabase Admin Sign In</h2>
+  <div class="hint">Sign in with the email and password for the authorized White Pack admin account. Only authenticated users listed in wp_product_admins can save catalogue changes.</div>
+  <label for="authEmail">Email</label>
+  <input id="authEmail" type="email" autocomplete="username" placeholder="Admin email">
+  <label for="authPassword">Password</label>
+  <input id="authPassword" type="password" autocomplete="current-password" placeholder="Password">
+  <div class="row"><button class="primary" id="signInBtn" type="button" onclick="signIn()">Sign in</button><button class="secondary" id="signOutBtn" type="button" onclick="signOut()" hidden>Sign out</button></div>
+  <div id="authStatus" class="hint" role="status" style="margin-top:8px"></div>
+</div>
+
+<div id="editorArea" hidden>
 <div class="panel">
   <label>Business Name</label>
   <input id="biz" value="White Pack">
@@ -126,10 +136,23 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
     and replace the old file. Your customer catalogue will then use the updated products.
   </div>
 </div>
+</div>
 
 </div>
 
 <script>
+// Public client settings only. Never put a service_role/secret key in this file.
+const SUPABASE_URL = 'https://gaphiedcwueunmfssisz.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_XnMvCbQGs2tGHXQa5Cjbew_vTTM7ubG';
+const SUPABASE_BUCKET = 'wp-product-images';
+const SUPABASE_TABLE = 'wp_products';
+const META_ID = '00000000-0000-4000-8000-000000000001';
+const SESSION_KEY = 'whitepack_supabase_session_v1';
+let supabaseSession = null;
+let currentUser = null;
+let remoteLoaded = false;
+let remoteRows = [];
+let syncingRemote = false;
 let data = {businessName:'White Pack', products:[]};
 let photo = '';
 let editIndex = -1;
@@ -158,7 +181,7 @@ const searchInfo = document.getElementById('searchInfo');
 const categoryFilter = document.getElementById('categoryFilter');
 const categoryList = document.getElementById('categoryList');
 
-dbReady.then(async()=>{ const saved=await dbGet(); if(saved&&Array.isArray(saved.products)) data=saved; normalizePriceOrder(data.products); biz.value=data.businessName||'White Pack'; await dbPut(data); render(); });
+initializeApp();
 
 file.addEventListener('change', async function(e){
   const f = e.target.files && e.target.files[0];
@@ -251,7 +274,7 @@ async function saveProduct(){
   if(editIndex>=0) data.products[editIndex]=product;
   else data.products.push(product);
 
-  try{ await dbPut(data); }catch(err){ data.products=oldProducts; alert('Could not save the catalogue.'); return; }
+  try{ await saveCatalogue(data); }catch(err){ data.products=oldProducts; alert('Could not save the catalogue.'); return; }
 
   show(editIndex>=0 ? '✅ Product updated.' : '✅ Product added.');
   clearForm();
@@ -278,9 +301,9 @@ function editProduct(i){
 async function del(i){
   if(!confirm('Delete this product?')) return;
   data.products.splice(i,1);
-  try{ await dbPut(data); }catch(err){ alert('Could not save the catalogue.'); return; }
+  try{ await saveCatalogue(data); }catch(err){ alert('Could not save the catalogue to Supabase. Please check your sign-in and connection.'); return; }
   render();
-  show('Product deleted.');
+  show('Product deleted from Supabase.');
 }
 
 function clearForm(){
@@ -300,10 +323,123 @@ function clearForm(){
   addBtn.textContent='➕ Add Product';
 }
 
+const authPanel=document.getElementById('authPanel');
+const editorArea=document.getElementById('editorArea');
+const authStatus=document.getElementById('authStatus');
+const authEmail=document.getElementById('authEmail');
+const authPassword=document.getElementById('authPassword');
+const signInBtn=document.getElementById('signInBtn');
+const signOutBtn=document.getElementById('signOutBtn');
+function authMessage(message,isError=false){authStatus.textContent=message;authStatus.style.color=isError?'#b91c1c':'#166534';}
+function apiHeaders(token){return {'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+(token||SUPABASE_PUBLISHABLE_KEY),'Content-Type':'application/json'};}
+async function apiJson(url,options={}){
+  const response=await fetch(url,options);
+  const raw=await response.text(); let body=null; try{body=raw?JSON.parse(raw):null;}catch(_){body={message:raw};}
+  if(!response.ok) throw new Error((body&&(body.msg||body.message||body.error_description||body.error))||('Supabase request failed ('+response.status+')'));
+  return body;
+}
+function saveSession(session){supabaseSession=session;try{if(session)localStorage.setItem(SESSION_KEY,JSON.stringify(session));else localStorage.removeItem(SESSION_KEY);}catch(_){} }
+async function refreshSessionIfNeeded(){
+  if(!supabaseSession||!supabaseSession.refresh_token)return false;
+  if(!supabaseSession.expires_at||Date.now()<supabaseSession.expires_at*1000-60000)return true;
+  try{const refreshed=await apiJson(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:apiHeaders(),body:JSON.stringify({refresh_token:supabaseSession.refresh_token})});
+    refreshed.expires_at=Math.floor(Date.now()/1000)+(refreshed.expires_in||3600);saveSession(refreshed);return true;
+  }catch(e){saveSession(null);currentUser=null;return false;}
+}
+async function authFetch(url,options={}){
+  if(!await refreshSessionIfNeeded()) throw new Error('Your session expired. Please sign in again.');
+  const headers={...apiHeaders(supabaseSession.access_token),...(options.headers||{})};
+  return apiJson(url,{...options,headers});
+}
+async function signIn(){
+  const email=authEmail.value.trim(),password=authPassword.value;
+  if(!email||!password){authMessage('Enter your admin email and password.',true);return;}
+  signInBtn.disabled=true;authMessage('Signing in…');
+  try{
+    const session=await apiJson(SUPABASE_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:apiHeaders(),body:JSON.stringify({email,password})});
+    session.expires_at=Math.floor(Date.now()/1000)+(session.expires_in||3600);saveSession(session);
+    await activateAdmin();authPassword.value='';
+  }catch(e){saveSession(null);authMessage('Sign-in failed: '+e.message,true);}
+  finally{signInBtn.disabled=false;}
+}
+async function signOut(){saveSession(null);currentUser=null;remoteLoaded=false;editorArea.hidden=true;signOutBtn.hidden=true;signInBtn.hidden=false;authPanel.hidden=false;authMessage('Signed out.');}
+async function initializeApp(){
+  try{const saved=await dbGet();if(saved&&Array.isArray(saved.products))data=saved;normalizePriceOrder(data.products);biz.value=data.businessName||'White Pack';}
+  catch(e){console.warn('Local cache unavailable',e);}
+  let stored=null;try{stored=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch(_){}
+  if(stored){saveSession(stored);try{await activateAdmin();return;}catch(e){saveSession(null);authMessage('Please sign in again.');}}
+  authPanel.hidden=false;editorArea.hidden=true;
+}
+async function activateAdmin(){
+  if(!await refreshSessionIfNeeded())throw new Error('Please sign in again.');
+  const user=await authFetch(SUPABASE_URL+'/auth/v1/user',{method:'GET',headers:{}});
+  currentUser=user;
+  authMessage('Signed in. Loading catalogue from Supabase…');
+  const rows=await authFetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE+'?select=id,product_data,sort_order,updated_at&order=sort_order.asc',{method:'GET',headers:{}});
+  if(!Array.isArray(rows))throw new Error('Unexpected product table response.');
+  remoteRows=rows;
+  const meta=rows.find(r=>r.id===META_ID||r.product_data&&r.product_data._wp_meta===true);
+  const products=rows.filter(r=>r.id!==META_ID&&!(r.product_data&&r.product_data._wp_meta===true)).map(r=>({...r.product_data,_supabaseId:r.id}));
+  data={businessName:(meta&&meta.product_data&&meta.product_data.businessName)||'White Pack',categoryOrder:(meta&&meta.product_data&&Array.isArray(meta.product_data.categoryOrder))?meta.product_data.categoryOrder:[],products};
+  normalizePriceOrder(data.products);biz.value=data.businessName||'White Pack';
+  remoteLoaded=true;await dbPut(data);render();
+  authPanel.hidden=false;editorArea.hidden=false;signInBtn.hidden=true;signOutBtn.hidden=false;
+  authMessage('Connected to Supabase. '+products.length+' products loaded.');
+}
+async function uploadPhotoIfNeeded(product){
+  if(!product.photo||!product.photo.startsWith('data:image/'))return product.photo||'';
+  const match=product.photo.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/s);
+  if(!match)throw new Error('A product photo has an invalid image format.');
+  const mime=match[1],base64=match[2];
+  const ext=mime.includes('png')?'png':mime.includes('webp')?'webp':'jpg';
+  // Use a timestamp plus UUID to avoid object-name collisions during JSON imports.
+  const makePath=()=> 'products/'+Date.now()+'-'+crypto.randomUUID()+'.'+ext;
+  const bytes=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));
+  let path=makePath();
+  let response=await fetch(SUPABASE_URL+'/storage/v1/object/'+SUPABASE_BUCKET+'/'+path,{method:'POST',headers:{'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+supabaseSession.access_token,'Content-Type':mime,'x-upsert':'false'},body:bytes});
+  // If Storage reports an existing object, retry once with a fresh unique name.
+  if(!response.ok){
+    const firstError=await response.clone().text();
+    if(/already exists|duplicate/i.test(firstError)){
+      path=makePath();
+      response=await fetch(SUPABASE_URL+'/storage/v1/object/'+SUPABASE_BUCKET+'/'+path,{method:'POST',headers:{'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+supabaseSession.access_token,'Content-Type':mime,'x-upsert':'false'},body:bytes});
+    }
+  }
+  const raw=await response.text();if(!response.ok){let msg=raw;try{const j=JSON.parse(raw);msg=j.message||j.error||raw;}catch(_){}throw new Error('Photo upload failed: '+msg);}
+  return SUPABASE_URL+'/storage/v1/object/public/'+SUPABASE_BUCKET+'/'+path;
+}
+async function syncCatalogueToSupabase(v){
+  if(!currentUser||!remoteLoaded)return;
+  if(syncingRemote)throw new Error('A Supabase save is already running. Please wait and try again.');
+  syncingRemote=true;
+  try{
+    const rows=[];
+    rows.push({id:META_ID,product_data:{_wp_meta:true,businessName:v.businessName||'White Pack',categoryOrder:Array.isArray(v.categoryOrder)?v.categoryOrder:[]},sort_order:-1,updated_at:new Date().toISOString()});
+    for(let i=0;i<(v.products||[]).length;i++){
+      const p=v.products[i];
+      if(!p._supabaseId)p._supabaseId=crypto.randomUUID();
+      p.photo=await uploadPhotoIfNeeded(p);
+      const productData={...p};delete productData._supabaseId;
+      rows.push({id:p._supabaseId,product_data:productData,sort_order:i,updated_at:new Date().toISOString()});
+    }
+    // Bulk upsert keeps large catalogues to a small number of requests.
+    await authFetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE+'?on_conflict=id',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(rows)});
+    const keep=new Set(rows.map(r=>r.id));
+    const stale=remoteRows.filter(r=>!keep.has(r.id));
+    for(const row of stale){await authFetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE+'?id=eq.'+encodeURIComponent(row.id),{method:'DELETE',headers:{'Prefer':'return=minimal'}});}
+    remoteRows=rows.map(r=>({id:r.id,product_data:r.product_data,sort_order:r.sort_order,updated_at:r.updated_at}));
+    // Store the remote image URLs and generated row IDs in the local cache too.
+    await dbPut(v);
+  }finally{syncingRemote=false;}
+}
+async function saveCatalogue(v){
+  await dbPut(v);
+  if(currentUser&&remoteLoaded){await syncCatalogueToSupabase(v);}
+}
 function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,DB_VERSION);r.onupgradeneeded=()=>r.result.createObjectStore(STORE);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 async function dbGet(){const db=await dbReady;return new Promise((resolve,reject)=>{const r=db.transaction(STORE,'readonly').objectStore(STORE).get('catalogue');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 async function dbPut(v){const db=await dbReady;return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(v,'catalogue');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}
-async function persist(){try{await dbPut(data);return true;}catch(e){return false;}}
+async function persist(){try{await saveCatalogue(data);return true;}catch(e){console.error(e);return false;}}
 
 function render(){
   const q=(searchInput ? searchInput.value : '').trim().toLowerCase();
@@ -394,10 +530,10 @@ async function updateInlinePrice(i, field, value){
     if(field==='price1') p.price=cleaned; // legacy compatibility
   }
   try{
-    await dbPut(data);
+    await saveCatalogue(data);
     const indicator=document.getElementById('inlineSaved_'+i);
-    if(indicator) indicator.textContent='✓ Saved locally';
-    show('✅ Price/unit saved in this browser. Download products.json to publish the changes.');
+    if(indicator) indicator.textContent='✓ Saved to Supabase';
+    show('✅ Price/unit saved to Supabase.');
   }catch(err){
     data.products[i]=previous;
     alert('Could not save this price. Please try again.');
@@ -419,7 +555,7 @@ function renderCategories(){
 
 async function moveCategory(i,d){
   const cats=getCategories(), j=i+d; if(j<0||j>=cats.length)return; [cats[i],cats[j]]=[cats[j],cats[i]]; data.categoryOrder=cats;
-  if(await persist()){render();show('✅ Category order saved.');} else alert('Could not save category order.');
+  if(await persist()){render();show('✅ Category order saved to Supabase.');} else alert('Could not save category order.');
 }
 
 async function moveProduct(i,d){
@@ -443,7 +579,7 @@ async function moveProduct(i,d){
 
   if(await persist()){
     render();
-    show('✅ Product order saved within '+category+'. Download products.json to publish the new order.');
+    show('✅ Product order saved to Supabase within '+category+'.');
   } else {
     [products[i],products[j]]=[products[j],products[i]];
     alert('Could not save product order.');
@@ -480,7 +616,7 @@ async function downloadJSON(){
   data.businessName=biz.value.trim()||'White Pack';
   show('⏳ Optimizing existing photos…');
   await optimizeAllPhotos();
-  try{await dbPut(data);}catch(e){alert('Could not save the catalogue before download. Please retry.');show('❌ Save failed; JSON was not downloaded.');return;}
+  try{await saveCatalogue(data);}catch(e){alert('Could not save the catalogue to Supabase before download. Please retry.');show('❌ Save failed; JSON was not downloaded.');return;}
   const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
@@ -489,30 +625,64 @@ async function downloadJSON(){
   a.click();
   a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  show('✅ products.json downloaded. Upload this file to GitHub to publish your changes.');
+  show('✅ products.json downloaded. Catalogue is also saved in Supabase.');
 }
 
-document.getElementById('importFile').onchange=async e=>{
-  const f=e.target.files[0];
-  if(!f)return;
-  const r=new FileReader();
-  r.onload=async()=>{
+// Reliable JSON import: reset the picker so the same file can be selected again,
+// validate before replacing the current catalogue, and keep a local copy even if
+// the remote Supabase sync reports an error.
+const importInput=document.getElementById('importFile');
+importInput.addEventListener('change', async e=>{
+  const f=e.target.files && e.target.files[0];
+  // Clear immediately; this allows importing the same file twice in a row.
+  e.target.value='';
+  if(!f) return;
+  if(!f.size){alert('This JSON file is empty (0 KB). Please choose the original products.json file.');return;}
+  show('⏳ Reading '+f.name+'…');
+  try{
+    const raw=await f.text();
+    if(!raw.trim()) throw new Error('The selected file is empty.');
+    let parsed;
+    try{parsed=JSON.parse(raw);}catch(_){throw new Error('The file is not valid JSON. Please choose products.json, not the admin HTML file.');}
+    // Accept both the normal {products:[...]} catalogue and a plain product array.
+    const products=Array.isArray(parsed)?parsed:parsed && parsed.products;
+    if(!Array.isArray(products)) throw new Error('No products array was found. Expected a catalogue containing "products".');
+    if(products.length===0) throw new Error('This file contains zero products, so the current catalogue was not changed.');
+    if(products.some(p=>!p || typeof p!=='object' || Array.isArray(p))) throw new Error('One or more product entries are invalid. The current catalogue was not changed.');
+    const imported={
+      businessName:(!Array.isArray(parsed)&&parsed.businessName)||data.businessName||'White Pack',
+      products:products,
+      categoryOrder:(!Array.isArray(parsed)&&Array.isArray(parsed.categoryOrder))?parsed.categoryOrder:[]
+    };
+    normalizePriceOrder(imported.products);
+    // Save locally first, so a network/storage issue cannot erase the import.
+    await dbPut(imported);
+    data=imported;
+    biz.value=data.businessName;
+    render();
+    clearForm();
     try{
-      const d=JSON.parse(r.result);
-      if(!Array.isArray(d.products)) throw new Error('Invalid catalogue');
-      const imported={businessName:d.businessName||'White Pack',products:d.products,categoryOrder:Array.isArray(d.categoryOrder)?d.categoryOrder:[]};
-      normalizePriceOrder(imported.products);
-      const previous=data;
-      data=imported;
-      biz.value=data.businessName;
-      await dbPut(data);
+      if(currentUser && remoteLoaded){
+        show('⏳ Imported '+products.length+' products locally. Syncing to Supabase…');
+        await syncCatalogueToSupabase(data);
+        await dbPut(data);
+        render();
+        show('✅ Imported '+products.length+' products and saved to Supabase.');
+      }else{
+        show('✅ Imported '+products.length+' products on this device. Sign in to sync them to Supabase.');
+      }
+    }catch(syncErr){
+      console.error('Supabase import sync failed:',syncErr);
       render();
-      clearForm();
-      show('✅ Catalogue imported and saved in this browser.');
-    }catch(err){alert('Could not import/save this file. Check that it is a valid products.json and try again.');}
-  };
-  r.readAsText(f);
-};
+      alert('The JSON was imported on this device ('+products.length+' products), but Supabase sync failed: '+(syncErr.message||'Unknown error')+'\n\nYour imported catalogue is kept locally. Please do not re-import repeatedly; check the error and retry sync after fixing it.');
+      show('⚠️ Imported locally; Supabase sync needs attention.');
+    }
+  }catch(err){
+    console.error('JSON import failed:',err);
+    alert('Could not import products.json. '+(err.message||'Please choose a valid JSON file.'));
+    show('❌ Import failed. Current catalogue was not replaced.');
+  }
+});
 
 function show(t){
   status.style.display='block';
