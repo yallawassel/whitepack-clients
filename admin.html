@@ -72,6 +72,15 @@ Sign in with your authorized White Pack admin account. Products and product phot
   <label>Business Name</label>
   <input id="biz" value="White Pack">
 
+  <div class="panel" style="padding:12px;margin:14px 0;background:#f8fafc;border:1px solid #e2e8f0;box-shadow:none">
+    <h2 style="font-size:18px;margin:0 0 6px">📲 Order WhatsApp Number</h2>
+    <div class="hint">Change the phone number that receives customer orders. Use the international country code, numbers only (example: 96181085811). This setting is saved to Supabase and applies to the public catalogue after refresh.</div>
+    <label for="orderWhatsApp">WhatsApp number for incoming orders</label>
+    <input id="orderWhatsApp" type="tel" inputmode="numeric" autocomplete="tel" placeholder="96181085811" maxlength="20">
+    <button type="button" class="primary" id="saveSettingsBtn" onclick="saveSettings()">💾 Save Company Settings</button>
+    <div id="settingsStatus" class="hint" aria-live="polite" style="margin-top:8px"></div>
+  </div>
+
   <label>Product Photo</label>
   <div class="photo" id="photoBox" role="button" tabindex="0" aria-label="Choose product photo">
     <img id="preview">
@@ -153,13 +162,15 @@ let currentUser = null;
 let remoteLoaded = false;
 let remoteRows = [];
 let syncingRemote = false;
-let data = {businessName:'White Pack', products:[]};
+let data = {businessName:'White Pack', whatsappOrderNumber:'96181085811', products:[]};
 let photo = '';
 let editIndex = -1;
 const DB_NAME='WhitePackAdminDB', DB_VERSION=1, STORE='catalogue';
 const dbReady=openDB();
 
 const biz = document.getElementById('biz');
+const orderWhatsApp = document.getElementById('orderWhatsApp');
+const settingsStatus = document.getElementById('settingsStatus');
 const file = document.getElementById('file');
 const photoBox = document.getElementById('photoBox');
 const preview = document.getElementById('preview');
@@ -246,12 +257,41 @@ function compressImage(file,maxSize,quality){
   });
 }
 
+async function saveSettings(){
+  const digits=orderWhatsApp.value.trim().replace(/\D/g,'');
+  if(digits.length<8||digits.length>15){
+    settingsStatus.textContent='Enter a valid international WhatsApp number (8–15 digits, including country code).';
+    settingsStatus.style.color='#b91c1c';
+    return;
+  }
+  const previous={businessName:data.businessName,whatsappOrderNumber:data.whatsappOrderNumber};
+  data.businessName=biz.value.trim()||'White Pack';
+  data.whatsappOrderNumber=digits;
+  const btn=document.getElementById('saveSettingsBtn');
+  btn.disabled=true;
+  settingsStatus.textContent='Saving settings to Supabase…';
+  settingsStatus.style.color='#475569';
+  try{
+    await saveCatalogue(data);
+    settingsStatus.textContent='✅ Settings saved. New orders will open WhatsApp number +' + digits + '.';
+    settingsStatus.style.color='#166534';
+    show('Company settings saved to Supabase.');
+  }catch(e){
+    data.businessName=previous.businessName;
+    data.whatsappOrderNumber=previous.whatsappOrderNumber;
+    orderWhatsApp.value=data.whatsappOrderNumber||'96181085811';
+    settingsStatus.textContent='Could not save settings. Check your admin sign-in and connection, then try again.';
+    settingsStatus.style.color='#b91c1c';
+  }finally{btn.disabled=false;}
+}
+
 async function saveProduct(){
   const n=nameEl.value.trim();
   if(!n){alert('Enter a product name.');return;}
   if(!photo && editIndex<0){alert('Choose a product photo.');return;}
 
   data.businessName=biz.value.trim() || 'White Pack';
+  data.whatsappOrderNumber=(orderWhatsApp.value.trim().replace(/\D/g,''))||data.whatsappOrderNumber||'96181085811';
   const firstLabel=price1Label.value.trim() || 'Box';
   const firstPrice=price1.value.replace(/[^0-9.]/g,'');
   const secondLabel=price2Label.value.trim() || 'Packet';
@@ -364,7 +404,7 @@ async function signIn(){
 }
 async function signOut(){saveSession(null);currentUser=null;remoteLoaded=false;editorArea.hidden=true;signOutBtn.hidden=true;signInBtn.hidden=false;authPanel.hidden=false;authMessage('Signed out.');}
 async function initializeApp(){
-  try{const saved=await dbGet();if(saved&&Array.isArray(saved.products))data=saved;normalizePriceOrder(data.products);biz.value=data.businessName||'White Pack';}
+  try{const saved=await dbGet();if(saved&&Array.isArray(saved.products))data=saved;data.whatsappOrderNumber=data.whatsappOrderNumber||'96181085811';normalizePriceOrder(data.products);biz.value=data.businessName||'White Pack';orderWhatsApp.value=data.whatsappOrderNumber;}
   catch(e){console.warn('Local cache unavailable',e);}
   let stored=null;try{stored=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch(_){}
   if(stored){saveSession(stored);try{await activateAdmin();return;}catch(e){saveSession(null);authMessage('Please sign in again.');}}
@@ -380,8 +420,8 @@ async function activateAdmin(){
   remoteRows=rows;
   const meta=rows.find(r=>r.id===META_ID||r.product_data&&r.product_data._wp_meta===true);
   const products=rows.filter(r=>r.id!==META_ID&&!(r.product_data&&r.product_data._wp_meta===true)).map(r=>({...r.product_data,_supabaseId:r.id}));
-  data={businessName:(meta&&meta.product_data&&meta.product_data.businessName)||'White Pack',categoryOrder:(meta&&meta.product_data&&Array.isArray(meta.product_data.categoryOrder))?meta.product_data.categoryOrder:[],products};
-  normalizePriceOrder(data.products);biz.value=data.businessName||'White Pack';
+  data={businessName:(meta&&meta.product_data&&meta.product_data.businessName)||'White Pack',whatsappOrderNumber:(meta&&meta.product_data&&meta.product_data.whatsappOrderNumber)||'96181085811',categoryOrder:(meta&&meta.product_data&&Array.isArray(meta.product_data.categoryOrder))?meta.product_data.categoryOrder:[],products};
+  normalizePriceOrder(data.products);biz.value=data.businessName||'White Pack';orderWhatsApp.value=data.whatsappOrderNumber||'96181085811';
   remoteLoaded=true;await dbPut(data);render();
   authPanel.hidden=false;editorArea.hidden=false;signInBtn.hidden=true;signOutBtn.hidden=false;
   authMessage('Connected to Supabase. '+products.length+' products loaded.');
@@ -414,7 +454,7 @@ async function syncCatalogueToSupabase(v){
   syncingRemote=true;
   try{
     const rows=[];
-    rows.push({id:META_ID,product_data:{_wp_meta:true,businessName:v.businessName||'White Pack',categoryOrder:Array.isArray(v.categoryOrder)?v.categoryOrder:[]},sort_order:-1,updated_at:new Date().toISOString()});
+    rows.push({id:META_ID,product_data:{_wp_meta:true,businessName:v.businessName||'White Pack',whatsappOrderNumber:String(v.whatsappOrderNumber||'96181085811'),categoryOrder:Array.isArray(v.categoryOrder)?v.categoryOrder:[]},sort_order:-1,updated_at:new Date().toISOString()});
     for(let i=0;i<(v.products||[]).length;i++){
       const p=v.products[i];
       if(!p._supabaseId)p._supabaseId=crypto.randomUUID();
@@ -676,6 +716,7 @@ importInput.addEventListener('change', async e=>{
     if(products.some(p=>!p || typeof p!=='object' || Array.isArray(p))) throw new Error('One or more product entries are invalid. The current catalogue was not changed.');
     const imported={
       businessName:(!Array.isArray(parsed)&&parsed.businessName)||data.businessName||'White Pack',
+      whatsappOrderNumber:(!Array.isArray(parsed)&&parsed.whatsappOrderNumber)||data.whatsappOrderNumber||'96181085811',
       products:products,
       categoryOrder:(!Array.isArray(parsed)&&Array.isArray(parsed.categoryOrder))?parsed.categoryOrder:[]
     };
@@ -684,6 +725,7 @@ importInput.addEventListener('change', async e=>{
     await dbPut(imported);
     data=imported;
     biz.value=data.businessName;
+    orderWhatsApp.value=data.whatsappOrderNumber||'96181085811';
     render();
     clearForm();
     try{
