@@ -43,7 +43,7 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
 .searchBox{display:flex;gap:8px;margin:12px 0 8px;align-items:center}
 .searchBox input{flex:1;min-width:0}
 .searchClear{margin-top:0;white-space:nowrap}
-.searchInfo{margin:4px 0 8px}.categoryItem{display:flex;gap:7px;align-items:center;background:#f8fafc;padding:9px;border-radius:12px;margin:7px 0}.categoryItem .catName{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis}.orderBtn{padding:8px 11px!important;margin:0!important;background:#e5e7eb;color:#111827}
+.searchInfo{margin:4px 0 8px}.categoryItem{display:flex;gap:7px;align-items:center;background:#f8fafc;padding:9px;border-radius:12px;margin:7px 0}.categoryItem .catName{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis}.orderBtn{padding:8px 11px!important;margin:0!important;background:#e5e7eb;color:#111827}.categoryRenameBtn{padding:8px 10px!important;margin:0!important;background:#dbeafe;color:#1e40af}.categoryItem .catName{overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -104,7 +104,7 @@ Sign in with your authorized White Pack admin account. Products and product phot
 
 <div class="panel">
   <h2>📂 Category Order</h2>
-  <div class="hint">Use the arrows to change category order. The order is saved in products.json.</div>
+  <div class="hint">Use the arrows to change category order, or tap Rename to change a category name for every product in that category at once. Changes save to Supabase automatically.</div>
   <div id="categoryList"></div>
 </div>
 
@@ -550,12 +550,37 @@ function getCategories(){
 
 function renderCategories(){
   const cats=getCategories(); data.categoryOrder=cats;
-  categoryList.innerHTML=cats.length?cats.map((c,i)=>`<div class="categoryItem"><button class="orderBtn" onclick="moveCategory(${i},-1)" ${i===0?'disabled':''}>⬆️</button><button class="orderBtn" onclick="moveCategory(${i},1)" ${i===cats.length-1?'disabled':''}>⬇️</button><span class="catName">${esc(c)}</span></div>`).join(''):'<div class="hint">No categories yet.</div>';
+  categoryList.innerHTML=cats.length?cats.map((c,i)=>`<div class="categoryItem"><button class="orderBtn" onclick="moveCategory(${i},-1)" ${i===0?'disabled':''}>⬆️</button><button class="orderBtn" onclick="moveCategory(${i},1)" ${i===cats.length-1?'disabled':''}>⬇️</button><span class="catName">${esc(c)}</span><button type="button" class="categoryRenameBtn" onclick="renameCategory(${JSON.stringify(c).replace(/"/g,'&quot;')})">✏️ Rename</button></div>`).join(''):'<div class="hint">No categories yet.</div>';
 }
 
 async function moveCategory(i,d){
   const cats=getCategories(), j=i+d; if(j<0||j>=cats.length)return; [cats[i],cats[j]]=[cats[j],cats[i]]; data.categoryOrder=cats;
   if(await persist()){render();show('✅ Category order saved to Supabase.');} else alert('Could not save category order.');
+}
+
+async function renameCategory(oldName){
+  const newName=prompt('Rename category "'+oldName+'" to:',oldName);
+  if(newName===null)return;
+  const cleaned=newName.trim();
+  if(!cleaned){alert('Category name cannot be empty.');return;}
+  if(cleaned===oldName)return;
+  if(getCategories().includes(cleaned)){alert('A category with that name already exists. Choose a different name.');return;}
+  const oldProducts=data.products.map(p=>({...p}));
+  const oldOrder=Array.isArray(data.categoryOrder)?data.categoryOrder.slice():[];
+  data.products.forEach(p=>{
+    if(((p.category||'Products').trim()||'Products')===oldName)p.category=cleaned;
+  });
+  data.categoryOrder=getCategories().map(c=>c===oldName?cleaned:c);
+  try{
+    await saveCatalogue(data);
+    render();
+    show('✅ Category renamed to "'+cleaned+'". All products in this category were updated and saved to Supabase.');
+  }catch(err){
+    data.products=oldProducts;
+    data.categoryOrder=oldOrder;
+    render();
+    alert('Could not save the category rename to Supabase. Please check your connection and try again.');
+  }
 }
 
 async function moveProduct(i,d){
