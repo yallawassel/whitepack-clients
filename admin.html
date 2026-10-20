@@ -36,7 +36,7 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
 .priceFields{display:grid;grid-template-columns:1fr 1fr;gap:10px}.priceFields>div{min-width:0}.priceFields label{margin-top:8px}
 .item .productCategory{display:block;font-size:12px;color:#667085;margin-top:2px}
 .item .productActions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-.item .productActions button{margin-top:0}
+.item .productActions button{margin-top:0}.positionControl{display:flex;align-items:center;gap:5px;margin-top:6px}.positionControl input{width:62px;padding:8px 5px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;text-align:center}.positionControl button{margin:0!important;padding:8px 10px!important;background:#d1fae5;color:#065f46}
 .small{font-size:12px;color:#667085}
 .note{background:#fff7ed;color:#9a3412;padding:12px;border-radius:10px;font-size:14px;line-height:1.45}
 .badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#e5e7eb;font-size:12px;margin-top:5px}
@@ -131,7 +131,7 @@ Sign in with your authorized White Pack admin account. Products and product phot
            autocomplete="off">
     <button type="button" class="secondary searchClear" id="clearSearch">Clear</button>
   </div>
-  <div class="hint">Use ⬆️ and ⬇️ to rearrange products within the same category. The order is saved locally and included when you download products.json.</div>
+  <div class="hint">Fast reorder: enter the product’s new position within its category (for example, 6 → 1) and tap Move. You can still use the arrows. Changes save to Supabase automatically.</div>
 
   <div id="searchInfo" class="hint searchInfo"></div>
   <div id="list"></div>
@@ -550,6 +550,11 @@ function render(){
       <div class="productActions">
         <button class="orderBtn" onclick="moveProduct(${i},-1)" title="Move up">⬆️</button>
         <button class="orderBtn" onclick="moveProduct(${i},1)" title="Move down">⬇️</button>
+        <div class="positionControl">
+          <label style="margin:0;font-size:12px">Position</label>
+          <input id="position_${i}" type="number" min="1" max="${(data.products||[]).filter(x=>((x.category||'Products').trim()||'Products')===((p.category||'Products').trim()||'Products')).length}" value="${(data.products||[]).slice(0,i+1).filter(x=>((x.category||'Products').trim()||'Products')===((p.category||'Products').trim()||'Products')).length}" aria-label="New position for ${esc(p.name)}">
+          <button type="button" onclick="moveProductToPosition(${i})">Move</button>
+        </div>
         <button class="edit" onclick="editProduct(${i})">Edit</button>
         <button class="danger" onclick="del(${i})">Delete</button>
       </div>
@@ -666,6 +671,40 @@ async function moveProduct(i,d){
     show('✅ Product order saved to Supabase within '+category+'.');
   } else {
     [products[i],products[j]]=[products[j],products[i]];
+    alert('Could not save product order.');
+    render();
+  }
+}
+
+async function moveProductToPosition(i){
+  const products=data.products||[];
+  const product=products[i];
+  if(!product) return;
+  const category=(product.category||'Products').trim()||'Products';
+  const categoryIndexes=[];
+  products.forEach((p,index)=>{
+    if(((p.category||'Products').trim()||'Products')===category) categoryIndexes.push(index);
+  });
+  const input=document.getElementById('position_'+i);
+  const requested=Number.parseInt(input?.value,10);
+  if(!Number.isInteger(requested)||requested<1||requested>categoryIndexes.length){
+    alert('Enter a position from 1 to '+categoryIndexes.length+'.');
+    return;
+  }
+  const oldPosition=categoryIndexes.indexOf(i);
+  const newPosition=requested-1;
+  if(oldPosition===newPosition) { show('Product is already at position '+requested+'.'); return; }
+  const originalCategoryProducts=categoryIndexes.map(index=>products[index]);
+  const categoryProducts=originalCategoryProducts.slice();
+  const moved=categoryProducts.splice(oldPosition,1)[0];
+  categoryProducts.splice(newPosition,0,moved);
+  categoryIndexes.forEach((index,j)=>products[index]=categoryProducts[j]);
+  if(await persist()){
+    render();
+    show('✅ Moved to position '+requested+' in '+category+'.');
+  }else{
+    // Restore the original order if the save failed.
+    categoryIndexes.forEach((index,j)=>products[index]=originalCategoryProducts[j]);
     alert('Could not save product order.');
     render();
   }
