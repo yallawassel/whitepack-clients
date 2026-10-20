@@ -49,6 +49,18 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
 @media(max-width:420px){.site-logo{width:50px;height:50px}h1{font-size:21px}}
 
+/* Home-screen installation invitation */
+.install-card{max-width:1100px;margin:10px auto 0;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #dbe2ea;border-radius:15px;box-shadow:0 2px 10px #0000000a}
+.install-card[hidden]{display:none}
+.install-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.install-copy strong{font-size:15px}
+.install-copy span{font-size:13px;color:#596273;line-height:1.35}
+.install-actions{display:flex;align-items:center;gap:7px;flex-shrink:0}
+#installAction{border:0;border-radius:10px;background:#111827;color:#fff;padding:10px 12px;font-weight:800;font-size:14px}
+.install-dismiss{border:0;background:#f3f4f6;color:#374151;border-radius:9px;width:34px;height:34px;font-size:22px}
+.install-help{flex-basis:100%;margin:2px 0 0;color:#374151;font-size:13px;line-height:1.5}
+.install-card{flex-wrap:wrap}
+@media(max-width:420px){.install-card{align-items:flex-start}.install-actions{margin-left:auto}#installAction{padding:9px 10px}}
 /* Shopping cart */
 .cartbar{position:fixed;right:16px;bottom:16px;z-index:50;background:#111827;color:#fff;border:0;border-radius:999px;padding:13px 18px;font-size:16px;font-weight:900;box-shadow:0 5px 20px #0003}
 .cartbar span{background:#fff;color:#111827;border-radius:999px;padding:2px 7px;margin-left:5px}
@@ -123,6 +135,17 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
     </div>
   </div>
 </header>
+<section id="installCard" class="install-card" aria-label="Install White Pack Catalogue" hidden>
+  <div class="install-copy">
+    <strong>📲 Add White Pack to your home screen</strong>
+    <span>Open the catalogue quickly like an app on your phone.</span>
+  </div>
+  <div class="install-actions">
+    <button id="installAction" type="button">Install / Add</button>
+    <button id="installDismiss" class="install-dismiss" type="button" aria-label="Dismiss install message">×</button>
+  </div>
+  <p id="installHelp" class="install-help" hidden></p>
+</section>
 <main class="wrap">
 <div class="toolbar"><input id="search" class="search" autocomplete="off" placeholder="🔍 Search products or categories..."></div>
 <section id="categories"><div class="title">Choose a Category</div><div id="categoryGrid" class="grid"></div></section>
@@ -365,6 +388,68 @@ window.addEventListener("popstate",()=>{
     showHome();
   }
 });
+
+// Cross-platform home-screen installation invitation.
+// Android/Chromium: use the native prompt when available.
+// iPhone/iPad: show the manual Safari "Share > Add to Home Screen" steps.
+(function setupHomeScreenInstall(){
+  const card=document.getElementById('installCard');
+  const action=document.getElementById('installAction');
+  const dismiss=document.getElementById('installDismiss');
+  const help=document.getElementById('installHelp');
+  if(!card||!action||!dismiss||!help) return;
+
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  const isInStandalone=window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone===true;
+  let installPromptEvent=null;
+
+  if(isInStandalone || sessionStorage.getItem('wpInstallDismissed')==='1'){
+    return;
+  }
+  card.hidden=false;
+
+  window.addEventListener('beforeinstallprompt', event=>{
+    event.preventDefault();
+    installPromptEvent=event;
+    action.textContent='Install';
+  });
+
+  window.addEventListener('appinstalled',()=>{
+    card.hidden=true;
+    installPromptEvent=null;
+  });
+
+  action.addEventListener('click',async()=>{
+    if(installPromptEvent){
+      installPromptEvent.prompt();
+      try{
+        const choice=await installPromptEvent.userChoice;
+        if(choice && choice.outcome==='accepted') card.hidden=true;
+      }catch(e){}
+      installPromptEvent=null;
+      return;
+    }
+
+    help.hidden=false;
+    if(isIOS){
+      help.textContent='On your iPhone/iPad: open this catalogue in Safari (not inside WhatsApp or another app), tap Share ⬆, choose “Add to Home Screen”, then tap Add. The White Pack icon will appear on your home screen.';
+      action.textContent='How to add';
+    }else if(/android/i.test(navigator.userAgent)){
+      help.textContent='In Chrome, tap the ⋮ menu and choose “Install app” or “Add to Home screen”, then confirm. If this option is missing, open the catalogue directly in Chrome and make sure you are online.';
+      action.textContent='How to add';
+    }else{
+      help.textContent='Open the catalogue in a supported browser. On a phone, use the browser menu to choose “Install app” or “Add to Home screen”. On iPhone/iPad, use Safari > Share > Add to Home Screen.';
+      action.textContent='How to add';
+    }
+  });
+
+  dismiss.addEventListener('click',()=>{
+    card.hidden=true;
+    sessionStorage.setItem('wpInstallDismissed','1');
+  });
+})();
 
 renderCart();
 
