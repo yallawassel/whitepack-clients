@@ -594,8 +594,27 @@ function renderCategories(){
 }
 
 async function moveCategory(i,d){
-  const cats=getCategories(), j=i+d; if(j<0||j>=cats.length)return; [cats[i],cats[j]]=[cats[j],cats[i]]; data.categoryOrder=cats;
-  if(await persist()){render();show('✅ Category order saved to Supabase.');} else alert('Could not save category order.');
+  // Build the currently displayed category order, then move exactly one category.
+  const cats=getCategories();
+  const j=i+d;
+  if(i<0 || i>=cats.length || j<0 || j>=cats.length) return;
+
+  const previousOrder=cats.slice();
+  [cats[i],cats[j]]=[cats[j],cats[i]];
+  data.categoryOrder=cats.slice();
+
+  // Save the order (including the Supabase metadata row) before re-rendering.
+  const saved=await persist();
+  if(saved){
+    render();
+    renderCategories();
+    show('✅ Category order saved. The new order is stored in your catalogue.');
+  }else{
+    data.categoryOrder=previousOrder;
+    render();
+    renderCategories();
+    alert('Could not save category order. Your previous order has been restored. Check your connection and try again.');
+  }
 }
 
 async function renameCategory(oldName){
