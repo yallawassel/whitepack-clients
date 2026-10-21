@@ -192,6 +192,18 @@ function cats(){
 }
 function photo(c){return products.find(p=>String(p.category||"").trim()===c&&p.photo)?.photo||""}
 
+// If a category's first product has no price, use it as the category-cover image
+// on the home screen only. Keep it out of the product list inside that category.
+function isCategoryCover(p){
+  const category=String(p.category||"").trim();
+  if(!category || priceOptions(p).length) return false;
+  const first=products.find(item=>String(item.category||"").trim()===category);
+  return first===p;
+}
+function visibleCategoryProducts(category){
+  return products.filter(p=>String(p.category||"").trim()===category&&!isCategoryCover(p));
+}
+
 function renderCats(){
  $("categories").style.display="block";$("products").style.display="none";
  const q=$("search").value.toLowerCase().trim();
@@ -236,10 +248,10 @@ function priceOptions(p){
  return out;
 }
 function selectedOption(p){const opts=priceOptions(p);if(!opts.length)return {label:'',price:'',key:'1'};return opts.find(o=>o.key===selectedUnits[productKey(p)])||opts[0];}
-function selectPrice(i,key){const list=products.filter(p=>String(p.category||'').trim()===active&&`${p.name||''} ${p.description||''}`.toLowerCase().includes($('search').value.toLowerCase().trim()));const p=list[i];if(!p)return;selectedUnits[productKey(p)]=key;renderProducts();}
+function selectPrice(i,key){const list=visibleCategoryProducts(active).filter(p=>`${p.name||''} ${p.description||''}`.toLowerCase().includes($('search').value.toLowerCase().trim()));const p=list[i];if(!p)return;selectedUnits[productKey(p)]=key;renderProducts();}
 function renderProducts(){
  const q=$("search").value.toLowerCase().trim();
- const a=products.filter(p=>String(p.category||"").trim()===active&&`${p.name||""} ${p.description||""}`.toLowerCase().includes(q));
+ const a=visibleCategoryProducts(active).filter(p=>`${p.name||""} ${p.description||""}`.toLowerCase().includes(q));
  $("productGrid").innerHTML=a.length?a.map((p,i)=>`
  <article class="product">
   <img src="${esc(p.photo||"")}" loading="lazy" alt="${esc(p.name)}" onclick="zoomProduct(this.src,this.alt)">
