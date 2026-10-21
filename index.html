@@ -211,7 +211,7 @@ function renderCats(){
   const items=products.filter(p=>String(p.category||"").trim()===c);
   if(q&&!(`${c} ${items.map(p=>p.name+" "+(p.description||"")).join(" ")}`.toLowerCase().includes(q)))return"";
   const im=photo(c);
-  return `<button class="category" data-c="${esc(c)}">${im?`<img src="${esc(im)}" loading="lazy" alt="">`:`<div class="placeholder">📦</div>`}<div class="info"><div class="name">${esc(c)}</div><div class="count">${items.length} product${items.length===1?"":"s"}</div></div></button>`;
+  return `<button class="category" data-c="${esc(c)}">${im?`<img src="${esc(im)}" loading="lazy" decoding="async" alt="">`:`<div class="placeholder">📦</div>`}<div class="info"><div class="name">${esc(c)}</div><div class="count">${items.length} product${items.length===1?"":"s"}</div></div></button>`;
  }).join("");
  $("categoryGrid").innerHTML=html||'<div class="empty">No categories found.</div>';
  document.querySelectorAll(".category").forEach(b=>b.onclick=()=>openCat(b.dataset.c));
@@ -254,7 +254,7 @@ function renderProducts(){
  const a=visibleCategoryProducts(active).filter(p=>`${p.name||""} ${p.description||""}`.toLowerCase().includes(q));
  $("productGrid").innerHTML=a.length?a.map((p,i)=>`
  <article class="product">
-  <img src="${esc(p.photo||"")}" loading="lazy" alt="${esc(p.name)}" onclick="zoomProduct(this.src,this.alt)">
+  <img src="${esc(p.photo||"")}" loading="lazy" decoding="async" alt="${esc(p.name)}" onclick="zoomProduct(this.src,this.alt)">
   <div class="body">
    <div class="name">${esc(p.name)}</div>
    ${p.description?`<div class="desc">${esc(p.description)}</div>`:""}
@@ -317,7 +317,7 @@ function renderCart(){
  }
  $("cartItems").innerHTML=cart.map((x,i)=>`
   <div class="cartitem">
-   <img src="${esc(x.p.photo||"")}" alt="">
+   <img src="${esc(x.p.photo||"")}" loading="lazy" decoding="async" alt="">
    <div>
     <div class="cartname">${esc(x.p.name)}</div>
     <div class="cartprice">${x.unit?`${esc(x.unit)} · `:''}Quantity: ${x.qty}${x.unitPrice!==undefined&&x.unitPrice!==''?` · $${esc(String(x.unitPrice).replace(/^\$/,''))} each`:''}</div>
