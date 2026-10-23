@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>White Pack — Quotation Builder</title>
+<style>
+:root{--ink:#172033;--muted:#667085;--line:#e4e7ec;--soft:#f6f8fb;--brand:#173b63;--accent:#d8a84e}
+*{box-sizing:border-box}body{margin:0;background:#f2f5f9;color:var(--ink);font:15px/1.45 Arial,Helvetica,sans-serif}
+header{background:linear-gradient(120deg,#122c49,#24577d);color:#fff;padding:22px 16px}
+.head{max-width:1180px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:25px;margin:0 0 4px}.sub{opacity:.82;font-size:13px}.wrap{max-width:1180px;margin:18px auto;padding:0 14px 36px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px;margin-bottom:15px;box-shadow:0 4px 18px #10243b08}
+h2{font-size:18px;margin:0 0 12px}.hint{font-size:13px;color:var(--muted);line-height:1.5}
+label{display:block;font-size:12px;font-weight:700;color:#475467;margin:10px 0 5px}
+input,textarea,select{width:100%;padding:11px 12px;border:1px solid #d0d5dd;border-radius:9px;background:#fff;font:inherit;color:var(--ink);min-width:0}
+textarea{min-height:72px;resize:vertical}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.grid .wide{grid-column:span 2}
+button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;font-size:14px;cursor:pointer;margin-top:8px}
+.primary{background:var(--brand);color:#fff}.gold{background:var(--accent);color:#1b2430}.secondary{background:#e9eef4;color:#26374b}.danger{background:#fee4e2;color:#912018}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.row>*{flex:0 0 auto}
+.searchrow{display:grid;grid-template-columns:1fr 220px;gap:10px}
+.products{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.product{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff;display:flex;flex-direction:column;min-width:0}
+.product img{width:100%;height:150px;object-fit:contain;background:#fff;padding:8px;border-bottom:1px solid #f0f2f5}
+.pbody{padding:11px;display:flex;flex-direction:column;gap:6px;flex:1}.pname{font-weight:800;line-height:1.25}.pcat{font-size:11px;color:var(--muted)}.pdesc{font-size:12px;color:#667085;min-height:16px}
+.prices{display:flex;gap:6px;flex-wrap:wrap}.pricechip{background:#f1f5f9;border-radius:7px;padding:5px 7px;font-size:12px}.pricechip b{color:#173b63}
+.product .add{margin-top:auto;width:100%}
+.cartline{display:grid;grid-template-columns:64px minmax(0,1fr) 90px 90px 90px 34px;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.cartline img{width:64px;height:58px;object-fit:contain;border:1px solid var(--line);border-radius:7px;background:white}
+.cartline .name{font-weight:700}.cartline .mini{font-size:11px;color:var(--muted)}
+.cartline input{padding:8px;font-size:14px}.cartline .remove{background:#fee4e2;color:#912018;padding:8px;margin:0}
+.totals{margin-left:auto;max-width:340px;padding-top:14px}.totalrow{display:flex;justify-content:space-between;padding:5px 0}.grand{border-top:2px solid var(--ink);font-size:20px;font-weight:800;margin-top:5px;padding-top:10px}
+.status{margin-top:10px;color:#067647;font-size:13px}.hidden{display:none!important}
+.archive-card{border:1px solid var(--line);border-radius:10px;padding:12px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.archive-title{font-weight:800}.archive-meta{font-size:12px;color:var(--muted);margin-top:3px}.archive-actions{display:flex;gap:6px;flex-wrap:wrap}.archive-actions button{margin:0;padding:8px 10px}
+footer{text-align:center;color:var(--muted);font-size:11px;margin:18px 0}
+@media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.products{grid-template-columns:repeat(2,minmax(0,1fr))}.cartline{grid-template-columns:52px minmax(0,1fr) 72px 72px 32px}.cartline .lineTotal{display:none}.cartline img{width:52px;height:52px}.cartline input{padding:7px 5px}.searchrow{grid-template-columns:1fr}.wrap{padding:0 9px 25px}.panel{padding:13px}}
+@media(max-width:420px){.products{grid-template-columns:1fr 1fr}.product img{height:120px}.grid .wide{grid-column:span 2}}
+/* Printed quotation */
+#printQuote{display:none}
+@media print{
+ @page{size:A4;margin:12mm}
+ body{background:#fff!important;color:#172033;font-size:10pt}
+ header,.wrap,.no-print,footer{display:none!important}
+ #printQuote{display:block!important}
+ .print-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #173b63;padding-bottom:12px;margin-bottom:15px}
+ .print-brand{font-size:25pt;font-weight:900;color:#173b63}.print-label{font-size:17pt;font-weight:800;text-align:right}
+ .print-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0 18px}
+ .print-box{border:1px solid #d8dee8;padding:10px;border-radius:5px}
+ .print-table{width:100%;border-collapse:collapse;table-layout:fixed}
+ .print-table th{background:#173b63!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;text-align:left;padding:7px;font-size:9pt}
+ .print-table td{border-bottom:1px solid #d8dee8;padding:7px;vertical-align:middle;overflow-wrap:anywhere}
+ .print-table tr{break-inside:avoid}
+ .print-table .photo-cell{width:76px}
+ .print-table img{width:64px;height:55px;object-fit:contain;display:block}
+ .print-table .qty,.print-table .money{text-align:right;white-space:nowrap}
+ .print-bottom{display:flex;justify-content:space-between;gap:18px;margin-top:16px;align-items:flex-start}
+ .print-notes{flex:1;white-space:pre-wrap;font-size:9pt;color:#475467}
+ .print-totals{width:235px}.print-total{display:flex;justify-content:space-between;padding:4px 0}
+ .print-grand{border-top:2px solid #173b63;margin-top:5px;padding-top:8px;font-size:14pt;font-weight:900}
+ .print-foot{margin-top:24px;padding-top:8px;border-top:1px solid #d8dee8;font-size:8pt;color:#667085;display:flex;justify-content:space-between}
+}
+</style>
+</head>
+<body>
+<header><div class="head"><div><h1>WHITE PACK <span style="color:#e7bd69">/ QUOTATIONS</span></h1><div class="sub">Professional quotation builder · Product photos · Client-specific prices · PDF-ready</div></div><div class="row"><button class="secondary" onclick="window.location.href='admin.html'">← Back to Admin</button></div></div></header>
+<div class="wrap">
+ <section class="panel" id="authPanel">
+  <h2>🔐 Admin sign in</h2><p class="hint">Sign in using the same authorized White Pack admin account you use for admin.html. This page reads the catalogue from the existing Supabase products table and does not change product prices in the catalogue.</p>
+  <div class="grid"><div class="wide"><label>Email</label><input id="email" type="email" autocomplete="username" placeholder="Admin email"></div><div class="wide"><label>Password</label><input id="password" type="password" autocomplete="current-password" placeholder="Admin password"></div></div>
+  <div class="row"><button class="primary" id="loginBtn" onclick="signIn()">Sign in and load products</button></div><div id="authStatus" class="hint" role="status"></div>
+ </section>
+ <div id="app" class="hidden">
+  <section class="panel" id="archivePanel">
+   <h2>📁 Client &amp; quotation archive</h2>
+   <p class="hint">Search saved quotations by client name, phone or quotation number. Cloud archive is shared across devices after sign-in.</p>
+   <div class="searchrow" style="margin-top:10px">
+    <input id="archiveSearch" placeholder="Search client, phone or quotation number…">
+    <button class="secondary" onclick="renderArchive()">Search archive</button>
+   </div>
+   <div id="archiveCount" class="hint" style="margin-top:8px"></div>
+   <div id="archiveList" style="margin-top:10px"></div>
+  </section>
+  <section class="panel">
+   <h2>1. Quotation details</h2>
+   <div class="grid">
+    <div><label>Quotation number</label><input id="quoteNo"></div>
+    <div><label>Quotation date</label><input id="quoteDate" type="date"></div>
+    <div><label>Valid until</label><input id="validUntil" type="date"></div>
+    <div><label>Currency</label><select id="currency"><option value="USD">USD ($)</option><option value="LBP">LBP (ل.ل)</option></select></div>
+    <div><label>Client / Company</label><input id="clientName" placeholder="Client name"></div>
+    <div><label>Contact person</label><input id="contact" placeholder="Contact name"></div>
+    <div><label>Phone / WhatsApp</label><input id="phone" placeholder="+961 ..."></div>
+    <div><label>Email</label><input id="clientEmail" type="email" placeholder="client@example.com"></div>
+    <div class="wide"><label>Delivery address</label><input id="address" placeholder="Client address"></div>
+    <div class="wide"><label>Quotation subject</label><input id="subject" placeholder="Packaging and supplies quotation"></div>
+   </div>
+  </section>
+  <section class="panel">
+   <h2>2. Choose products</h2><div class="hint">Prices shown in the catalogue are starting references. Adding an item copies its price into this quotation only. Change any price or quantity below without modifying the master catalogue.</div>
+   <div class="searchrow" style="margin-top:12px"><input id="search" placeholder="🔎 Search product name, category or description…"><select id="category"><option value="">All categories</option></select></div>
+   <div id="productCount" class="hint" style="margin-top:8px"></div><div id="products" class="products"></div>
+  </section>
+  <section class="panel">
+   <h2>3. Quotation items</h2><div class="hint">Edit quantity, unit and price for this client. The PDF will place each clean product photo beside its item name and price.</div>
+   <div id="cart"><p class="hint">No items selected yet. Add products above.</p></div>
+   <div class="grid" style="margin-top:12px"><div><label>Discount (%)</label><input id="discount" type="number" min="0" max="100" step="0.1" value="0"></div><div><label>Delivery / other fee</label><input id="fee" type="number" min="0" step="0.01" value="0"></div><div class="wide"><label>Notes / payment terms</label><textarea id="notes" placeholder="Prices valid for 7 days. Delivery terms, payment terms, etc."></textarea></div></div>
+   <div class="totals" id="totals"></div>
+   <div class="row no-print" style="margin-top:18px"><button class="gold" onclick="exportPDF()">🖨️ Export / Save PDF</button><button class="primary" onclick="saveArchiveQuote()">📁 Save to client archive</button><button class="secondary" onclick="saveQuoteJSON()">⬇️ Download JSON</button><button class="secondary" onclick="resetQuote()">＋ New quotation</button></div>
+   <div class="hint no-print" style="margin-top:8px">PDF tip: choose “Save as PDF” in the print window. On a phone, select Save as PDF from the print/share menu if available.</div><div id="saveStatus" class="status"></div>
+  </section>
+ </div>
+</div>
+<div id="printQuote"></div><footer>White Pack · Professional quotation</footer>
+<script>
+const SUPABASE_URL='https://gaphiedcwueunmfssisz.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_XnMvCbQGs2tGHXQa5Cjbew_vTTM7ubG';
+const SUPABASE_TABLE='wp_products', QUOTES_TABLE='wp_quotations', META_ID='00000000-0000-4000-8000-000000000001';
+let session=null, catalogue=[], items=[], activeArchiveId=null;
+const $=id=>document.getElementById(id);
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function apiHeaders(token){return {'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+(token||SUPABASE_PUBLISHABLE_KEY),'Content-Type':'application/json'};}
+async function api(url,opts={}){const r=await fetch(url,opts);const t=await r.text();let d;try{d=t?JSON.parse(t):null}catch{d={message:t}}if(!r.ok)throw Error(d?.msg||d?.message||d?.error_description||d?.error||'Supabase request failed ('+r.status+')');return d;}
+async function signIn(){
+ const email=$('email').value.trim(),password=$('password').value;
+ if(!email||!password){$('authStatus').textContent='Enter your admin email and password.';return;}
+ $('loginBtn').disabled=true;$('authStatus').textContent='Signing in and loading catalogue…';
+ try{
+  session=await api(SUPABASE_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:apiHeaders(),body:JSON.stringify({email,password})});
+  const user=await api(SUPABASE_URL+'/auth/v1/user',{headers:apiHeaders(session.access_token)});
+  const rows=await api(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE+'?select=id,product_data,sort_order,updated_at&order=sort_order.asc',{headers:apiHeaders(session.access_token)});
+  if(!Array.isArray(rows))throw Error('Unexpected product table response.');
+  const meta=rows.find(r=>r.id===META_ID||r.product_data?._wp_meta===true);
+  catalogue=rows.filter(r=>r.id!==META_ID&&!(r.product_data&&r.product_data._wp_meta===true)).map(r=>({...r.product_data,_id:r.id}));
+  // Product access is governed by the same Supabase Auth/RLS policies as admin.html.
+  $('authPanel').classList.add('hidden');$('app').classList.remove('hidden');
+  $('authStatus').textContent='';initQuote(meta?.product_data);renderProducts();await fetchArchive();$('archiveSearch').addEventListener('input',renderArchive);
+ }catch(e){session=null;$('authStatus').textContent='Could not connect: '+e.message;$('authStatus').style.color='#b42318';}
+ finally{$('loginBtn').disabled=false;}
+}
+function initQuote(meta){
+ const today=new Date();const iso=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+ $('quoteDate').value=iso(today);$('validUntil').value=iso(new Date(today.getTime()+7*86400000));
+ $('quoteNo').value='WP-'+today.getFullYear()+String(today.getMonth()+1).padStart(2,'0')+String(today.getDate()).padStart(2,'0')+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
+ $('subject').value='Packaging and supplies quotation';
+ $('discount').addEventListener('input',renderCart);$('fee').addEventListener('input',renderCart);
+ const cats=[...new Set(catalogue.map(p=>(p.category||'Products').trim()||'Products'))];
+ $('category').innerHTML='<option value="">All categories</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+ $('search').addEventListener('input',renderProducts);$('category').addEventListener('change',renderProducts);
+}
+function money(n){const cur=$('currency').value;return cur==='LBP'?'ل.ل '+Number(n||0).toLocaleString('en-US',{maximumFractionDigits:0}):'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function priceVal(p){const a=p.price1??p.price??'';return a!==''&&a!==null&&Number.isFinite(Number(a))?Number(a):0}
+function renderProducts(){
+ const q=$('search').value.trim().toLowerCase(),cat=$('category').value;
+ const arr=catalogue.filter(p=>(!cat||(p.category||'Products')===cat)&&[p.name,p.category,p.description].some(v=>String(v||'').toLowerCase().includes(q)));
+ $('productCount').textContent=`Showing ${arr.length} of ${catalogue.length} catalogue products`;
+ $('products').innerHTML=arr.map(p=>{
+  const idx=catalogue.indexOf(p),photo=p.photo||'';
+  const prices=[];
+  const p1=p.price1??p.price??'';if(p1!==''&&p1!==null)prices.push(`<span class="pricechip">${esc(p.price1Label||'Box')}: <b>${money(p1)}</b></span>`);
+  if(p.price2!==''&&p.price2!==null&&p.price2!==undefined)prices.push(`<span class="pricechip">${esc(p.price2Label||'Packet')}: <b>${money(p.price2)}</b></span>`);
+  return `<article class="product">${photo?`<img src="${esc(photo)}" alt="${esc(p.name)}" loading="lazy">`:'<div style="height:150px;display:grid;place-items:center;color:#98a2b3;background:#fafafa">No photo</div>'}<div class="pbody"><div class="pname">${esc(p.name||'Unnamed product')}</div><div class="pcat">${esc(p.category||'Products')}</div><div class="pdesc">${esc(p.description||'')}</div><div class="prices">${prices.join('')||'<span class="hint">No catalogue price — enter your quote price after adding</span>'}</div><button class="primary add" onclick="addItem(${idx})">＋ Add to quotation</button></div></article>`;
+ }).join('')||'<p class="hint">No products found. Try a different search.</p>';
+}
+function productUnits(p){
+ const units=[];
+ const l1=String(p.price1Label||'Box').trim()||'Box';
+ const v1=p.price1??p.price??'';
+ if(v1!==''&&v1!==null&&Number.isFinite(Number(v1))) units.push({label:l1,price:Number(v1)});
+ const l2=String(p.price2Label||'Packet').trim()||'Packet';
+ const v2=p.price2??'';
+ if(v2!==''&&v2!==null&&Number.isFinite(Number(v2))) units.push({label:l2,price:Number(v2)});
+ // Keep both named options visible even if the catalogue has no price for one.
+ if(!units.some(u=>u.label.toLowerCase()===l1.toLowerCase()))units.push({label:l1,price:0});
+ if(!units.some(u=>u.label.toLowerCase()===l2.toLowerCase()))units.push({label:l2,price:0});
+ return units;
+}
+function addItem(i){
+ const p=catalogue[i];if(!p)return;
+ // Same product may be quoted in different units (e.g. Packet and Box).
+ const units=productUnits(p),unit=units[0];
+ items.push({sourceId:p._id,name:p.name||'Product',description:p.description||'',category:p.category||'Products',photo:p.photo||'',unit:unit.label,unitOptions:units,qty:1,price:unit.price});
+ renderCart();
+}
+function updateItem(i,key,val){
+ if(!items[i])return;
+ if(key==='qty')items[i].qty=Math.max(0.01,Number(val)||1);
+ else if(key==='price')items[i].price=Math.max(0,Number(val)||0);
+ else if(key==='unit'){
+   if(val==='__custom__'){
+     const custom=prompt('Enter unit name (for example: Carton, Piece, Bundle):',items[i].unit||'Piece');
+     if(custom&&custom.trim()){
+       const label=custom.trim();
+       items[i].unit=label;
+       if(!items[i].unitOptions)items[i].unitOptions=[];
+       if(!items[i].unitOptions.some(u=>u.label.toLowerCase()===label.toLowerCase()))items[i].unitOptions.push({label,price:items[i].price});
+     }
+   }else{
+     items[i].unit=val;
+     const option=(items[i].unitOptions||[]).find(u=>u.label===val);
+     if(option)items[i].price=option.price;
+   }
+ }
+ renderCart();
+}
+function removeItem(i){items.splice(i,1);renderCart();}
+function calc(){const subtotal=items.reduce((s,x)=>s+x.qty*x.price,0),discount=Math.min(100,Math.max(0,Number($('discount').value)||0)),discountAmount=subtotal*discount/100,fee=Math.max(0,Number($('fee').value)||0);return{subtotal,discount,discountAmount,fee,total:Math.max(0,subtotal-discountAmount+fee)}}
+function renderCart(){
+ if(!items.length){$('cart').innerHTML='<p class="hint">No items selected yet. Add products above.</p>';}
+ else $('cart').innerHTML=`<div class="cartline" style="font-size:11px;font-weight:800;color:#667085"><span>PHOTO</span><span>PRODUCT / UNIT</span><span>QTY</span><span>UNIT PRICE</span><span class="lineTotal">TOTAL</span><span></span></div>`+items.map((x,i)=>`<div class="cartline"><img src="${esc(x.photo)}" alt=""><div><div class="name">${esc(x.name)}</div><div class="mini">${esc(x.category)}</div><select aria-label="Unit" onchange="updateItem(${i},'unit',this.value)" style="margin-top:5px">${(x.unitOptions||[{label:x.unit,price:x.price}]).map(u=>`<option value="${esc(u.label)}" ${u.label===x.unit?'selected':''}>${esc(u.label)}</option>`).join('')}<option value="__custom__">＋ Custom unit…</option></select></div><input aria-label="Quantity" type="number" min=".01" step=".01" value="${x.qty}" onchange="updateItem(${i},'qty',this.value)"><input aria-label="Unit price" type="number" min="0" step=".01" value="${x.price}" onchange="updateItem(${i},'price',this.value)"><div class="lineTotal" style="font-weight:800">${money(x.qty*x.price)}</div><button class="remove" aria-label="Remove item" onclick="removeItem(${i})">×</button></div>`).join('');
+ const c=calc();$('totals').innerHTML=`<div class="totalrow"><span>Subtotal</span><b>${money(c.subtotal)}</b></div><div class="totalrow"><span>Discount (${c.discount}%)</span><b>− ${money(c.discountAmount)}</b></div><div class="totalrow"><span>Delivery / other fee</span><b>${money(c.fee)}</b></div><div class="totalrow grand"><span>Total</span><span>${money(c.total)}</span></div>`;
+}
+$('currency').addEventListener('change',()=>{renderProducts();renderCart()});
+function val(id){return $(id).value.trim()}
+function exportPDF(){
+ if(!items.length){alert('Add at least one product before exporting.');return;}
+ const c=calc(),cur=$('currency').value;
+ const dateFmt=s=>s?new Date(s+'T12:00:00').toLocaleDateString():'—';
+ $('printQuote').innerHTML=`
+ <div class="print-head"><div><div class="print-brand">WHITE PACK</div><div style="color:#667085;font-size:9pt">Packaging · Paper products · Food-service supplies</div></div><div class="print-label">QUOTATION<br><span style="font-size:10pt;color:#667085">${esc(val('quoteNo'))}</span></div></div>
+ <div class="print-meta"><div class="print-box"><b>PREPARED FOR</b><div style="font-size:13pt;font-weight:800;margin-top:5px">${esc(val('clientName')||'Client')}</div>${val('contact')?`<div>${esc(val('contact'))}</div>`:''}${val('phone')?`<div>${esc(val('phone'))}</div>`:''}${val('clientEmail')?`<div>${esc(val('clientEmail'))}</div>`:''}${val('address')?`<div style="margin-top:4px">${esc(val('address'))}</div>`:''}</div><div class="print-box"><b>QUOTATION DETAILS</b><div style="margin-top:7px">Date: <b>${dateFmt(val('quoteDate'))}</b></div><div>Valid until: <b>${dateFmt(val('validUntil'))}</b></div><div>Currency: <b>${cur}</b></div><div style="margin-top:7px">${esc(val('subject'))}</div></div></div>
+ <table class="print-table"><thead><tr><th class="photo-cell">Photo</th><th>Product / Description</th><th>Unit</th><th class="qty">Qty</th><th class="money">Unit price</th><th class="money">Amount</th></tr></thead><tbody>${items.map(x=>`<tr><td class="photo-cell">${x.photo?`<img src="${esc(x.photo)}" alt="">`:''}</td><td><b>${esc(x.name)}</b>${x.description?`<div style="font-size:8pt;color:#667085;margin-top:3px">${esc(x.description)}</div>`:''}</td><td>${esc(x.unit)}</td><td class="qty">${x.qty.toLocaleString('en-US',{maximumFractionDigits:2})}</td><td class="money">${money(x.price)}</td><td class="money"><b>${money(x.qty*x.price)}</b></td></tr>`).join('')}</tbody></table>
+ <div class="print-bottom"><div class="print-notes">${val('notes')?'<b>Notes / Terms</b>\n'+esc(val('notes')):''}</div><div class="print-totals"><div class="print-total"><span>Subtotal</span><b>${money(c.subtotal)}</b></div><div class="print-total"><span>Discount (${c.discount}%)</span><b>− ${money(c.discountAmount)}</b></div><div class="print-total"><span>Delivery / other fee</span><b>${money(c.fee)}</b></div><div class="print-total print-grand"><span>TOTAL</span><span>${money(c.total)}</span></div></div></div>
+ <div class="print-foot"><span>Thank you for your business.</span><span>${esc(val('quoteNo'))} · ${dateFmt(val('quoteDate'))}</span></div>`;
+ window.print();
+}
+function quotePayload(){
+ const c=calc();
+ return {quotationNumber:val('quoteNo'),date:val('quoteDate'),validUntil:val('validUntil'),currency:val('currency'),
+ client:{name:val('clientName'),contact:val('contact'),phone:val('phone'),email:val('clientEmail'),address:val('address')},
+ subject:val('subject'),items:items.map(x=>({...x,unitOptions:(x.unitOptions||[]).map(u=>({...u}))})),
+ discountPercent:c.discount,fee:c.fee,subtotal:c.subtotal,discountAmount:c.discountAmount,total:c.total,notes:val('notes')};
+}
+let archiveCache=[];
+async function fetchArchive(){
+ try{
+  const rows=await api(SUPABASE_URL+'/rest/v1/'+QUOTES_TABLE+'?select=id,quotation_number,client_name,client_phone,quote_data,created_at,updated_at&order=updated_at.desc',
+   {headers:{...apiHeaders(session.access_token),'Prefer':'return=representation'}});
+  if(!Array.isArray(rows))throw Error('Unexpected quotation archive response.');
+  archiveCache=rows.map(r=>({...r.quote_data,archiveId:r.id,quotationNumber:r.quotation_number||r.quote_data?.quotationNumber,
+   client:{...(r.quote_data?.client||{}),name:r.client_name||r.quote_data?.client?.name,phone:r.client_phone||r.quote_data?.client?.phone},
+   createdAt:r.created_at,updatedAt:r.updated_at}));
+  renderArchive();return true;
+ }catch(e){
+  $('archiveCount').textContent='Cloud archive is not ready yet.';
+  $('archiveList').innerHTML='<p class="hint">Supabase table wp_quotations is missing or its permissions are not set. Run the supplied wp_quotations_setup.sql in Supabase → SQL Editor, then refresh this page.</p>';
+  return false;
+ }
+}
+async function saveArchiveQuote(){
+ if(!val('clientName')){alert('Please enter the client / company name before saving.');$('clientName').focus();return;}
+ if(!items.length){alert('Add at least one product before saving to the archive.');return;}
+ if(!session?.access_token){alert('Please sign in again before saving.');return;}
+ const payload=quotePayload(),now=new Date().toISOString();
+ const body={user_id:session.user?.id,quotation_number:payload.quotationNumber,client_name:payload.client.name,
+  client_phone:payload.client.phone,quote_data:payload,updated_at:now};
+ $('saveStatus').textContent='Saving quotation to Supabase cloud archive…';
+ try{
+  if(activeArchiveId){
+   await api(SUPABASE_URL+'/rest/v1/'+QUOTES_TABLE+'?id=eq.'+encodeURIComponent(activeArchiveId),
+    {method:'PATCH',headers:{...apiHeaders(session.access_token),'Prefer':'return=representation'},body:JSON.stringify(body)});
+  }else{
+   body.created_at=now;
+   const inserted=await api(SUPABASE_URL+'/rest/v1/'+QUOTES_TABLE,
+    {method:'POST',headers:{...apiHeaders(session.access_token),'Prefer':'return=representation'},body:JSON.stringify(body)});
+   if(!Array.isArray(inserted)||!inserted[0]?.id)throw Error('Quotation saved response did not include its ID.');
+   activeArchiveId=inserted[0].id;
+  }
+  await fetchArchive();
+  $('saveStatus').textContent='Saved to Supabase cloud archive. Search for this client and reopen the quotation on any device.';
+ }catch(e){
+  $('saveStatus').textContent='Cloud save failed: '+e.message+'. Check that the wp_quotations table and its RLS policies have been created in Supabase.';
+ }
+}
+function renderArchive(){
+ const q=String($('archiveSearch')?.value||'').trim().toLowerCase();
+ const shown=archiveCache.filter(x=>[x.client?.name,x.client?.phone,x.quotationNumber,x.client?.contact].some(v=>String(v||'').toLowerCase().includes(q)));
+ $('archiveCount').textContent=`${shown.length} quotation${shown.length===1?'':'s'} shown · ${archiveCache.length} saved in Supabase`;
+ $('archiveList').innerHTML=shown.map(x=>`<div class="archive-card"><div><div class="archive-title">${esc(x.client?.name||'Unnamed client')} · ${esc(x.quotationNumber||'No number')}</div><div class="archive-meta">${esc(x.date||'No date')} · ${esc(x.currency||'USD')} ${Number(x.total||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} · ${Number(x.items?.length||0)} item(s)</div><div class="archive-meta">${esc(x.client?.phone||'No phone')} · Last saved ${esc((x.updatedAt||x.createdAt||'').slice(0,10)||'—')}</div></div><div class="archive-actions"><button class="primary" onclick="loadArchiveQuote('${esc(x.archiveId)}')">Open / Edit</button><button class="secondary" onclick="downloadArchiveQuote('${esc(x.archiveId)}')">JSON backup</button><button class="danger" onclick="deleteArchiveQuote('${esc(x.archiveId)}')">Delete</button></div></div>`).join('')||'<p class="hint">No saved quotations match your search. Save a quotation to start your cloud archive.</p>';
+}
+function loadArchiveQuote(id){
+ const q=archiveCache.find(x=>x.archiveId===id);if(!q){alert('This saved quotation was not found.');return;}
+ if(items.length&&!confirm('Open this quotation? Unsaved changes in the current quotation will be lost.'))return;
+ activeArchiveId=id;
+ $('quoteNo').value=q.quotationNumber||'';$('quoteDate').value=q.date||'';$('validUntil').value=q.validUntil||'';$('currency').value=q.currency||'USD';
+ $('clientName').value=q.client?.name||'';$('contact').value=q.client?.contact||'';$('phone').value=q.client?.phone||'';$('clientEmail').value=q.client?.email||'';$('address').value=q.client?.address||'';$('subject').value=q.subject||'';
+ $('discount').value=String(q.discountPercent??0);$('fee').value=String(q.fee??0);$('notes').value=q.notes||'';
+ items=(q.items||[]).map(x=>({...x,unitOptions:Array.isArray(x.unitOptions)?x.unitOptions:[{label:x.unit||'Piece',price:Number(x.price||0)}]}));
+ renderProducts();renderCart();$('saveStatus').textContent='Loaded from Supabase. Edit it, then save to update this cloud quotation.';
+ $('archivePanel').scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function deleteArchiveQuote(id){
+ const q=archiveCache.find(x=>x.archiveId===id);if(!q)return;
+ if(!confirm(`Delete the saved quotation for "${q.client?.name||'this client'}" (${q.quotationNumber||'no number'})? This cannot be undone.`))return;
+ try{
+  await api(SUPABASE_URL+'/rest/v1/'+QUOTES_TABLE+'?id=eq.'+encodeURIComponent(id),
+   {method:'DELETE',headers:{...apiHeaders(session.access_token),'Prefer':'return=minimal'}});
+  if(activeArchiveId===id)activeArchiveId=null;
+  await fetchArchive();$('saveStatus').textContent='Quotation deleted from the Supabase cloud archive.';
+ }catch(e){alert('Could not delete quotation: '+e.message);}
+}
+function downloadArchiveQuote(id){
+ const q=archiveCache.find(x=>x.archiveId===id);if(!q)return;
+ const blob=new Blob([JSON.stringify(q,null,2)],{type:'application/json'}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download=(q.quotationNumber||'quotation')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function saveQuoteJSON(){
+ const payload=quotePayload(),blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download=(val('quoteNo')||'quotation')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+ $('saveStatus').textContent='JSON backup downloaded. Use the client archive for quick editing in this browser.';
+}
+function resetQuote(){
+ if(!confirm('Start a new quotation? Unsaved changes will be cleared. Saved archive entries will remain.'))return;
+ items=[];activeArchiveId=null;['clientName','contact','phone','clientEmail','address','notes'].forEach(id=>$(id).value='');
+ $('discount').value='0';$('fee').value='0';initQuote();renderProducts();renderCart();$('saveStatus').textContent='New quotation started. Previous saved quotations remain in the archive.';
+}
+</script>
+</body>
+</html>
