@@ -30,7 +30,11 @@ button{border:0;border-radius:9px;padding:11px 14px;font-weight:700;font-size:14
 .cartline .name{font-weight:700}.cartline .mini{font-size:11px;color:var(--muted)}
 .cartline input{padding:8px;font-size:14px}.cartline .remove{background:#fee4e2;color:#912018;padding:8px;margin:0}
 .totals{margin-left:auto;max-width:340px;padding-top:14px}.totalrow{display:flex;justify-content:space-between;padding:5px 0}.grand{border-top:2px solid var(--ink);font-size:20px;font-weight:800;margin-top:5px;padding-top:10px}
-.status{margin-top:10px;color:#067647;font-size:13px}.hidden{display:none!important}
+.status{margin-top:10px;color:#067647;font-size:13px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9999;background:#173b63;color:#fff;padding:13px 18px;border-radius:12px;box-shadow:0 8px 28px #10243b40;font-weight:700;max-width:calc(100% - 28px);text-align:center;opacity:0;pointer-events:none;transition:opacity .18s}
+.toast.show{opacity:1}
+#backToTop{position:fixed;right:16px;bottom:18px;z-index:9000;box-shadow:0 5px 18px #10243b35;border-radius:999px;padding:12px 16px;margin:0}
+.hidden{display:none!important}
 .archive-card{border:1px solid var(--line);border-radius:10px;padding:12px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.archive-title{font-weight:800}.archive-meta{font-size:12px;color:var(--muted);margin-top:3px}.archive-actions{display:flex;gap:6px;flex-wrap:wrap}.archive-actions button{margin:0;padding:8px 10px}
 footer{text-align:center;color:var(--muted);font-size:11px;margin:18px 0}
 @media(max-width:760px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.products{grid-template-columns:repeat(2,minmax(0,1fr))}.cartline{grid-template-columns:52px minmax(0,1fr) 72px 72px 32px}.cartline .lineTotal{display:none}.cartline img{width:52px;height:52px}.cartline input{padding:7px 5px}.searchrow{grid-template-columns:1fr}.wrap{padding:0 9px 25px}.panel{padding:13px}}
@@ -96,7 +100,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;margin:18px 0}
    </div>
   </section>
   <section class="panel">
-   <h2>2. Choose products</h2><div class="hint">Prices shown in the catalogue are starting references. Adding an item copies its price into this quotation only. Change any price or quantity below without modifying the master catalogue.</div>
+   <div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0">2. Choose products</h2><button class="gold" type="button" onclick="goToQuotation()">↓ Go to quotation <span id="goCartCount"></span></button></div><div class="hint" style="margin-top:10px">Prices shown in the catalogue are starting references. Adding an item copies its price into this quotation only. Change any price or quantity below without modifying the master catalogue.</div>
    <div class="searchrow" style="margin-top:12px"><input id="search" placeholder="🔎 Search product name, category or description…"><select id="category"><option value="">All categories</option></select></div>
    <div id="productCount" class="hint" style="margin-top:8px"></div><div id="products" class="products"></div>
   </section>
@@ -110,13 +114,21 @@ footer{text-align:center;color:var(--muted);font-size:11px;margin:18px 0}
   </section>
  </div>
 </div>
-<div id="printQuote"></div><footer>White Pack · Professional quotation</footer>
+<div id="printQuote"></div><div id="toast" class="toast" role="status" aria-live="polite"></div>
+<button id="backToTop" class="primary" type="button" onclick="goToTop()" aria-label="Back to top">↑ Back to top</button>
+<footer>White Pack · Professional quotation</footer>
 <script>
 const SUPABASE_URL='https://gaphiedcwueunmfssisz.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_XnMvCbQGs2tGHXQa5Cjbew_vTTM7ubG';
 const SUPABASE_TABLE='wp_products', QUOTES_TABLE='wp_quotations', META_ID='00000000-0000-4000-8000-000000000001';
 let session=null, catalogue=[], items=[], activeArchiveId=null;
 const $=id=>document.getElementById(id);
+let toastTimer=null;
+function showToast(message){
+ const el=$('toast');if(!el)return;
+ el.textContent=message;el.classList.add('show');
+ clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2300);
+}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function apiHeaders(token){return {'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+(token||SUPABASE_PUBLISHABLE_KEY),'Content-Type':'application/json'};}
 async function api(url,opts={}){const r=await fetch(url,opts);const t=await r.text();let d;try{d=t?JSON.parse(t):null}catch{d={message:t}}if(!r.ok)throw Error(d?.msg||d?.message||d?.error_description||d?.error||'Supabase request failed ('+r.status+')');return d;}
@@ -174,12 +186,20 @@ function productUnits(p){
  if(!units.some(u=>u.label.toLowerCase()===l2.toLowerCase()))units.push({label:l2,price:0});
  return units;
 }
+function goToQuotation(){
+ $('cart').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function goToTop(){
+ window.scrollTo({top:0,behavior:'smooth'});
+}
 function addItem(i){
  const p=catalogue[i];if(!p)return;
  // Same product may be quoted in different units (e.g. Packet and Box).
  const units=productUnits(p),unit=units[0];
  items.push({sourceId:p._id,name:p.name||'Product',description:p.description||'',category:p.category||'Products',photo:p.photo||'',unit:unit.label,unitOptions:units,qty:1,price:unit.price});
  renderCart();
+ const count=items.length;
+ showToast(`1 item added · ${count} item${count===1?'':'s'} in quotation · Total: ${money(calc().total)}`);
 }
 function updateItem(i,key,val){
  if(!items[i])return;
