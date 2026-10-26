@@ -1,261 +1,902 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#173f35"><title>My Catalogue — Business Admin</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="saas.js"></script><style>
-*{box-sizing:border-box}body{margin:0;background:#f3f6f3;color:#17231f;font:15px Arial,sans-serif}.oauth-row{margin:12px 0}.oauth{background:#fff;border:1px solid #ccd7ce}header{background:#173f35;color:#fff;padding:20px 16px}header h1{margin:0 0 5px}.wrap{max-width:1000px;margin:auto;padding:14px}.panel{background:#fff;border:1px solid #dfe7df;border-radius:15px;padding:16px;margin-bottom:14px}h2{margin:0 0 12px;font-size:19px}label{display:block;font-weight:700;font-size:13px;margin:10px 0 5px}input,textarea,select{width:100%;padding:12px;border:1px solid #ccd7ce;border-radius:9px;font:inherit;background:#fff}textarea{min-height:72px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}.btn{border:0;border-radius:9px;padding:12px 14px;font-weight:800;cursor:pointer;background:#e8eee9;color:#173f35}.primary{background:#236653;color:#fff}.danger{background:#fee2e2;color:#991b1b}.hint{font-size:13px;line-height:1.5;color:#637269}.status{margin:10px 0;padding:10px;border-radius:9px;background:#e8f3eb;white-space:pre-wrap;overflow-wrap:anywhere}.error{background:#fff0ed;color:#a32d20}.hidden{display:none!important}.item{display:grid;grid-template-columns:72px 1fr auto;gap:10px;align-items:center;border:1px solid #e1e7e2;padding:9px;border-radius:11px;margin-top:8px}.item img{width:88px;height:88px;object-fit:contain;background:#fff;border:1px solid #e1e7e2;border-radius:8px}.inlineFields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.inlineFields input,.inlineFields textarea{min-width:0;padding:8px;font-size:13px}.inlineFields .wide{grid-column:1/-1}.inlineActions{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}.item{grid-template-columns:92px minmax(0,1fr)}.item .itemActions{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}.item .itemActions button{flex:1}.item .itemPhoto{display:flex;flex-direction:column;gap:6px}.item .itemPhoto input{width:100%;font-size:11px}.duplicateGroup{border:1px solid #f1c7a8;border-radius:10px;padding:10px;margin-top:8px;background:#fffaf5}.duplicateRow{display:grid;grid-template-columns:56px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-top:1px solid #f3e2d5}.duplicateRow img{width:56px;height:56px;object-fit:contain;background:#fff;border-radius:6px}.item small{display:block;color:#68756e;margin-top:5px}.item button{margin:2px}.pill{display:inline-block;background:#e8eee9;border-radius:20px;padding:5px 8px;font-size:12px}.domain{background:#f8faf8;border:1px solid #e1e7e2;padding:10px;border-radius:10px;margin-top:8px;overflow-wrap:anywhere}@media(max-width:560px){.grid{grid-template-columns:1fr}.item{grid-template-columns:64px minmax(0,1fr);gap:8px}.item img{width:64px;height:64px}.inlineFields{grid-template-columns:1fr}.inlineFields .wide{grid-column:auto}.item .itemActions{grid-column:1/-1}.duplicateRow{grid-template-columns:44px 1fr}.duplicateRow img{width:44px;height:44px}.duplicateRow button{grid-column:2}}
-</style></head><body><header><div style="max-width:1000px;margin:auto"><h1>My Catalogue · Business Admin</h1><div>Manage your brand, products, custom domain and catalogue.</div></div></header><main class="wrap"><div id="status" class="status" role="status">Connecting…</div>
-<section class="panel" id="authPanel"><h2>Sign in or create your account</h2><p class="hint">Create an account with your business email. If email confirmation is enabled in Supabase, confirm your email and then sign in. A business stays unpublished until the platform owner approves it.</p><div class="row oauth-row"><button class="btn oauth" id="googleSignIn" type="button">🌐 Continue with Google</button><button class="btn oauth" id="microsoftSignIn" type="button">✉️ Continue with Microsoft (Outlook / Hotmail)</button></div><p class="hint">Or use your email address</p><div class="grid"><div><label>Email</label><input id="email" type="email" autocomplete="username" placeholder="you@company.com"></div><div><label>Password</label><input id="password" type="password" autocomplete="current-password" placeholder="At least 8 characters"></div></div><div class="row"><button class="btn primary" id="signIn">Sign in</button><button class="btn" id="signUp">Create account</button></div><button class="btn" id="forgot">Forgot password? Send reset email</button></section><section class="panel hidden" id="resetPanel"><h2>Choose a new password</h2><p class="hint">Enter a new password for your account. Use at least 8 characters.</p><label for="newPassword">New password</label><input id="newPassword" type="password" autocomplete="new-password" minlength="8"><label for="confirmPassword">Confirm new password</label><input id="confirmPassword" type="password" autocomplete="new-password" minlength="8"><button class="btn primary" id="saveNewPassword" type="button">Save new password</button></section>
-<section class="panel hidden" id="createPanel"><h2>Create your business profile</h2><p class="hint">Your business receives a unique catalogue link. You can request a custom domain below.</p><label>Business / brand name</label><input id="company" placeholder="Example: Cedar Bakery"><label>Catalogue link name</label><input id="slug" placeholder="cedar-bakery"><div class="grid"><div><label>WhatsApp number with country code</label><input id="whatsapp" placeholder="961XXXXXXXX"></div><div><label>Currency</label><select id="currency"><option>USD</option><option>LBP</option><option>EUR</option></select></div></div><label>Short description</label><textarea id="description" placeholder="What your business offers"></textarea><button class="btn primary" id="createBusiness">Create business</button></section>
-<div id="app" class="hidden"><section class="panel"><div class="row" style="align-items:center"><div><h2 id="businessHeading">Business settings</h2><div id="publishStatus" class="pill">Awaiting approval</div></div><button class="btn" id="signOut">Sign out</button></div><div class="grid"><div><label>Brand name</label><input id="editCompany"></div><div><label>Catalogue slug</label><input id="editSlug" disabled></div><div><label>WhatsApp number</label><input id="editWhatsapp" placeholder="961XXXXXXXX"></div><div><label>Currency</label><select id="editCurrency"><option>USD</option><option>LBP</option><option>EUR</option></select></div><div><label>Brand colour</label><input id="brandColor" type="color" value="#173f35"></div><div><label>Logo image</label><input id="logoFile" type="file" accept="image/*"></div></div><label>Description</label><textarea id="editDescription"></textarea><div class="row"><button class="btn primary" id="saveSettings">Save business settings</button><button class="btn" id="copyLink">Copy catalogue link</button><a class="btn" id="openCatalogue" target="_blank" rel="noopener">Preview catalogue</a></div><div class="hint" style="margin-top:8px">Public catalogue link: <span id="catalogueLink"></span></div></section>
-<section class="panel"><h2>Catalogue design</h2><p class="hint">Choose a style for your public catalogue.</p><label for="catalogueTemplate">Catalogue template</label><select id="catalogueTemplate"><option value="classic">Classic — clean and professional</option><option value="premium">Premium — dark and elegant</option><option value="fresh">Fresh — bright and modern</option></select><button class="btn primary" id="saveTemplate" type="button">Save catalogue design</button><p class="hint">Your products, logo, prices and catalogue link stay the same.</p></section>
-<section class="panel"><h2>Custom domain</h2><p class="hint">Enter a domain you own, for example shop.example.com. Your hosting provider must route that domain to this catalogue app and enable HTTPS. Domain approval is manual; it is not active until verified by the platform operator.</p><label>Custom domain (without https://)</label><input id="domainInput" placeholder="shop.example.com"><button class="btn primary" id="requestDomain">Request domain setup</button><div id="domainList"></div></section>
-<section class="panel"><h2 id="productTitle">Add a product</h2><input id="productId" type="hidden"><div class="grid"><div><label>Product name *</label><input id="pName" placeholder="Kraft paper bag"></div><div><label>Category *</label><input id="pCategory" list="categories" placeholder="Paper bags"><datalist id="categories"></datalist></div><div><label>Barcode / SKU</label><input id="pBarcode" placeholder="Optional barcode"></div><div><label>Product photo</label><input id="pPhoto" type="file" accept="image/*"></div><div><label>First unit (e.g. Box)</label><input id="pLabel1" value="Box"></div><div><label>First price</label><input id="pPrice1" type="number" min="0" step="0.01" placeholder="Leave blank if not priced"></div><div><label>Second unit (e.g. Packet)</label><input id="pLabel2" value="Packet"></div><div><label>Second price</label><input id="pPrice2" type="number" min="0" step="0.01" placeholder="Leave blank if not priced"></div><div><label>Display order number</label><input id="pSortOrder" type="number" min="1" step="1" value="1" placeholder="1 = first"></div></div><p class="hint">Use 1, 2, 3… to control product order. Category order follows the first product position in that category.</p><label>Description / sizes / material / specifications</label><textarea id="pDescription" placeholder="Sizes, quantity, material, packaging details..."></textarea><div class="row"><button class="btn primary" id="saveProduct">Save product</button><button class="btn" id="cancelProduct">Clear form</button></div><p class="hint">Images are optimized to WebP up to 1200 × 1200 px before upload. Product records and images are scoped to your business.</p></section>
-<section class="panel" id="bulkImportPanel">
-<h2>Bulk import products + match photos</h2>
-<p class="hint">Upload an Excel (.xlsx) or CSV file, then select many product photos. Photo matching shows image previews so you can choose visually. Add a Display Order column (1, 2, 3…) to control product order; category order follows the first product in each category.</p>
-<div class="grid">
-  <div><label>1. Excel or CSV file</label><input id="bulkSheet" type="file" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></div>
-  <div><label>2. Product photos (select multiple)</label><input id="bulkPhotos" type="file" accept="image/*" multiple><div class="hint">You can select many photos at once. On some phones, select them from Files or Gallery.</div></div>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>White Pack — Admin</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f4f6;color:#111827}
+.wrap{max-width:850px;margin:auto;padding:14px}
+.panel{background:#fff;padding:16px;border-radius:16px;margin-bottom:14px;box-shadow:0 2px 10px #0000000b}
+h1{margin:0 0 8px;font-size:25px}
+h2{margin:0 0 10px}
+label{display:block;font-weight:700;margin:12px 0 5px}
+input,textarea,select{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:16px;background:#fff}
+.filePicker{display:none}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.photo{touch-action:manipulation}
+textarea{min-height:80px;resize:vertical}
+.photo{height:210px;border:2px dashed #cbd5e1;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fafafa;cursor:pointer}
+.photo img{width:100%;height:100%;object-fit:contain;display:none}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:8px;font-size:15px;cursor:pointer}
+.primary{background:#111827;color:#fff}
+.secondary{background:#e5e7eb;color:#111827}
+.danger{background:#fee2e2;color:#991b1b}
+.edit{background:#dbeafe;color:#1e40af}
+.hint{color:#667085;font-size:14px;line-height:1.5}
+.ok{padding:12px;border-radius:10px;background:#ecfdf3;color:#166534;margin-top:10px;display:none}
+.item{display:flex;gap:10px;align-items:center;background:#f8fafc;padding:9px;border-radius:12px;margin:8px 0}
+.item .productPhotoWrap{width:70px;flex:0 0 70px;display:flex;flex-direction:column;gap:4px}.item img{width:70px;height:70px;object-fit:contain;border-radius:8px;background:#fff}.item .changePhotoBtn{margin:0!important;padding:6px 4px!important;font-size:11px;background:#dbeafe;color:#1e40af;white-space:nowrap}.item .photoReplaceInput{display:none}
+.item .productInfo{flex:1;min-width:0}
+.item .productPrice{display:block;font-size:14px;font-weight:800;color:#111827;margin-top:4px;line-height:1.5}
+.inlinePriceGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px;max-width:440px}.inlinePriceUnit{min-width:0;background:#fff;border:1px solid #dbe2ea;border-radius:9px;padding:6px}.inlinePriceUnit label{font-size:11px;color:#475569;margin:0 0 4px}.inlinePriceUnit input{font-size:13px;padding:7px 6px;margin:0 0 5px;min-width:0}.inlinePriceUnit input:last-child{margin-bottom:0}.inlinePriceUnit .unitLabel{font-weight:700}.inlineSaved{font-size:11px;color:#15803d;min-height:13px;margin-top:3px}
+@media(max-width:560px){.item{align-items:flex-start;flex-wrap:wrap}.item .productPhotoWrap{width:58px;flex-basis:58px}.item .productPhotoWrap img{width:58px;height:58px}.item .changePhotoBtn{font-size:10px;padding:5px 2px!important}.item .productInfo{flex:1 1 calc(100% - 80px)}.item .productActions{width:100%;justify-content:flex-start;padding-left:66px}.inlinePriceGrid{max-width:none}.inlinePriceUnit input{font-size:14px}}
+.priceFields{display:grid;grid-template-columns:1fr 1fr;gap:10px}.priceFields>div{min-width:0}.priceFields label{margin-top:8px}
+.item .productCategory{display:block;font-size:12px;color:#667085;margin-top:2px}
+.item .productActions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.item .productActions button{margin-top:0}.positionControl{display:flex;align-items:center;gap:5px;margin-top:6px}.positionControl input{width:62px;padding:8px 5px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;text-align:center}.positionControl button{margin:0!important;padding:8px 10px!important;background:#d1fae5;color:#065f46}
+.small{font-size:12px;color:#667085}
+.note{background:#fff7ed;color:#9a3412;padding:12px;border-radius:10px;font-size:14px;line-height:1.45}
+.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#e5e7eb;font-size:12px;margin-top:5px}
+.searchBox{display:flex;gap:8px;margin:12px 0 8px;align-items:center}
+.searchBox input{flex:1;min-width:0}
+.searchClear{margin-top:0;white-space:nowrap}
+.searchInfo{margin:4px 0 8px}.categoryItem{display:flex;gap:7px;align-items:center;background:#f8fafc;padding:9px;border-radius:12px;margin:7px 0}.categoryItem .catName{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis}.orderBtn{padding:8px 11px!important;margin:0!important;background:#e5e7eb;color:#111827}.categoryRenameBtn{padding:8px 10px!important;margin:0!important;background:#dbeafe;color:#1e40af}.categoryItem .catName{overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="panel">
+  <h1>📦 White Pack — Phone Editor</h1>
+  <div class="hint">
+Sign in with your authorized White Pack admin account. Products and product photos save to Supabase automatically. JSON import/export remains available as a backup and publishing option.
+  </div>
 </div>
-<div class="row" style="margin-top:12px">
-  <button class="btn" id="analyzeBulk" type="button">Analyze and match photos</button>
-  <button class="btn" id="clearBulk" type="button">Clear import</button>
+
+<div class="panel" id="authPanel">
+  <h2>🔐 Supabase Admin Sign In</h2>
+  <div class="hint">Sign in with the email and password for the authorized White Pack admin account. Only authenticated users listed in wp_product_admins can save catalogue changes.</div>
+  <label for="authEmail">Email</label>
+  <input id="authEmail" type="email" autocomplete="username" placeholder="Admin email">
+  <label for="authPassword">Password</label>
+  <input id="authPassword" type="password" autocomplete="current-password" placeholder="Password">
+  <div class="row"><button class="primary" id="signInBtn" type="button" onclick="signIn()">Sign in</button><button class="secondary" id="signOutBtn" type="button" onclick="signOut()" hidden>Sign out</button></div>
+  <div id="authStatus" class="hint" role="status" style="margin-top:8px"></div>
 </div>
-<div id="bulkSummary" class="hint" style="margin-top:10px" aria-live="polite"></div>
-<div id="bulkPreview" style="overflow-x:auto;margin-top:12px"></div>
-<div id="photoPicker" class="hidden" style="position:fixed;inset:0;background:#10231dcc;z-index:9999;padding:16px;overflow:auto">
- <div style="max-width:900px;margin:20px auto;background:#fff;border-radius:16px;padding:16px">
-  <div class="row" style="align-items:center"><h2 style="flex:2">Choose product photo</h2><button class="btn danger" id="closePhotoPicker" type="button">Close</button></div>
-  <p id="photoPickerFor" class="hint"></p>
-  <div id="photoGallery" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px"></div>
- </div>
+
+<div id="editorArea" hidden>
+<div class="panel">
+  <label>Business Name</label>
+  <input id="biz" value="White Pack">
+
+  <div class="panel" style="padding:12px;margin:14px 0;background:#f8fafc;border:1px solid #e2e8f0;box-shadow:none">
+    <h2 style="font-size:18px;margin:0 0 6px">📲 Order WhatsApp Number</h2>
+    <div class="hint">Change the phone number that receives customer orders. Use the international country code, numbers only (example: 96181085811). This setting is saved to Supabase and applies to the public catalogue after refresh.</div>
+    <label for="orderWhatsApp">WhatsApp number for incoming orders</label>
+    <input id="orderWhatsApp" type="tel" inputmode="numeric" autocomplete="tel" placeholder="96181085811" maxlength="20">
+    <button type="button" class="primary" id="saveSettingsBtn" onclick="saveSettings()">💾 Save Company Settings</button>
+    <div id="settingsStatus" class="hint" aria-live="polite" style="margin-top:8px"></div>
+  </div>
+
+  <label>Product Photo</label>
+  <div class="photo" id="photoBox" role="button" tabindex="0" aria-label="Choose product photo">
+    <img id="preview">
+    <span id="pt">📷 Tap here to choose a product photo</span>
+  </div>
+  <input id="file" type="file" accept="image/*" class="filePicker">
+  <div class="hint" style="margin-top:6px">Photos are automatically optimized to sharp WebP when supported (up to 1200 × 1200 px) to keep the catalogue clear and fast.</div>
+
+  <label>Product Name</label>
+  <input id="name" placeholder="Example: Kraft Paper Bag">
+
+  <label>Description</label>
+  <textarea id="desc" placeholder="Size, quantity, material, etc."></textarea>
+
+  <div class="priceFields">
+    <div><label>First unit label (Box)</label><input id="price1Label" placeholder="Box"><label>First price (USD)</label><input id="price1" inputmode="decimal" placeholder="120.00"></div>
+    <div><label>Second unit label (Packet)</label><input id="price2Label" placeholder="Packet"><label>Second price (USD)</label><input id="price2" inputmode="decimal" placeholder="12.50"></div>
+  </div>
+  <div class="hint">For older products, the existing price is kept as the first price. Category cover tip: if the first product in a category has no price, its photo appears on the main category screen only and it is hidden from the products inside that category.</div>
+
+  <label>Category</label>
+  <input id="cat" placeholder="Paper Bags">
+
+  <div class="row">
+    <button class="primary" id="addBtn" onclick="saveProduct()">➕ Add Product</button>
+    <button type="button" class="secondary" onclick="clearForm()">Clear</button>
+  </div>
+  <div id="status" class="ok"></div>
 </div>
-<div class="row" style="margin-top:12px">
-  <label style="display:flex;align-items:center;gap:8px"><input id="skipDuplicates" type="checkbox" checked disabled style="width:auto"> Always skip products already in my catalogue (matching normalized name or SKU/barcode)</label>
+
+<div class="panel">
+  <h2>📂 Category Order</h2>
+  <div class="hint">Use the arrows to change category order, or tap Rename to change a category name for every product in that category at once. Changes save to Supabase automatically.</div>
+  <div id="categoryList"></div>
 </div>
-<button class="btn primary" id="runBulkImport" type="button" disabled>Import reviewed products to catalogue</button>
-<p class="hint">Photos are optimized before upload. Products are saved directly to your existing Supabase catalogue; JSON export/import remains available.</p>
-</section>
-<section class="panel"><div class="row"><h2 style="flex:2">Products</h2><button class="btn" id="refreshProducts">Refresh</button><button class="btn" id="exportJson">Export JSON</button><button class="btn" id="reviewDuplicates" type="button">Review duplicates</button></div><div id="duplicateReview" class="hidden"></div><label>Search products</label><input id="productSearch" placeholder="Search name, category, barcode..."><label class="btn" style="display:block;text-align:center;cursor:pointer">Import catalogue JSON<input id="importJson" type="file" accept=".json,application/json" style="display:none"></label><div id="productList"></div></section>
-<section class="panel"><h2>Business tools</h2><div class="row"><a class="btn" href="orders.html">Orders dashboard</a><a class="btn" href="quotation.html">Quotation builder & client archive</a><a class="btn" href="driver-tracking.html">Driver tracking</a></div><p class="hint">All tools use the signed-in account and selected business ID. They do not use White Pack's Supabase project.</p></section></div></main>
+
+<div class="panel">
+  <h2>Products <span id="count" class="badge">0</span></h2>
+  <div class="hint">Designed for up to 1,000 products. Edit unit labels and prices directly in each row. Tap 📷 Change photo under any product image to replace it immediately—no need to press Edit. Changes save to Supabase automatically.</div>
+
+  <label for="categoryFilter">Filter products by category</label>
+  <select id="categoryFilter">
+    <option value="">All categories</option>
+  </select>
+  <div class="searchBox">
+    <input id="searchInput" type="search"
+           placeholder="🔎 Search product name or description..."
+           autocomplete="off">
+    <button type="button" class="secondary searchClear" id="clearSearch">Clear</button>
+  </div>
+  <div class="hint">Fast reorder: enter the product’s new position within its category (for example, 6 → 1) and tap Move. You can still use the arrows. Changes save to Supabase automatically.</div>
+
+  <div id="searchInfo" class="hint searchInfo"></div>
+  <div id="list"></div>
+  <div class="row">
+    <button class="primary" onclick="downloadJSON()">⬇️ Download products.json</button>
+    <button class="secondary" onclick="document.getElementById('importFile').click()">📥 Import products.json</button>
+    <input id="importFile" type="file" accept=".json,application/json" hidden>
+  </div>
+  <div class="note" style="margin-top:12px">
+    After downloading, upload <b>products.json</b> to the <b>whitepack-clients</b> repository
+    and replace the old file. Your customer catalogue will then use the updated products.
+  </div>
+</div>
+</div>
+
+</div>
+
 <script>
-(()=>{const {sb,esc,slugify,optimizeImage}=MC;const $=id=>document.getElementById(id);let user=null,biz=null,products=[];const setStatus=(m,err=false)=>{$('status').textContent=m;$('status').className='status'+(err?' error':'')};let recoveryMode=new URLSearchParams(location.search).get('type')==='recovery';const show=(id,on=true)=>$(id).classList.toggle('hidden',!on);const parsePrice=v=>v.trim()===''?null:Number(v);const businessUrl=()=>location.origin+location.pathname.replace(/admin\.html?$/,'index.html')+'?shop='+encodeURIComponent(biz.slug);
-async function sessionLoad(){const {data}=await sb.auth.getSession();user=data.session?.user||null;if(!user){show('authPanel');show('createPanel',false);show('app',false);setStatus('Sign in to manage your catalogue.');return}show('authPanel',false);const r=await sb.from('mc_saas_members').select('business_id,role').eq('user_id',user.id).limit(1).maybeSingle();if(r.error){setStatus('Could not check business membership: '+r.error.message,true);return}if(!r.data){show('createPanel');show('app',false);setStatus('Signed in. Create your business profile to continue.');return}const b=await sb.from('mc_saas_businesses').select('*').eq('id',r.data.business_id).maybeSingle();if(b.error||!b.data){setStatus('Could not load your business: '+(b.error?.message||'not found'),true);return}biz=b.data;show('createPanel',false);show('app');fillSettings();await Promise.all([loadProducts(),loadDomains()]);setStatus(biz.is_published?'Business loaded. Your catalogue is published.':'Business loaded. It is private until platform approval.');}
-function fillSettings(){$('businessHeading').textContent=biz.company_name+' · Settings';$('publishStatus').textContent=biz.is_published?'Published':'Awaiting platform approval';$('editCompany').value=biz.company_name||'';$('editSlug').value=biz.slug;$('editWhatsapp').value=biz.whatsapp||'';$('editCurrency').value=biz.currency||'USD';$('brandColor').value=biz.primary_color||'#173f35';$('editDescription').value=biz.description||'';$('catalogueTemplate').value=['classic','premium','fresh'].includes(biz.catalogue_template)?biz.catalogue_template:'classic';$('catalogueLink').textContent=businessUrl();$('openCatalogue').href=businessUrl();}
-async function oauth(provider){try{const redirectTo=location.origin+location.pathname;const {error}=await sb.auth.signInWithOAuth({provider,options:{redirectTo,scopes:provider==='azure'?'email':undefined,queryParams:provider==='google'?{access_type:'offline',prompt:'select_account'}:undefined}});if(error)throw error}catch(e){setStatus('Sign-in could not start: '+e.message,true)}};$('googleSignIn').onclick=()=>oauth('google');$('microsoftSignIn').onclick=()=>oauth('azure');
-$('saveNewPassword').onclick=async()=>{try{const a=$('newPassword').value,b=$('confirmPassword').value;if(a.length<8)throw Error('Use at least 8 characters.');if(a!==b)throw Error('The passwords do not match.');const {error}=await sb.auth.updateUser({password:a});if(error)throw error;recoveryMode=false;$('newPassword').value='';$('confirmPassword').value='';show('resetPanel',false);setStatus('Password changed successfully. You can now manage your catalogue.');await sessionLoad()}catch(e){setStatus('Could not change password: '+e.message,true)}};
-sb.auth.onAuthStateChange((event)=>{if(event==='PASSWORD_RECOVERY'){recoveryMode=true;show('authPanel',false);show('resetPanel');show('createPanel',false);show('app',false);setStatus('Email verified. Choose your new password below.')}else if(event==='SIGNED_IN'){recoveryMode=false;sessionLoad().catch(e=>setStatus(e.message,true))}});
-$('signIn').onclick=async()=>{try{const {error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;await sessionLoad()}catch(e){setStatus(e.message,true)}};
-$('signUp').onclick=async()=>{try{const email=$('email').value.trim(),password=$('password').value;if(password.length<8)throw Error('Use a password with at least 8 characters.');const {data,error}=await sb.auth.signUp({email,password});if(error)throw error;if(data.session){await sessionLoad()}else setStatus('Account created. Check your email to confirm the account, then sign in and create your business.')}catch(e){setStatus(e.message,true)}};
-$('forgot').onclick=async()=>{try{const email=$('email').value.trim();if(!email)throw Error('Enter your email first.');const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname+'?type=recovery'});if(error)throw error;setStatus('If this email belongs to an account, a secure password-reset link has been sent. Check your inbox and spam folder.')}catch(e){setStatus(e.message,true)}};
-$('createBusiness').onclick=async()=>{try{const company=$('company').value.trim(),slug=slugify($('slug').value||company);if(!company||!slug)throw Error('Enter a business name and valid catalogue link name.');const {data,error}=await sb.rpc('mc_saas_create_business',{p_company_name:company,p_slug:slug,p_description:$('description').value.trim(),p_whatsapp:$('whatsapp').value.trim().replace(/\D/g,''),p_currency:$('currency').value});if(error)throw error;setStatus('Business profile created. It is private until the platform owner approves it.');await sessionLoad()}catch(e){setStatus(e.message,true)}};
-$('company').addEventListener('input',()=>{if(!$('slug').dataset.edited)$('slug').value=slugify($('company').value)});$('slug').addEventListener('input',()=>{$('slug').dataset.edited='1';$('slug').value=slugify($('slug').value)});
-$('saveSettings').onclick=async()=>{try{if(!$('editCompany').value.trim())throw Error('Business name is required.');let logo=biz.logo_url||'';const file=$('logoFile').files[0];if(file){const optimized=await optimizeImage(file);const ext=optimized.type==='image/webp'?'webp':'jpg';const path=biz.id+'/logo-'+Date.now()+'.'+ext;const up=await sb.storage.from('mc-saas-images').upload(path,optimized,{upsert:true,contentType:optimized.type});if(up.error)throw up.error;logo=sb.storage.from('mc-saas-images').getPublicUrl(path).data.publicUrl}const payload={company_name:$('editCompany').value.trim(),description:$('editDescription').value.trim(),whatsapp:$('editWhatsapp').value.trim().replace(/\D/g,''),currency:$('editCurrency').value,primary_color:$('brandColor').value,logo_url:logo};const r=await sb.rpc('mc_saas_update_business_settings',{p_business_id:biz.id,p_company_name:payload.company_name,p_description:payload.description,p_whatsapp:payload.whatsapp,p_currency:payload.currency,p_logo_url:payload.logo_url,p_primary_color:payload.primary_color});if(r.error)throw r.error;biz={...biz,...payload};fillSettings();setStatus('Business settings saved securely.')}catch(e){setStatus(e.message,true)}};
-$('saveTemplate').onclick=async()=>{try{const template=$('catalogueTemplate').value;const r=await sb.rpc('mc_saas_update_catalogue_template',{p_business_id:biz.id,p_template:template});if(r.error)throw r.error;biz.catalogue_template=template;setStatus('Catalogue design saved. Refresh the public catalogue to see the change.')}catch(e){setStatus('Could not save catalogue design: '+e.message,true)}};
-$('signOut').onclick=async()=>{await sb.auth.signOut();biz=null;products=[];await sessionLoad()};$('copyLink').onclick=async()=>{try{await navigator.clipboard.writeText(businessUrl());setStatus('Catalogue link copied.')}catch(_){setStatus('Copy this link: '+businessUrl())}};
-$('pPhoto').addEventListener('change',()=>{if($('pPhoto').files[0])setStatus('Photo selected. It will be optimized when you save the product.')});
-function resetProduct(){$('productId').value='';$('pName').value='';$('pCategory').value='';$('pBarcode').value='';$('pPhoto').value='';$('pLabel1').value='Box';$('pPrice1').value='';$('pLabel2').value='Packet';$('pPrice2').value='';$('pDescription').value='';$('pSortOrder').value=String(products.length+1);$('productTitle').textContent='Add a product';$('saveProduct').textContent='Save product'}$('cancelProduct').onclick=resetProduct;
-async function loadProducts(){const r=await sb.from('mc_saas_products').select('*').eq('business_id',biz.id).order('sort_order').order('name');if(r.error)throw r.error;products=r.data||[];renderProducts()}
-function renderProducts(){
- const cats=[...new Set(products.map(p=>p.category).filter(Boolean))].sort();$('categories').innerHTML=cats.map(c=>'<option value="'+esc(c)+'"></option>').join('');
- const q=$('productSearch').value.toLowerCase().trim();const list=products.filter(p=>[p.name,p.category,p.barcode,p.description].join(' ').toLowerCase().includes(q));
- $('productList').innerHTML=list.map(p=>`<article class="item" data-product-row="${esc(p.id)}">
- <div class="itemPhoto"><img src="${esc(p.image||'')}" alt="${esc(p.name)}" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22 viewBox=%220 0 120 120%22%3E%3Crect width=%22120%22 height=%22120%22 fill=%22%23f3f5f3%22/%3E%3Ctext x=%2260%22 y=%2268%22 font-size=%2238%22 text-anchor=%22middle%22 fill=%22%23717d75%22%3E%F0%9F%93%A6%3C/text%3E%3C/svg%3E'"><input type="file" accept="image/*" data-inline-photo="${esc(p.id)}" aria-label="Change photo for ${esc(p.name)}"></div>
- <div><div class="inlineFields">
- <input data-field="name" value="${esc(p.name)}" aria-label="Product name" placeholder="Product name">
- <input data-field="category" value="${esc(p.category||'Products')}" aria-label="Category" placeholder="Category">
- <input data-field="barcode" value="${esc(p.barcode||'')}" aria-label="Barcode or SKU" placeholder="Barcode / SKU">
- <input data-field="sort_order" type="number" min="0" step="1" value="${Number(p.sort_order)||0}" aria-label="Display order" placeholder="Order">
- <input data-field="label1" value="${esc(p.label1||'Box')}" aria-label="First unit" placeholder="First unit">
- <input data-field="price1" type="number" min="0" step="0.01" value="${p.price1==null?'':esc(p.price1)}" aria-label="First price" placeholder="First price">
- <input data-field="label2" value="${esc(p.label2||'Packet')}" aria-label="Second unit" placeholder="Second unit">
- <input data-field="price2" type="number" min="0" step="0.01" value="${p.price2==null?'':esc(p.price2)}" aria-label="Second price" placeholder="Second price">
- <textarea class="wide" data-field="description" aria-label="Description" placeholder="Description / sizes">${esc(p.description||'')}</textarea>
- </div><div class="inlineActions"><button class="btn primary" data-inline-save="${esc(p.id)}">Save this row</button><button class="btn" data-edit="${esc(p.id)}">Open full editor</button><button class="btn danger" data-delete="${esc(p.id)}">Delete</button></div></div></article>`).join('')||'<p class="hint">No products yet.</p>';
-}
-$('productSearch').oninput=renderProducts;$('refreshProducts').onclick=()=>loadProducts().then(()=>setStatus('Products refreshed.')).catch(e=>setStatus(e.message,true));
-$('saveProduct').onclick=async()=>{try{const id=$('productId').value,name=$('pName').value.trim(),category=$('pCategory').value.trim();if(!name||!category)throw Error('Product name and category are required.');const p={business_id:biz.id,name,category,barcode:$('pBarcode').value.trim(),description:$('pDescription').value.trim(),label1:$('pLabel1').value.trim()||'Box',price1:parsePrice($('pPrice1').value),label2:$('pLabel2').value.trim()||'Packet',price2:parsePrice($('pPrice2').value),sort_order:Math.max(0,(Number($('pSortOrder').value)||1)-1),updated_at:new Date().toISOString()};if([p.price1,p.price2].some(v=>v!==null&&(!Number.isFinite(v)||v<0)))throw Error('Prices must be zero or greater.');const file=$('pPhoto').files[0];if(file){const optimized=await optimizeImage(file);const ext=optimized.type==='image/webp'?'webp':'jpg';const path=biz.id+'/'+crypto.randomUUID()+'.'+ext;const up=await sb.storage.from('mc-saas-images').upload(path,optimized,{upsert:false,contentType:optimized.type});if(up.error)throw up.error;p.image=sb.storage.from('mc-saas-images').getPublicUrl(path).data.publicUrl}if(id){const old=products.find(x=>x.id===id);if(!p.image)p.image=old?.image||'';const r=await sb.from('mc_saas_products').update(p).eq('id',id).eq('business_id',biz.id);if(r.error)throw r.error}else{const r=await sb.from('mc_saas_products').insert(p);if(r.error)throw r.error}resetProduct();await loadProducts();setStatus('Product saved to your business catalogue.')}catch(e){setStatus(e.message,true)}};
-$('productList').onchange=async e=>{const input=e.target.closest('[data-inline-photo]');if(!input||!input.files?.[0])return;const id=input.dataset.inlinePhoto;try{setStatus('Uploading product photo…');const optimized=await optimizeImage(input.files[0]);const path=biz.id+'/'+crypto.randomUUID()+'.webp';const up=await sb.storage.from('mc-saas-images').upload(path,optimized,{upsert:false,contentType:optimized.type});if(up.error)throw up.error;const image=sb.storage.from('mc-saas-images').getPublicUrl(path).data.publicUrl;const r=await sb.from('mc_saas_products').update({image,updated_at:new Date().toISOString()}).eq('id',id).eq('business_id',biz.id);if(r.error)throw r.error;await loadProducts();setStatus('Product photo updated.')}catch(err){setStatus('Photo update failed: '+err.message,true)}};
-$('productList').onclick=async e=>{const inline=e.target.closest('[data-inline-save]');if(inline){const id=inline.dataset.inlineSave,row=inline.closest('[data-product-row]');try{const value=k=>row.querySelector(`[data-field="${k}"]`)?.value??'';const name=value('name').trim(),category=value('category').trim();if(!name||!category)throw Error('Product name and category are required.');const parse=v=>String(v).trim()===''?null:Number(v);const price1=parse(value('price1')),price2=parse(value('price2')),sort=Number(value('sort_order'));if([price1,price2].some(v=>v!==null&&(!Number.isFinite(v)||v<0)))throw Error('Prices must be zero or greater.');if(!Number.isFinite(sort)||sort<0)throw Error('Display order must be zero or greater.');const payload={name,category,barcode:value('barcode').trim(),label1:value('label1').trim()||'Box',price1,label2:value('label2').trim()||'Packet',price2,description:value('description').trim(),sort_order:Math.floor(sort),updated_at:new Date().toISOString()};const r=await sb.from('mc_saas_products').update(payload).eq('id',id).eq('business_id',biz.id);if(r.error)throw r.error;await loadProducts();setStatus('Product updated in its row.')}catch(err){setStatus('Could not save this product: '+err.message,true)}return;}const eb=e.target.closest('[data-edit]'),db=e.target.closest('[data-delete]');try{if(eb){const p=products.find(x=>x.id===eb.dataset.edit);if(!p)return;$('productId').value=p.id;$('pName').value=p.name;$('pCategory').value=p.category;$('pBarcode').value=p.barcode||'';$('pLabel1').value=p.label1||'Box';$('pPrice1').value=p.price1??'';$('pLabel2').value=p.label2||'Packet';$('pPrice2').value=p.price2??'';$('pDescription').value=p.description||'';$('pSortOrder').value=String((Number(p.sort_order)||0)+1);$('pPhoto').value='';$('productTitle').textContent='Edit product';$('saveProduct').textContent='Update product';window.scrollTo({top:0,behavior:'smooth'})}if(db&&confirm('Delete this product?')){const r=await sb.from('mc_saas_products').delete().eq('id',db.dataset.delete).eq('business_id',biz.id);if(r.error)throw r.error;await loadProducts();setStatus('Product deleted.')}}catch(e){setStatus(e.message,true)}};
-function normalizedProductKey(v){return String(v??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ')}
-$('reviewDuplicates').onclick=()=>{const groups=new Map();for(const p of products){const name=normalizedProductKey(p.name);if(!name)continue;const key='name:'+name;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(p)}const inNameGroups=new Set([...groups.values()].filter(arr=>arr.length>1).flat().map(p=>p.id));const byCode=new Map();for(const p of products){const code=normalizedProductKey(p.barcode);if(!code||inNameGroups.has(p.id))continue;if(!byCode.has(code))byCode.set(code,[]);byCode.get(code).push(p)}for(const [code,arr] of byCode){if(arr.length>1)groups.set('sku:'+code,arr)}const dup=[...groups.entries()].filter(([,arr])=>arr.length>1);const box=$('duplicateReview');box.classList.remove('hidden');if(!dup.length){box.innerHTML='<p class="status">No exact duplicate names or barcodes were found in this business catalogue.</p>';return}box.innerHTML='<p class="hint">Review each group carefully. Delete only the extra record; this action permanently deletes that product from this business.</p>'+dup.map(([key,arr])=>`<div class="duplicateGroup"><b>${esc(key.replace(/^(sku:|name:)/,''))}</b><span class="pill">${arr.length} records</span>${arr.map((p,i)=>`<div class="duplicateRow"><img src="${esc(p.image||'')}" alt="" onerror="this.style.visibility='hidden'"><div><b>${esc(p.name)}</b><small>${esc(p.category||'')} · ${esc(p.barcode||'No SKU')}</small><small>${esc(p.label1||'Box')}: ${p.price1==null?'—':esc(p.price1)} · ${esc(p.label2||'Packet')}: ${p.price2==null?'—':esc(p.price2)}</small></div>${i===0?'<span class="pill">Keep for now</span>':`<button class="btn danger" data-delete-duplicate="${esc(p.id)}">Delete this extra record</button>`}</div>`).join('')}</div>`).join('');};
-$('duplicateReview').addEventListener('click',async e=>{const b=e.target.closest('[data-delete-duplicate]');if(!b)return;const p=products.find(x=>x.id===b.dataset.deleteDuplicate);if(!p||!confirm('Permanently delete duplicate product "'+p.name+'"? Make sure the first record in this group is the one you want to keep.'))return;try{const r=await sb.from('mc_saas_products').delete().eq('id',p.id).eq('business_id',biz.id);if(r.error)throw r.error;await loadProducts();$('reviewDuplicates').click();setStatus('Duplicate product deleted.')}catch(err){setStatus('Could not delete duplicate: '+err.message,true)}});
-$('exportJson').onclick=()=>{const data={business:{company_name:biz.company_name,description:biz.description,whatsapp:biz.whatsapp,currency:biz.currency},products};const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download=biz.slug+'-catalogue.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
-// Import compatible with both My Catalogue JSON and the working White Pack products.json format.
-async function uploadImportedPhoto(value, productName){
- if(!value || typeof value!=='string') return '';
- if(!value.startsWith('data:image/')) return value; // Keep existing public URLs unchanged.
- const match=value.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([\s\S]*)$/);
- if(!match) throw new Error('Invalid embedded photo for '+productName);
- const mime=match[1], raw=atob(match[2]), bytes=new Uint8Array(raw.length);
- for(let i=0;i<raw.length;i++) bytes[i]=raw.charCodeAt(i);
- const original=new File([bytes],productName.replace(/[^a-z0-9_-]+/gi,'-')+'.'+(mime.includes('webp')?'webp':mime.includes('png')?'png':'jpg'),{type:mime});
- const optimized=await optimizeImage(original);
- const ext=optimized.type==='image/webp'?'webp':'jpg', path=biz.id+'/'+crypto.randomUUID()+'.'+ext;
- const up=await sb.storage.from('mc-saas-images').upload(path,optimized,{upsert:false,contentType:optimized.type});
- if(up.error) throw new Error('Photo upload failed for '+productName+': '+up.error.message);
- return sb.storage.from('mc-saas-images').getPublicUrl(path).data.publicUrl;
-}
-$('importJson').onchange=async e=>{
- const f=e.target.files[0];if(!f)return;
- try{
-  if(!f.size)throw Error('The selected JSON file is empty (0 KB). Choose the original products.json file.');
-  const d=JSON.parse(await f.text());
-  if(!Array.isArray(d.products))throw Error('JSON must contain a products array.');
-  const clean=v=>String(v??'').trim();
-  const norm=v=>clean(v).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
-  const toPrice=v=>v===undefined||v===null||clean(v)===''?null:Number(clean(v).replace(/[$, ]/g,''));
-  const knownNames=new Set(products.map(p=>norm(p.name))), knownCodes=new Set(products.map(p=>norm(p.barcode)).filter(Boolean));
-  const rows=[], inFileNames=new Set(), inFileCodes=new Set();let duplicates=0;
-  for(const raw of d.products){
-   const name=clean(raw.name||raw.product_name||raw.title);if(!name)continue;
-   const barcode=clean(raw.barcode||raw.sku||raw.productCode||raw.code), n=norm(name), c=norm(barcode);
-   if(knownNames.has(n)||(c&&knownCodes.has(c))||(inFileNames.has(n))||(c&&inFileCodes.has(c))){duplicates++;continue}
-   inFileNames.add(n);if(c)inFileCodes.add(c);
-   const p1=toPrice(raw.price1??raw.price??raw.price_1),p2=toPrice(raw.price2??raw.price_2);
-   if([p1,p2].some(v=>v!==null&&(!Number.isFinite(v)||v<0)))throw Error('Invalid price for product '+name);
-   rows.push({raw,name,barcode,category:clean(raw.category||raw.group||'Products')||'Products',description:clean(raw.description||raw.details),label1:clean(raw.price1Label||raw.label1||raw.unit1||'Box')||'Box',price1:p1,label2:clean(raw.price2Label||raw.label2||raw.unit2||'Packet')||'Packet',price2:p2,photo:raw.image||raw.photo||raw.image_url||'',sort_order:rows.length});
+// Public client settings only. Never put a service_role/secret key in this file.
+const SUPABASE_URL = 'https://gaphiedcwueunmfssisz.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_XnMvCbQGs2tGHXQa5Cjbew_vTTM7ubG';
+const SUPABASE_BUCKET = 'wp-product-images';
+const SUPABASE_TABLE = 'wp_products';
+const META_ID = '00000000-0000-4000-8000-000000000001';
+const SESSION_KEY = 'whitepack_supabase_session_v1';
+let supabaseSession = null;
+let currentUser = null;
+let remoteLoaded = false;
+let remoteRows = [];
+let syncingRemote = false;
+let data = {businessName:'White Pack', whatsappOrderNumber:'96181085811', products:[]};
+let photo = '';
+let editIndex = -1;
+const DB_NAME='WhitePackAdminDB', DB_VERSION=1, STORE='catalogue';
+const dbReady=openDB();
+
+const biz = document.getElementById('biz');
+const orderWhatsApp = document.getElementById('orderWhatsApp');
+const settingsStatus = document.getElementById('settingsStatus');
+const file = document.getElementById('file');
+const photoBox = document.getElementById('photoBox');
+const preview = document.getElementById('preview');
+const pt = document.getElementById('pt');
+const nameEl = document.getElementById('name');
+const desc = document.getElementById('desc');
+const price1Label = document.getElementById('price1Label');
+const price1 = document.getElementById('price1');
+const price2Label = document.getElementById('price2Label');
+const price2 = document.getElementById('price2');
+const cat = document.getElementById('cat');
+const list = document.getElementById('list');
+const count = document.getElementById('count');
+const status = document.getElementById('status');
+const addBtn = document.getElementById('addBtn');
+const searchInput = document.getElementById('searchInput');
+const clearSearch = document.getElementById('clearSearch');
+const searchInfo = document.getElementById('searchInfo');
+const categoryFilter = document.getElementById('categoryFilter');
+const categoryList = document.getElementById('categoryList');
+
+initializeApp();
+
+file.addEventListener('change', async function(e){
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  if(!f.type || !f.type.startsWith('image/')){
+    alert('Please choose an image file.');
+    file.value='';
+    return;
   }
-  if(!rows.length)throw Error('No new products to import. '+duplicates+' duplicate(s) were found by product name or barcode.');
-  if(!confirm('Import '+rows.length+' new product(s) into '+biz.company_name+'? '+duplicates+' duplicate(s) will be skipped. Existing products will not be deleted. Embedded photos will be optimized and uploaded to this business storage.'))return;
-  let saved=0,failed=0,photos=0;const errors=[];
-  for(let i=0;i<rows.length;i++){
-   const r=rows[i];
-   try{
-    let image='';if(r.photo){image=await uploadImportedPhoto(String(r.photo),r.name);if(image)photos++}
-    const p={business_id:biz.id,name:r.name,category:r.category,description:r.description,image,barcode:r.barcode,label1:r.label1,price1:r.price1,label2:r.label2,price2:r.price2,sort_order:r.sort_order,is_active:true,updated_at:new Date().toISOString()};
-    const ins=await sb.from('mc_saas_products').insert(p);if(ins.error)throw ins.error;
-    saved++;if(r.barcode)knownCodes.add(norm(r.barcode));knownNames.add(norm(r.name));
-    setStatus('Importing '+(i+1)+'/'+rows.length+': '+r.name+' · '+saved+' saved, '+failed+' failed');
-   }catch(err){failed++;errors.push(r.name+': '+err.message)}
+  try {
+    show('⏳ Processing photo...');
+    photo = await compressImage(f, 1200, 0.84);
+    preview.src = photo;
+    preview.style.display = 'block';
+    pt.style.display = 'none';
+    show('✅ Photo ready — ' + Math.max(1, Math.round((photo.length * 3 / 4) / 1024)) + ' KB, optimized for sharp catalogue display.');
+  } catch(err) {
+    console.error(err);
+    photo='';
+    preview.removeAttribute('src');
+    preview.style.display='none';
+    pt.style.display='block';
+    alert('Could not read this photo. Please try another JPG or PNG.');
   }
-  await loadProducts();setStatus('JSON import finished: '+saved+' saved, '+failed+' failed, '+photos+' embedded photo(s) uploaded. '+duplicates+' duplicate(s) skipped.'+(errors.length?' First error: '+errors[0]:''),failed>0);
- }catch(err){setStatus('Import failed: '+err.message,true)}finally{e.target.value=''}
-};
-// Bulk Excel/CSV import with assisted photo matching. Uses the existing product schema and business-scoped storage.
-const bulkState={rows:[],photos:[],analyzed:false,busy:false};
-const normBulk=v=>String(v??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i,'').replace(/[^a-z0-9]+/g,' ').trim().replace(/\s+/g,' ');
-const getCell=(row,aliases)=>{for(const k of Object.keys(row)){const nk=normBulk(k);if(aliases.includes(nk))return row[k]}return ''};
-const numBulk=v=>v===undefined||v===null||String(v).trim()===''?null:Number(String(v).replace(/[, ]/g,''));
-function mapBulkRow(raw,i){
-  const name=String(getCell(raw,['product name','name','product','item name','item'])||'').trim();
-  const category=String(getCell(raw,['category','product category','group','type'])||'Products').trim()||'Products';
-  const barcode=String(getCell(raw,['barcode','sku','product code','code','item code','ean'])||'').trim();
-  const label1=String(getCell(raw,['label1','unit1','unit 1','first unit','unit','packaging 1','price unit 1'])||'Box').trim()||'Box';
-  const price1=numBulk(getCell(raw,['price1','price 1','first price','unit price 1','price','selling price','wholesale price']));
-  const label2=String(getCell(raw,['label2','unit2','unit 2','second unit','packaging 2','price unit 2'])||'Packet').trim()||'Packet';
-  const price2=numBulk(getCell(raw,['price2','price 2','second price','unit price 2','retail price']));
-  const description=String(getCell(raw,['description','details','specification','specifications','size','notes'])||'').trim();
-  const sortRaw=getCell(raw,['display order','display order number','sort order','sort_order','position','order']);
-  const parsedOrder=String(sortRaw).trim()===''?i:Number(sortRaw)-1;
-  const sortOrder=Number.isFinite(parsedOrder)&&parsedOrder>=0?parsedOrder:i;
-  const photoName=String(getCell(raw,['photo','image','image filename','photo filename','image file','photo file','picture'])||'').trim();
-  return {rowNo:i+2,name,category,barcode,label1,price1,label2,price2,description,photoName,sortOrder,photo:null,matchType:'',selected:true,problem:''};
+});
+
+photoBox.addEventListener('click', function(e){
+  if(e.target !== file) file.click();
+});
+
+photoBox.addEventListener('keydown', function(e){
+  if(e.key === 'Enter' || e.key === ' '){
+    e.preventDefault();
+    file.click();
+  }
+});
+
+function compressImage(file,maxSize=1200,quality=0.84){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=function(e){
+      const img=new Image();
+      img.onload=async function(){
+        try{
+          let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+          if(!w||!h) throw new Error('Invalid image');
+          const scale=Math.min(1,maxSize/Math.max(w,h));
+          w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+          const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+          const ctx=canvas.getContext('2d',{alpha:false});
+          if(!ctx) throw new Error('Canvas unavailable');
+          ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
+          const encode=(type,q)=>new Promise((res,rej)=>{
+            canvas.toBlob(blob=>blob?res(blob):rej(new Error('Image encoding failed')),type,q);
+          });
+          let type='image/webp', blob=null;
+          try{
+            blob=await encode(type,quality);
+            if(!blob.type || blob.type!=='image/webp') throw new Error('WebP encoding unsupported');
+          }catch(_){
+            type='image/jpeg';
+            blob=await encode(type,quality);
+          }
+          for(const q of [0.80,0.76,0.72,0.68]){
+            if(blob.size<=280*1024) break;
+            blob=await encode(type,q);
+          }
+          if(blob.size>380*1024 && Math.max(w,h)>900){
+            const scaleDown=900/Math.max(w,h);
+            const nw=Math.max(1,Math.round(w*scaleDown)), nh=Math.max(1,Math.round(h*scaleDown));
+            canvas.width=nw; canvas.height=nh;
+            const ctx2=canvas.getContext('2d',{alpha:false});
+            ctx2.fillStyle='#fff'; ctx2.fillRect(0,0,nw,nh); ctx2.drawImage(img,0,0,nw,nh);
+            blob=await encode(type,0.76);
+          }
+          const outReader=new FileReader();
+          outReader.onload=()=>resolve(outReader.result);
+          outReader.onerror=()=>reject(new Error('Could not read optimized image'));
+          outReader.readAsDataURL(blob);
+        }catch(err){reject(err);}
+      };
+      img.onerror=()=>reject(new Error('Image decode failed'));
+      img.src=e.target.result;
+    };
+    reader.onerror=()=>reject(new Error('File read failed'));
+    reader.readAsDataURL(file);
+  });
 }
-function photoScore(row,file){
- const fn=normBulk(file.name), name=normBulk(row.name), code=normBulk(row.barcode);
- if(row.photoName && normBulk(row.photoName)===fn)return 120;
- if(code && fn===code)return 115;
- if(name && fn===name)return 110;
- if(code && fn.includes(code))return 95;
- if(name && fn.includes(name))return 90;
- const a=new Set(name.split(' ').filter(t=>t.length>1)), b=new Set(fn.split(' ').filter(t=>t.length>1));
- if(!a.size||!b.size)return 0;
- const overlap=[...a].filter(t=>b.has(t)).length;
- return Math.round(70*overlap/a.size);
+async function saveSettings(){
+  const digits=orderWhatsApp.value.trim().replace(/\D/g,'');
+  if(digits.length<8||digits.length>15){
+    settingsStatus.textContent='Enter a valid international WhatsApp number (8–15 digits, including country code).';
+    settingsStatus.style.color='#b91c1c';
+    return;
+  }
+  const previous={businessName:data.businessName,whatsappOrderNumber:data.whatsappOrderNumber};
+  data.businessName=biz.value.trim()||'White Pack';
+  data.whatsappOrderNumber=digits;
+  const btn=document.getElementById('saveSettingsBtn');
+  btn.disabled=true;
+  settingsStatus.textContent='Saving settings to Supabase…';
+  settingsStatus.style.color='#475569';
+  try{
+    await saveCatalogue(data);
+    settingsStatus.textContent='✅ Settings saved. New orders will open WhatsApp number +' + digits + '.';
+    settingsStatus.style.color='#166534';
+    show('Company settings saved to Supabase.');
+  }catch(e){
+    data.businessName=previous.businessName;
+    data.whatsappOrderNumber=previous.whatsappOrderNumber;
+    orderWhatsApp.value=data.whatsappOrderNumber||'96181085811';
+    settingsStatus.textContent='Could not save settings. Check your admin sign-in and connection, then try again.';
+    settingsStatus.style.color='#b91c1c';
+  }finally{btn.disabled=false;}
 }
-function autoMatchPhoto(row){
- if(!bulkState.photos.length)return;
- const ranked=bulkState.photos.map(file=>({file,score:photoScore(row,file)})).sort((a,b)=>b.score-a.score);
- if(ranked[0]?.score>=70){row.photo=ranked[0].file;row.matchType=ranked[0].score>=90?'Likely match':'Possible match'}
- else {row.photo=null;row.matchType='Choose photo'}
+
+async function saveProduct(){
+  const n=nameEl.value.trim();
+  if(!n){alert('Enter a product name.');return;}
+  if(!photo && editIndex<0){alert('Choose a product photo.');return;}
+
+  data.businessName=biz.value.trim() || 'White Pack';
+  data.whatsappOrderNumber=(orderWhatsApp.value.trim().replace(/\D/g,''))||data.whatsappOrderNumber||'96181085811';
+  const firstLabel=price1Label.value.trim() || 'Box';
+  const firstPrice=price1.value.replace(/[^0-9.]/g,'');
+  const secondLabel=price2Label.value.trim() || 'Packet';
+  const secondPrice=price2.value.replace(/[^0-9.]/g,'');
+  const product={
+    ...(editIndex>=0 ? data.products[editIndex] : {}),
+    name:n,
+    description:desc.value.trim(),
+    price:firstPrice, // backward compatibility with the old catalogue field
+    price1Label:firstLabel,
+    price1:firstPrice,
+    price2Label:secondLabel,
+    price2:secondPrice,
+    category:cat.value.trim() || 'Products',
+    photo: photo || (editIndex>=0 ? data.products[editIndex].photo : '')
+  };
+
+  const oldProducts=data.products.slice();
+
+  if(editIndex>=0) data.products[editIndex]=product;
+  else data.products.push(product);
+
+  try{ await saveCatalogue(data); }catch(err){ data.products=oldProducts; alert('Could not save the catalogue.'); return; }
+
+  show(editIndex>=0 ? '✅ Product updated.' : '✅ Product added.');
+  clearForm();
+  render();
 }
-function loadXlsxReader(){return new Promise((resolve,reject)=>{if(window.XLSX){resolve(window.XLSX);return}const sources=['https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js','https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'];let index=0;const next=()=>{if(window.XLSX){resolve(window.XLSX);return}if(index>=sources.length){reject(new Error('Excel reader could not load. Refresh the page or import a CSV file.'));return}const s=document.createElement('script');s.src=sources[index++];s.async=true;s.onload=()=>window.XLSX?resolve(window.XLSX):next();s.onerror=next;document.head.appendChild(s)};next()})}
-function setBulkSummary(message){$('bulkSummary').textContent=message}
-let photoPickerRow=-1;
-function renderBulkPreview(){
- const rows=bulkState.rows;
- if(!rows.length){$('bulkPreview').innerHTML='';return}
- $('bulkPreview').innerHTML=`<table style="width:100%;min-width:850px;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:8px">Import</th><th style="text-align:left;padding:8px">Product / details</th><th style="text-align:left;padding:8px">Prices</th><th style="text-align:left;padding:8px">Photo match</th><th style="text-align:left;padding:8px">Order</th><th style="text-align:left;padding:8px">Status</th></tr></thead><tbody>${rows.map((r,i)=>`<tr style="border-top:1px solid #e5e7eb"><td style="padding:8px"><input type="checkbox" data-bulk-select="${i}" ${r.selected?'checked':''} style="width:auto"></td><td style="padding:8px"><b>${esc(r.name||'(Missing name)')}</b><br><small>${esc(r.category)} · ${esc(r.barcode||'No SKU')}</small><br><small>${esc(r.description)}</small></td><td style="padding:8px">${esc(r.label1)}: ${r.price1===null?'—':esc(r.price1)}<br>${esc(r.label2)}: ${r.price2===null?'—':esc(r.price2)}</td><td style="padding:8px;min-width:190px">${r.photo?`<img src="${URL.createObjectURL(r.photo)}" alt="" style="display:block;width:100px;height:86px;object-fit:contain;background:#f5f7f5;border:1px solid #dce4dd;border-radius:8px;margin-bottom:6px">`:''}<button class="btn" type="button" data-choose-photo="${i}">${r.photo?'Change photo':'Choose photo'}</button><small style="display:block;margin-top:5px">${r.photo?esc(r.photo.name):'No photo selected'}</small></td><td style="padding:8px">${r.sortOrder+1}</td><td style="padding:8px">${esc(r.problem||r.matchType||'Ready')}</td></tr>`).join('')}</tbody></table>`;
- $('bulkPreview').querySelectorAll('[data-choose-photo]').forEach(btn=>btn.onclick=()=>openPhotoPicker(Number(btn.dataset.choosePhoto)));
- $('bulkPreview').querySelectorAll('[data-bulk-select]').forEach(cb=>cb.onchange=()=>{bulkState.rows[Number(cb.dataset.bulkSelect)].selected=cb.checked;updateBulkCount()});
- $('runBulkImport').disabled=!rows.some(r=>r.selected&&!r.problem);
+
+function editProduct(i){
+  const p=data.products[i];
+  editIndex=i;
+  biz.value=data.businessName||'White Pack';
+  nameEl.value=p.name||'';
+  desc.value=p.description||'';
+  price1Label.value=p.price1Label||'Box';
+  price1.value=p.price1??p.price??'';
+  price2Label.value=p.price2Label||'Packet';
+  price2.value=p.price2??'';
+  cat.value=p.category||'Products';
+  photo=p.photo||'';
+  if(photo){preview.src=photo;preview.style.display='block';pt.style.display='none';}
+  addBtn.textContent='💾 Save Changes';
+  window.scrollTo({top:0,behavior:'smooth'});
 }
-function openPhotoPicker(rowIndex){
- photoPickerRow=rowIndex;
- const row=bulkState.rows[rowIndex];
- $('photoPickerFor').textContent='Choose a photo for: '+row.name;
- const current=bulkState.photos.indexOf(row.photo);
- $('photoGallery').innerHTML=`<button type="button" class="btn" data-gallery-photo="-1" style="min-height:150px">No photo</button>`+bulkState.photos.map((f,i)=>`<button type="button" data-gallery-photo="${i}" class="btn" style="background:${i===current?'#d8eee3':'#f4f7f4'};color:#173f35;padding:8px;min-width:0"><img src="${URL.createObjectURL(f)}" alt="" style="width:100%;height:105px;object-fit:contain;background:#fff;border-radius:7px"><span style="display:block;font-size:12px;overflow-wrap:anywhere;margin-top:6px">${esc(f.name)}</span></button>`).join('');
- $('photoPicker').classList.remove('hidden');
- $('photoGallery').querySelectorAll('[data-gallery-photo]').forEach(btn=>btn.onclick=()=>{
-  const n=Number(btn.dataset.galleryPhoto);
-  bulkState.rows[photoPickerRow].photo=n<0?null:bulkState.photos[n];
-  bulkState.rows[photoPickerRow].matchType=n<0?'No photo':'Manually selected';
-  $('photoPicker').classList.add('hidden');
-  renderBulkPreview();updateBulkCount();
- });
+
+async function del(i){
+  if(!confirm('Delete this product?')) return;
+  data.products.splice(i,1);
+  try{ await saveCatalogue(data); }catch(err){ alert('Could not save the catalogue to Supabase. Please check your sign-in and connection.'); return; }
+  render();
+  show('Product deleted from Supabase.');
 }
-$('closePhotoPicker').onclick=()=>$('photoPicker').classList.add('hidden');
-function updateBulkCount(){const selected=bulkState.rows.filter(r=>r.selected&&!r.problem).length,matched=bulkState.rows.filter(r=>r.selected&&r.photo&&!r.problem).length;setBulkSummary(`${bulkState.rows.length} spreadsheet rows · ${selected} selected to import · ${matched} selected with photos. You can import without a photo and add it later.`);$('runBulkImport').disabled=selected===0||bulkState.busy}
-$('bulkPhotos').addEventListener('change',()=>{bulkState.photos=Array.from($('bulkPhotos').files||[]);if(bulkState.rows.length){bulkState.rows.forEach(autoMatchPhoto);renderBulkPreview();updateBulkCount()}setStatus(`${bulkState.photos.length} photo(s) selected.`,false)});
-$('analyzeBulk').onclick=async()=>{
- try{
-  const f=$('bulkSheet').files[0];if(!f)throw Error('Choose an Excel or CSV file first.');
-  const XLSX=await loadXlsxReader();
-   const ab=await f.arrayBuffer(),wb=XLSX.read(ab,{type:'array'}),sheet=wb.Sheets[wb.SheetNames[0]],raw=XLSX.utils.sheet_to_json(sheet,{defval:'',raw:false});
-  if(!raw.length)throw Error('The first sheet has no product rows.');
-  bulkState.photos=Array.from($('bulkPhotos').files||[]);
-  bulkState.rows=raw.map((r,i)=>mapBulkRow(r,i)).filter(r=>r.name);
-  if(!bulkState.rows.length)throw Error('No product names found. Add a column named Product Name or Name.');
-  bulkState.rows.forEach(r=>{if([r.price1,r.price2].some(v=>v!==null&&(!Number.isFinite(v)||v<0)))r.problem='Invalid price';autoMatchPhoto(r)});
-  bulkState.analyzed=true;renderBulkPreview();updateBulkCount();
-  setStatus('Spreadsheet analyzed. Review photo matches before importing.');
- }catch(e){setStatus('Could not analyze spreadsheet: '+e.message,true)}
-};
-$('clearBulk').onclick=()=>{$('bulkSheet').value='';$('bulkPhotos').value='';bulkState.rows=[];bulkState.photos=[];bulkState.analyzed=false;$('bulkPreview').innerHTML='';$('runBulkImport').disabled=true;setBulkSummary('');setStatus('Bulk import cleared.')};
-$('runBulkImport').onclick=async()=>{
- if(bulkState.busy)return;
- const chosen=bulkState.rows.filter(r=>r.selected&&!r.problem);
- if(!chosen.length){setStatus('Select at least one valid product to import.',true);return}
- const skip=true; // Safety: do not create duplicates; matching rows are skipped.
- const existingNames=new Set(products.map(p=>normBulk(p.name)));
- const existingCodes=new Set(products.map(p=>normBulk(p.barcode)).filter(Boolean));
- const seenNames=new Set(),seenCodes=new Set();const duplicateInFile=new Set();for(const row of chosen){const n=normBulk(row.name),c=normBulk(row.barcode);if((n&&seenNames.has(n))||(c&&seenCodes.has(c)))duplicateInFile.add(row);if(n)seenNames.add(n);if(c)seenCodes.add(c)}
- const isExistingDuplicate=r=>(r.barcode&&existingCodes.has(normBulk(r.barcode)))||existingNames.has(normBulk(r.name));
- const duplicateRows=chosen.filter(r=>isExistingDuplicate(r)||duplicateInFile.has(r));
- const proceed=skip?chosen.filter(r=>!isExistingDuplicate(r)&&!duplicateInFile.has(r)):chosen;
- if(!proceed.length){setStatus('No new products to import: every selected row matches an existing product or a repeated row in this spreadsheet. Existing records were left unchanged.',true);return}
- if(!confirm(`Import ${proceed.length} product(s) into ${biz.company_name}?${duplicateRows.length&&skip?` ${duplicateRows.length} duplicate(s) will be skipped.`:''} This will not delete existing products.`))return;
- bulkState.busy=true;$('runBulkImport').disabled=true;let ok=0,failed=0,photoCount=0;const failures=[];
- try{
-  for(let i=0;i<proceed.length;i++){
-   const row=proceed[i];
-   try{
-    const p={business_id:biz.id,name:row.name,category:row.category||'Products',description:row.description||'',image:'',barcode:row.barcode||'',label1:row.label1||'Box',price1:row.price1,label2:row.label2||'Packet',price2:row.price2,sort_order:Number.isFinite(row.sortOrder)?row.sortOrder:products.length+ok,is_active:true,updated_at:new Date().toISOString()};
-    if(row.photo){
-     const optimized=await optimizeImage(row.photo);
-     const ext=optimized.type==='image/webp'?'webp':'jpg';
-     const path=biz.id+'/'+crypto.randomUUID()+'.'+ext;
-     const up=await sb.storage.from('mc-saas-images').upload(path,optimized,{upsert:false,contentType:optimized.type});
-     if(up.error)throw Error('Photo upload failed: '+up.error.message);
-     p.image=sb.storage.from('mc-saas-images').getPublicUrl(path).data.publicUrl;photoCount++;
+
+function clearForm(){
+  editIndex=-1;
+  photo='';
+  nameEl.value='';
+  desc.value='';
+  price1Label.value='Box';
+  price1.value='';
+  price2Label.value='Packet';
+  price2.value='';
+  cat.value='';
+  file.value='';
+  preview.src='';
+  preview.style.display='none';
+  pt.style.display='block';
+  addBtn.textContent='➕ Add Product';
+}
+
+const authPanel=document.getElementById('authPanel');
+const editorArea=document.getElementById('editorArea');
+const authStatus=document.getElementById('authStatus');
+const authEmail=document.getElementById('authEmail');
+const authPassword=document.getElementById('authPassword');
+const signInBtn=document.getElementById('signInBtn');
+const signOutBtn=document.getElementById('signOutBtn');
+function authMessage(message,isError=false){authStatus.textContent=message;authStatus.style.color=isError?'#b91c1c':'#166534';}
+function apiHeaders(token){return {'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+(token||SUPABASE_PUBLISHABLE_KEY),'Content-Type':'application/json'};}
+async function apiJson(url,options={}){
+  const response=await fetch(url,options);
+  const raw=await response.text(); let body=null; try{body=raw?JSON.parse(raw):null;}catch(_){body={message:raw};}
+  if(!response.ok) throw new Error((body&&(body.msg||body.message||body.error_description||body.error))||('Supabase request failed ('+response.status+')'));
+  return body;
+}
+function saveSession(session){supabaseSession=session;try{if(session)localStorage.setItem(SESSION_KEY,JSON.stringify(session));else localStorage.removeItem(SESSION_KEY);}catch(_){} }
+async function refreshSessionIfNeeded(){
+  if(!supabaseSession||!supabaseSession.refresh_token)return false;
+  if(!supabaseSession.expires_at||Date.now()<supabaseSession.expires_at*1000-60000)return true;
+  try{const refreshed=await apiJson(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:apiHeaders(),body:JSON.stringify({refresh_token:supabaseSession.refresh_token})});
+    refreshed.expires_at=Math.floor(Date.now()/1000)+(refreshed.expires_in||3600);saveSession(refreshed);return true;
+  }catch(e){saveSession(null);currentUser=null;return false;}
+}
+async function authFetch(url,options={}){
+  if(!await refreshSessionIfNeeded()) throw new Error('Your session expired. Please sign in again.');
+  const headers={...apiHeaders(supabaseSession.access_token),...(options.headers||{})};
+  return apiJson(url,{...options,headers});
+}
+async function signIn(){
+  const email=authEmail.value.trim(),password=authPassword.value;
+  if(!email||!password){authMessage('Enter your admin email and password.',true);return;}
+  signInBtn.disabled=true;authMessage('Signing in…');
+  try{
+    const session=await apiJson(SUPABASE_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:apiHeaders(),body:JSON.stringify({email,password})});
+    session.expires_at=Math.floor(Date.now()/1000)+(session.expires_in||3600);saveSession(session);
+    await activateAdmin();authPassword.value='';
+  }catch(e){saveSession(null);authMessage('Sign-in failed: '+e.message,true);}
+  finally{signInBtn.disabled=false;}
+}
+async function signOut(){saveSession(null);currentUser=null;remoteLoaded=false;editorArea.hidden=true;signOutBtn.hidden=true;signInBtn.hidden=false;authPanel.hidden=false;authMessage('Signed out.');}
+async function initializeApp(){
+  try{const saved=await dbGet();if(saved&&Array.isArray(saved.products))data=saved;data.whatsappOrderNumber=data.whatsappOrderNumber||'96181085811';normalizePriceOrder(data.products);biz.value=data.businessName||'White Pack';orderWhatsApp.value=data.whatsappOrderNumber;}
+  catch(e){console.warn('Local cache unavailable',e);}
+  let stored=null;try{stored=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch(_){}
+  if(stored){saveSession(stored);try{await activateAdmin();return;}catch(e){saveSession(null);authMessage('Please sign in again.');}}
+  authPanel.hidden=false;editorArea.hidden=true;
+}
+async function activateAdmin(){
+  if(!await refreshSessionIfNeeded())throw new Error('Please sign in again.');
+  const user=await authFetch(SUPABASE_URL+'/auth/v1/user',{method:'GET',headers:{}});
+  currentUser=user;
+  authMessage('Signed in. Loading catalogue from Supabase…');
+  const rows=await authFetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE+'?select=id,product_data,sort_order,updated_at&order=sort_order.asc',{method:'GET',headers:{}});
+  if(!Array.isArray(rows))throw new Error('Unexpected product table response.');
+  remoteRows=rows;
+  const meta=rows.find(r=>r.id===META_ID||r.product_data&&r.product_data._wp_meta===true);
+  const products=rows.filter(r=>r.id!==META_ID&&!(r.product_data&&r.product_data._wp_meta===true)).map(r=>({...r.product_data,_supabaseId:r.id}));
+  data={businessName:(meta&&meta.product_data&&meta.product_data.businessName)||'White Pack',whatsappOrderNumber:(meta&&meta.product_data&&meta.product_data.whatsappOrderNumber)||'96181085811',categoryOrder:(meta&&meta.product_data&&Array.isArray(meta.product_data.categoryOrder))?meta.product_data.categoryOrder:[],products};
+  normalizePriceOrder(data.products);biz.value=data.businessName||'White Pack';orderWhatsApp.value=data.whatsappOrderNumber||'96181085811';
+  remoteLoaded=true;await dbPut(data);render();
+  authPanel.hidden=false;editorArea.hidden=false;signInBtn.hidden=true;signOutBtn.hidden=false;
+  authMessage('Connected to Supabase. '+products.length+' products loaded.');
+}
+async function uploadPhotoIfNeeded(product){
+  if(!product.photo||!product.photo.startsWith('data:image/'))return product.photo||'';
+  const match=product.photo.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/s);
+  if(!match)throw new Error('A product photo has an invalid image format.');
+  const mime=match[1],base64=match[2];
+  const ext=mime.includes('png')?'png':mime.includes('webp')?'webp':'jpg';
+  // Use a timestamp plus UUID to avoid object-name collisions during JSON imports.
+  const makePath=()=> 'products/'+Date.now()+'-'+crypto.randomUUID()+'.'+ext;
+  const bytes=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));
+  let path=makePath();
+  let response=await fetch(SUPABASE_URL+'/storage/v1/object/'+SUPABASE_BUCKET+'/'+path,{method:'POST',headers:{'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+supabaseSession.access_token,'Content-Type':mime,'x-upsert':'false'},body:bytes});
+  // If Storage reports an existing object, retry once with a fresh unique name.
+  if(!response.ok){
+    const firstError=await response.clone().text();
+    if(/already exists|duplicate/i.test(firstError)){
+      path=makePath();
+      response=await fetch(SUPABASE_URL+'/storage/v1/object/'+SUPABASE_BUCKET+'/'+path,{method:'POST',headers:{'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+supabaseSession.access_token,'Content-Type':mime,'x-upsert':'false'},body:bytes});
     }
-    const ins=await sb.from('mc_saas_products').insert(p);
-    if(ins.error)throw ins.error;
-    ok++;
-    setStatus(`Importing ${i+1}/${proceed.length}: ${row.name} · ${ok} saved, ${failed} failed`);
-   }catch(err){failed++;failures.push(`${row.name}: ${err.message}`)}
   }
-  await loadProducts();
-  const dupMsg=duplicateRows.length&&skip?` Skipped ${duplicateRows.length} duplicate row(s) (existing products or repeated rows in this spreadsheet).`:'';
-  setStatus(`Bulk import finished: ${ok} saved, ${failed} failed, ${photoCount} photo(s) uploaded.${dupMsg}${failures.length?' First error: '+failures[0]:''}`,failed>0);
-  setBulkSummary(`Finished: ${ok} saved · ${failed} failed · ${photoCount} photos uploaded.${dupMsg}`);
- }catch(e){setStatus('Bulk import stopped: '+e.message,true)}
- finally{bulkState.busy=false;$('runBulkImport').disabled=!bulkState.rows.some(r=>r.selected&&!r.problem)}
-};
+  const raw=await response.text();if(!response.ok){let msg=raw;try{const j=JSON.parse(raw);msg=j.message||j.error||raw;}catch(_){}throw new Error('Photo upload failed: '+msg);}
+  return SUPABASE_URL+'/storage/v1/object/public/'+SUPABASE_BUCKET+'/'+path;
+}
+async function syncCatalogueToSupabase(v){
+  if(!currentUser||!remoteLoaded)return;
+  if(syncingRemote)throw new Error('A Supabase save is already running. Please wait and try again.');
+  syncingRemote=true;
+  try{
+    const rows=[];
+    rows.push({id:META_ID,product_data:{_wp_meta:true,businessName:v.businessName||'White Pack',whatsappOrderNumber:String(v.whatsappOrderNumber||'96181085811'),categoryOrder:Array.isArray(v.categoryOrder)?v.categoryOrder:[]},sort_order:-1,updated_at:new Date().toISOString()});
+    for(let i=0;i<(v.products||[]).length;i++){
+      const p=v.products[i];
+      if(!p._supabaseId)p._supabaseId=crypto.randomUUID();
+      p.photo=await uploadPhotoIfNeeded(p);
+      const productData={...p};delete productData._supabaseId;
+      rows.push({id:p._supabaseId,product_data:productData,sort_order:i,updated_at:new Date().toISOString()});
+    }
+    // Bulk upsert keeps large catalogues to a small number of requests.
+    await authFetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE+'?on_conflict=id',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(rows)});
+    const keep=new Set(rows.map(r=>r.id));
+    const stale=remoteRows.filter(r=>!keep.has(r.id));
+    for(const row of stale){await authFetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE+'?id=eq.'+encodeURIComponent(row.id),{method:'DELETE',headers:{'Prefer':'return=minimal'}});}
+    remoteRows=rows.map(r=>({id:r.id,product_data:r.product_data,sort_order:r.sort_order,updated_at:r.updated_at}));
+    // Store the remote image URLs and generated row IDs in the local cache too.
+    await dbPut(v);
+  }finally{syncingRemote=false;}
+}
+async function saveCatalogue(v){
+  await dbPut(v);
+  if(currentUser&&remoteLoaded){await syncCatalogueToSupabase(v);}
+}
+function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,DB_VERSION);r.onupgradeneeded=()=>r.result.createObjectStore(STORE);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+async function dbGet(){const db=await dbReady;return new Promise((resolve,reject)=>{const r=db.transaction(STORE,'readonly').objectStore(STORE).get('catalogue');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+async function dbPut(v){const db=await dbReady;return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(v,'catalogue');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}
+async function persist(){try{await saveCatalogue(data);return true;}catch(e){console.error(e);return false;}}
+
+function render(){
+  const q=(searchInput ? searchInput.value : '').trim().toLowerCase();
+  const selectedCategory=(categoryFilter ? categoryFilter.value : '').trim();
+  const allProducts=data.products||[];
+
+  // Keep the category filter options up to date without resetting the user's selection.
+  if(categoryFilter){
+    const previous=categoryFilter.value;
+    const cats=getCategories();
+    categoryFilter.innerHTML='<option value="">All categories</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    categoryFilter.value=cats.includes(previous)?previous:'';
+  }
+
+  count.textContent=allProducts.length;
+
+  if(!allProducts.length){
+    if(searchInfo) searchInfo.textContent='';
+    list.innerHTML='<div class="hint">No products yet. Add your first product above.</div>';
+    return;
+  }
+
+  const activeCategory=categoryFilter ? categoryFilter.value.trim() : '';
+  const matches=allProducts.map((p,i)=>({p,i})).filter(({p})=>{
+    const productCategory=(p.category||'Products').trim()||'Products';
+    if(activeCategory && productCategory!==activeCategory) return false;
+    if(!q) return true;
+    return [
+      p.name,
+      p.description,
+      p.price, p.price1Label, p.price1, p.price2Label, p.price2
+    ].some(v=>String(v||'').toLowerCase().includes(q));
+  });
+
+  if(searchInfo){
+    searchInfo.textContent=q
+      ? `Showing ${matches.length} of ${allProducts.length} products`
+      : `${allProducts.length} products`;
+  }
+
+  if(!matches.length){
+    list.innerHTML='<div class="hint">🔎 No products found. Try another search.</div>';
+    return;
+  }
+
+  renderCategories();
+
+  list.innerHTML=matches.map(({p,i})=>`
+    <div class="item">
+      <div class="productPhotoWrap">
+        <img src="${p.photo||''}" alt="Photo of ${esc(p.name)}" loading="lazy" decoding="async">
+        <button type="button" class="changePhotoBtn" onclick="document.getElementById('replacePhoto_${i}').click()">📷 Change photo</button>
+        <input class="photoReplaceInput" id="replacePhoto_${i}" type="file" accept="image/*" onchange="changeProductPhoto(${i},this)">
+      </div>
+      <div class="productInfo">
+        <b>${esc(p.name)}</b>
+        <div class="inlinePriceGrid" aria-label="Inline unit and price editor">
+          <div class="inlinePriceUnit">
+            <label>First unit / price</label>
+            <input class="unitLabel" aria-label="First unit label" value="${esc(p.price1Label||'Box')}" onchange="updateInlinePrice(${i},'price1Label',this.value)" placeholder="Box">
+            <input aria-label="First price in USD" inputmode="decimal" value="${esc(p.price1??p.price??'')}" onchange="updateInlinePrice(${i},'price1',this.value)" placeholder="Price USD">
+          </div>
+          <div class="inlinePriceUnit">
+            <label>Second unit / price</label>
+            <input class="unitLabel" aria-label="Second unit label" value="${esc(p.price2Label||'Packet')}" onchange="updateInlinePrice(${i},'price2Label',this.value)" placeholder="Packet">
+            <input aria-label="Second price in USD" inputmode="decimal" value="${esc(p.price2??'')}" onchange="updateInlinePrice(${i},'price2',this.value)" placeholder="Price USD">
+          </div>
+        </div>
+        <div class="inlineSaved" id="inlineSaved_${i}"></div>
+        <span class="productCategory">📂 ${esc(p.category||'Products')}</span>
+      </div>
+      <div class="productActions">
+        <button class="orderBtn" onclick="moveProduct(${i},-1)" title="Move up">⬆️</button>
+        <button class="orderBtn" onclick="moveProduct(${i},1)" title="Move down">⬇️</button>
+        <div class="positionControl">
+          <label style="margin:0;font-size:12px">Position</label>
+          <input id="position_${i}" type="number" min="1" max="${(data.products||[]).filter(x=>((x.category||'Products').trim()||'Products')===((p.category||'Products').trim()||'Products')).length}" value="${(data.products||[]).slice(0,i+1).filter(x=>((x.category||'Products').trim()||'Products')===((p.category||'Products').trim()||'Products')).length}" aria-label="New position for ${esc(p.name)}">
+          <button type="button" onclick="moveProductToPosition(${i})">Move</button>
+        </div>
+        <button class="edit" onclick="editProduct(${i})">Edit</button>
+        <button class="danger" onclick="del(${i})">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
 
 
-async function loadDomains(){const r=await sb.from('mc_saas_custom_domains').select('*').eq('business_id',biz.id).order('created_at',{ascending:false});if(r.error){$('domainList').textContent='Could not load domains: '+r.error.message;return}$('domainList').innerHTML=(r.data||[]).map(d=>`<div class="domain"><b>${esc(d.domain)}</b> · ${d.verified&&d.active?'Active': 'Pending approval'}<br><span class="hint">DNS verification token: <code>${esc(d.verification_token)}</code></span>${!d.verified?`<br><button class="btn danger" data-domain-delete="${d.id}">Cancel request</button>`:''}</div>`).join('')||'<p class="hint">No custom domains requested.</p>'}
-$('requestDomain').onclick=async()=>{try{const domain=$('domainInput').value.trim().toLowerCase().replace(/^https?:\/\//,'').replace(/\/$/,'').replace(/^www\./,'');if(!/^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(domain))throw Error('Enter a valid domain such as shop.example.com.');const r=await sb.from('mc_saas_custom_domains').insert({business_id:biz.id,domain});if(r.error)throw r.error;$('domainInput').value='';await loadDomains();setStatus('Domain request saved. Give the displayed verification token to your platform administrator for DNS review and activation.')}catch(e){setStatus(e.message,true)}};
-$('domainList').onclick=async e=>{const b=e.target.closest('[data-domain-delete]');if(!b||!confirm('Cancel this pending domain request?'))return;const r=await sb.from('mc_saas_custom_domains').delete().eq('id',b.dataset.domainDelete).eq('business_id',biz.id);if(r.error)setStatus(r.error.message,true);else{await loadDomains();setStatus('Domain request removed.')}};
-sb.auth.onAuthStateChange(()=>setTimeout(()=>sessionLoad().catch(e=>setStatus(e.message,true)),0));sessionLoad().catch(e=>setStatus(e.message,true));
-})();
-</script></body></html>
+async function changeProductPhoto(i,input){
+  const f=input && input.files && input.files[0];
+  if(input) input.value=''; // allow selecting the same photo again
+  if(!f) return;
+  if(!f.type || !f.type.startsWith('image/')){alert('Please choose an image file.');return;}
+  const product=data.products[i];
+  if(!product){alert('This product could not be found. Please refresh the admin page.');return;}
+  const oldPhoto=product.photo||'';
+  const button=document.querySelector(`button[onclick="document.getElementById('replacePhoto_${i}').click()"]`);
+  if(button){button.disabled=true;button.textContent='⏳ Saving…';}
+  show('⏳ Optimizing and saving the new product photo…');
+  try{
+    const optimized=await compressImage(f,1200,0.84);
+    product.photo=optimized;
+    await saveCatalogue(data);
+    render();
+    show('✅ Photo changed and saved to Supabase.');
+  }catch(err){
+    console.error('Product photo replacement failed:',err);
+    product.photo=oldPhoto;
+    render();
+    alert('Could not replace this photo. Your previous photo has been kept. Check your admin sign-in and connection, then try again.');
+  }
+}
+
+async function updateInlinePrice(i, field, value){
+  const p=data.products[i];
+  if(!p || !['price1Label','price1','price2Label','price2'].includes(field)) return;
+  const previous={...p};
+  if(field==='price1Label') p.price1Label=value.trim()||'Box';
+  else if(field==='price2Label') p.price2Label=value.trim()||'Packet';
+  else {
+    const cleaned=String(value).replace(/[^0-9.]/g,'');
+    if((cleaned.match(/\./g)||[]).length>1){alert('Enter a valid price.');render();return;}
+    p[field]=cleaned;
+    if(field==='price1') p.price=cleaned; // legacy compatibility
+  }
+  try{
+    await saveCatalogue(data);
+    const indicator=document.getElementById('inlineSaved_'+i);
+    if(indicator) indicator.textContent='✓ Saved to Supabase';
+    show('✅ Price/unit saved to Supabase.');
+  }catch(err){
+    data.products[i]=previous;
+    alert('Could not save this price. Please try again.');
+    render();
+  }
+}
+
+function getCategories(){
+  const seen=new Set(), cats=[];
+  for(const p of (data.products||[])){ const c=(p.category||'Products').trim()||'Products'; if(!seen.has(c)){seen.add(c);cats.push(c);} }
+  const saved=Array.isArray(data.categoryOrder)?data.categoryOrder:[];
+  return [...saved.filter(c=>cats.includes(c)), ...cats.filter(c=>!saved.includes(c))];
+}
+
+function renderCategories(){
+  const cats=getCategories(); data.categoryOrder=cats;
+  categoryList.innerHTML=cats.length?cats.map((c,i)=>`<div class="categoryItem"><button class="orderBtn" onclick="moveCategory(${i},-1)" ${i===0?'disabled':''}>⬆️</button><button class="orderBtn" onclick="moveCategory(${i},1)" ${i===cats.length-1?'disabled':''}>⬇️</button><span class="catName">${esc(c)}</span><button type="button" class="categoryRenameBtn" onclick="renameCategory(${JSON.stringify(c).replace(/"/g,'&quot;')})">✏️ Rename</button></div>`).join(''):'<div class="hint">No categories yet.</div>';
+}
+
+async function moveCategory(i,d){
+  // Build the currently displayed category order, then move exactly one category.
+  const cats=getCategories();
+  const j=i+d;
+  if(i<0 || i>=cats.length || j<0 || j>=cats.length) return;
+
+  const previousOrder=cats.slice();
+  [cats[i],cats[j]]=[cats[j],cats[i]];
+  data.categoryOrder=cats.slice();
+
+  // Save the order (including the Supabase metadata row) before re-rendering.
+  const saved=await persist();
+  if(saved){
+    render();
+    renderCategories();
+    show('✅ Category order saved. The new order is stored in your catalogue.');
+  }else{
+    data.categoryOrder=previousOrder;
+    render();
+    renderCategories();
+    alert('Could not save category order. Your previous order has been restored. Check your connection and try again.');
+  }
+}
+
+async function renameCategory(oldName){
+  const newName=prompt('Rename category "'+oldName+'" to:',oldName);
+  if(newName===null)return;
+  const cleaned=newName.trim();
+  if(!cleaned){alert('Category name cannot be empty.');return;}
+  if(cleaned===oldName)return;
+  if(getCategories().includes(cleaned)){alert('A category with that name already exists. Choose a different name.');return;}
+  const oldProducts=data.products.map(p=>({...p}));
+  const oldOrder=Array.isArray(data.categoryOrder)?data.categoryOrder.slice():[];
+  data.products.forEach(p=>{
+    if(((p.category||'Products').trim()||'Products')===oldName)p.category=cleaned;
+  });
+  data.categoryOrder=getCategories().map(c=>c===oldName?cleaned:c);
+  try{
+    await saveCatalogue(data);
+    render();
+    show('✅ Category renamed to "'+cleaned+'". All products in this category were updated and saved to Supabase.');
+  }catch(err){
+    data.products=oldProducts;
+    data.categoryOrder=oldOrder;
+    render();
+    alert('Could not save the category rename to Supabase. Please check your connection and try again.');
+  }
+}
+
+async function moveProduct(i,d){
+  const products=data.products||[];
+  const product=products[i];
+  if(!product) return;
+  const category=(product.category||'Products').trim()||'Products';
+
+  // Find this product's position among products in its own category.
+  // Swap with the previous/next product in that category, even if other
+  // categories appear between them in the full catalogue.
+  const categoryIndexes=[];
+  products.forEach((p,index)=>{
+    if(((p.category||'Products').trim()||'Products')===category) categoryIndexes.push(index);
+  });
+  const position=categoryIndexes.indexOf(i);
+  const targetPosition=position+d;
+  if(position<0 || targetPosition<0 || targetPosition>=categoryIndexes.length) return;
+  const j=categoryIndexes[targetPosition];
+  [products[i],products[j]]=[products[j],products[i]];
+
+  if(await persist()){
+    render();
+    show('✅ Product order saved to Supabase within '+category+'.');
+  } else {
+    [products[i],products[j]]=[products[j],products[i]];
+    alert('Could not save product order.');
+    render();
+  }
+}
+
+async function moveProductToPosition(i){
+  const products=data.products||[];
+  const product=products[i];
+  if(!product) return;
+  const category=(product.category||'Products').trim()||'Products';
+  const categoryIndexes=[];
+  products.forEach((p,index)=>{
+    if(((p.category||'Products').trim()||'Products')===category) categoryIndexes.push(index);
+  });
+  const input=document.getElementById('position_'+i);
+  const requested=Number.parseInt(input?.value,10);
+  if(!Number.isInteger(requested)||requested<1||requested>categoryIndexes.length){
+    alert('Enter a position from 1 to '+categoryIndexes.length+'.');
+    return;
+  }
+  const oldPosition=categoryIndexes.indexOf(i);
+  const newPosition=requested-1;
+  if(oldPosition===newPosition) { show('Product is already at position '+requested+'.'); return; }
+  const originalCategoryProducts=categoryIndexes.map(index=>products[index]);
+  const categoryProducts=originalCategoryProducts.slice();
+  const moved=categoryProducts.splice(oldPosition,1)[0];
+  categoryProducts.splice(newPosition,0,moved);
+  categoryIndexes.forEach((index,j)=>products[index]=categoryProducts[j]);
+  if(await persist()){
+    render();
+    show('✅ Moved to position '+requested+' in '+category+'.');
+  }else{
+    // Restore the original order if the save failed.
+    categoryIndexes.forEach((index,j)=>products[index]=originalCategoryProducts[j]);
+    alert('Could not save product order.');
+    render();
+  }
+}
+
+async function optimizeAllPhotos(){
+  for(const p of (data.products||[])){
+    if(!p.photo || !p.photo.startsWith('data:image')) continue;
+    p.photo = await compressDataUrl(p.photo,400,0.55);
+  }
+}
+function compressDataUrl(dataUrl,maxSize=400,quality=0.55){
+  return new Promise(resolve=>{
+    if(!dataUrl || !dataUrl.startsWith('data:image')){resolve(dataUrl);return;}
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+      const scale=Math.min(1,maxSize/Math.max(w,h));
+      w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+      const c=document.createElement('canvas'); c.width=maxSize; c.height=maxSize;
+      const ctx=c.getContext('2d',{alpha:false});
+      if(!ctx){resolve(dataUrl);return;}
+      ctx.fillStyle='#fff'; ctx.fillRect(0,0,maxSize,maxSize);
+      ctx.drawImage(img,Math.round((maxSize-w)/2),Math.round((maxSize-h)/2),w,h);
+      resolve(c.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=()=>resolve(dataUrl);
+    img.src=dataUrl;
+  });
+}
+async function downloadJSON(){
+  data.businessName=biz.value.trim()||'White Pack';
+  show('⏳ Optimizing existing photos…');
+  await optimizeAllPhotos();
+  try{await saveCatalogue(data);}catch(e){alert('Could not save the catalogue to Supabase before download. Please retry.');show('❌ Save failed; JSON was not downloaded.');return;}
+  const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='products.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  show('✅ products.json downloaded. Catalogue is also saved in Supabase.');
+}
+
+// Reliable JSON import: reset the picker so the same file can be selected again,
+// validate before replacing the current catalogue, and keep a local copy even if
+// the remote Supabase sync reports an error.
+const importInput=document.getElementById('importFile');
+importInput.addEventListener('change', async e=>{
+  const f=e.target.files && e.target.files[0];
+  // Clear immediately; this allows importing the same file twice in a row.
+  e.target.value='';
+  if(!f) return;
+  if(!f.size){alert('This JSON file is empty (0 KB). Please choose the original products.json file.');return;}
+  show('⏳ Reading '+f.name+'…');
+  try{
+    const raw=await f.text();
+    if(!raw.trim()) throw new Error('The selected file is empty.');
+    let parsed;
+    try{parsed=JSON.parse(raw);}catch(_){throw new Error('The file is not valid JSON. Please choose products.json, not the admin HTML file.');}
+    // Accept both the normal {products:[...]} catalogue and a plain product array.
+    const products=Array.isArray(parsed)?parsed:parsed && parsed.products;
+    if(!Array.isArray(products)) throw new Error('No products array was found. Expected a catalogue containing "products".');
+    if(products.length===0) throw new Error('This file contains zero products, so the current catalogue was not changed.');
+    if(products.some(p=>!p || typeof p!=='object' || Array.isArray(p))) throw new Error('One or more product entries are invalid. The current catalogue was not changed.');
+    const imported={
+      businessName:(!Array.isArray(parsed)&&parsed.businessName)||data.businessName||'White Pack',
+      whatsappOrderNumber:(!Array.isArray(parsed)&&parsed.whatsappOrderNumber)||data.whatsappOrderNumber||'96181085811',
+      products:products,
+      categoryOrder:(!Array.isArray(parsed)&&Array.isArray(parsed.categoryOrder))?parsed.categoryOrder:[]
+    };
+    normalizePriceOrder(imported.products);
+    // Save locally first, so a network/storage issue cannot erase the import.
+    await dbPut(imported);
+    data=imported;
+    biz.value=data.businessName;
+    orderWhatsApp.value=data.whatsappOrderNumber||'96181085811';
+    render();
+    clearForm();
+    try{
+      if(currentUser && remoteLoaded){
+        show('⏳ Imported '+products.length+' products locally. Syncing to Supabase…');
+        await syncCatalogueToSupabase(data);
+        await dbPut(data);
+        render();
+        show('✅ Imported '+products.length+' products and saved to Supabase.');
+      }else{
+        show('✅ Imported '+products.length+' products on this device. Sign in to sync them to Supabase.');
+      }
+    }catch(syncErr){
+      console.error('Supabase import sync failed:',syncErr);
+      render();
+      alert('The JSON was imported on this device ('+products.length+' products), but Supabase sync failed: '+(syncErr.message||'Unknown error')+'\n\nYour imported catalogue is kept locally. Please do not re-import repeatedly; check the error and retry sync after fixing it.');
+      show('⚠️ Imported locally; Supabase sync needs attention.');
+    }
+  }catch(err){
+    console.error('JSON import failed:',err);
+    alert('Could not import products.json. '+(err.message||'Please choose a valid JSON file.'));
+    show('❌ Import failed. Current catalogue was not replaced.');
+  }
+});
+
+function show(t){
+  status.style.display='block';
+  status.textContent=t;
+  setTimeout(()=>status.style.display='none',3500);
+}
+
+function normalizePriceOrder(products){
+  for(const p of (products||[])){
+    let l1=String(p.price1Label||'').trim(), l2=String(p.price2Label||'').trim();
+    if((p.price1===undefined||p.price1===null||String(p.price1).trim()==='') && p.price!==undefined && p.price!==null && String(p.price).trim()!=='') p.price1=p.price;
+    if(l1.toLowerCase()==='packet' && l2.toLowerCase()==='box' && p.price2!==undefined && p.price2!==null && String(p.price2).trim()!==''){
+      const oldFirst=p.price1??p.price;
+      p.price1=p.price2; p.price2=oldFirst; p.price1Label='Box'; p.price2Label='Packet';
+    }else{
+      p.price1Label=l1||'Box'; p.price2Label=l2||'Packet';
+    }
+    if(p.price1!==undefined && p.price1!==null && String(p.price1).trim()!=='') p.price=p.price1;
+  }
+}
+
+function esc(s){
+  return String(s||'').replace(/[&<>"']/g,m=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[m]));
+}
+
+searchInput.addEventListener('input', render);
+categoryFilter.addEventListener('change', render);
+clearSearch.addEventListener('click', ()=>{
+  searchInput.value='';
+  render();
+  searchInput.focus();
+});
+
+</script>
+</body>
+</html>
