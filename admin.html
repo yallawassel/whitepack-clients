@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#087cf0">
+<meta name="application-name" content="White Pack Admin">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="WP Admin">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="manifest" href="admin-manifest.webmanifest">
 <title>White Pack — Admin</title>
 <style>
 *{box-sizing:border-box}
@@ -44,15 +52,45 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
 .searchBox input{flex:1;min-width:0}
 .searchClear{margin-top:0;white-space:nowrap}
 .searchInfo{margin:4px 0 8px}.categoryItem{display:flex;gap:7px;align-items:center;background:#f8fafc;padding:9px;border-radius:12px;margin:7px 0}.categoryItem .catName{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis}.orderBtn{padding:8px 11px!important;margin:0!important;background:#e5e7eb;color:#111827}.categoryRenameBtn{padding:8px 10px!important;margin:0!important;background:#dbeafe;color:#1e40af}.categoryItem .catName{overflow-wrap:anywhere}
+
+/* Professional, installable White Pack Admin shell */
+body{background:linear-gradient(180deg,#eef5fc 0,#f5f7fb 240px,#f5f7fb 100%);color:#132238;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;padding-bottom:24px}
+.wrap{max-width:1120px;padding:18px 14px}
+.panel{border:1px solid #e0e9f3;border-radius:18px;box-shadow:0 5px 22px #15385a0c;padding:18px}
+.brand-panel{display:flex;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(120deg,#102c4e,#145c91);color:#fff;border:0;padding:17px 19px;margin-bottom:16px;overflow:hidden;position:relative}
+.brand-main{display:flex;align-items:center;gap:14px;min-width:0}
+.brand-main img{width:66px;height:66px;object-fit:contain;background:#fff;border-radius:16px;padding:4px;flex:0 0 auto;box-shadow:0 3px 12px #0002}
+.brand-copy h1{margin:0 0 5px;font-size:24px;letter-spacing:-.4px}
+.brand-copy p{margin:0;color:#dbeafe;font-size:13px;line-height:1.45}
+.brand-actions{display:flex;flex-direction:column;align-items:flex-end;gap:5px;max-width:255px}
+#adminInstallBtn{background:#fff;color:#124c7c;border:0;border-radius:11px;padding:11px 13px;font-weight:900;white-space:nowrap;box-shadow:0 2px 8px #0002}
+#adminInstallHelp{font-size:12px;line-height:1.45;color:#e0efff;text-align:right;max-width:250px}
+#authPanel{max-width:730px;margin:0 auto 16px}
+#editorArea>.panel{margin-bottom:16px}
+input,textarea,select{border-color:#cdd8e5;border-radius:11px;transition:border-color .15s,box-shadow .15s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#2583d8;box-shadow:0 0 0 3px #2583d81b}
+button{transition:transform .12s,filter .12s}button:hover{filter:brightness(.97)}button:active{transform:translateY(1px)}
+.primary{background:linear-gradient(120deg,#0759a6,#087cf0)}
+.secondary{background:#e9f1f9;color:#173b63}
+.edit{background:#e2f1ff;color:#0759a6}
+h2{letter-spacing:-.2px}
+@media(max-width:560px){.wrap{padding:10px}.brand-panel{align-items:flex-start;padding:14px;gap:10px}.brand-main{gap:9px}.brand-main img{width:48px;height:48px;border-radius:12px}.brand-copy h1{font-size:18px}.brand-copy p{font-size:11px}.brand-actions{max-width:132px}#adminInstallBtn{white-space:normal;padding:9px 10px;font-size:12px}#adminInstallHelp{font-size:11px}.panel{padding:13px}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-<div class="panel">
-  <h1>📦 White Pack — Phone Editor</h1>
-  <div class="hint">
-Sign in with your authorized White Pack admin account. Products and product photos save to Supabase automatically. JSON import/export remains available as a backup and publishing option.
+<div class="panel brand-panel">
+  <div class="brand-main">
+    <img src="logo.png" alt="White Pack logo">
+    <div class="brand-copy">
+      <h1>White Pack Admin</h1>
+      <p>Product management · Secure sign-in · Live catalogue updates</p>
+    </div>
+  </div>
+  <div class="brand-actions">
+    <button id="adminInstallBtn" type="button">📲 Install Admin App</button>
+    <div id="adminInstallHelp" role="status" aria-live="polite">Add this private admin tool to your home screen or desktop.</div>
   </div>
 </div>
 
@@ -897,6 +935,24 @@ clearSearch.addEventListener('click', ()=>{
   searchInput.focus();
 });
 
+</script>
+
+<script>
+(function setupAdminPWA(){
+  const button=document.getElementById('adminInstallBtn');
+  const help=document.getElementById('adminInstallHelp');
+  let pending=null;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  if(standalone){button.hidden=true;help.textContent='White Pack Admin is running as an app.';}
+  window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();pending=event;button.textContent='📲 Install Admin App';});
+  button.addEventListener('click',async()=>{
+    if(pending){pending.prompt();try{const result=await pending.userChoice;if(result&&result.outcome==='accepted'){button.hidden=true;help.textContent='White Pack Admin has been installed.';}}catch(_){}pending=null;return;}
+    help.textContent=ios?'On iPhone/iPad: open this page in Safari, tap Share, choose “Add to Home Screen”, then tap Add. This Admin app still requires your authorized sign-in.':(/android/i.test(navigator.userAgent)?'On Android: open this page in Chrome, tap ⋮, then choose “Install app” or “Add to Home screen”.':'On desktop Chrome or Edge: use the install icon in the address bar, or open the browser menu and choose “Install White Pack Admin”.');
+  });
+  window.addEventListener('appinstalled',()=>{pending=null;button.hidden=true;help.textContent='White Pack Admin has been installed.';});
+  if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('Service worker registration failed',err)));
+})();
 </script>
 </body>
 </html>

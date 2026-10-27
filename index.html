@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111827">
+<meta name="theme-color" content="#087cf0">
+<meta name="application-name" content="White Pack Catalogue">
 <title>White Pack Catalogue</title>
 <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
 <link rel="icon" type="image/png" sizes="48x48" href="icon-48.png">
@@ -123,15 +124,30 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 
 /* Delivery checkout */
 .checkout{display:grid;gap:10px;margin:16px 0}.checkout label{font-size:14px;font-weight:700}.checkout input,.checkout textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit}.locationbtn{border:1px solid #111827;background:#fff;border-radius:10px;padding:12px;font-weight:700}.locationhint{font-size:13px;color:#475569}.ordererror{color:#b91c1c;font-size:14px;white-space:pre-wrap}.sendwa:disabled{opacity:.6}
+
+/* Brand header and share link */
+.brand{max-width:1100px;justify-content:space-between;gap:14px}
+.brand-identity{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-actions{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+#shareCatalogueBtn{border:1px solid #b8d8ff;background:#fff;color:#0757ad;border-radius:12px;padding:11px 14px;font-weight:900;font-size:14px;cursor:pointer;box-shadow:0 2px 8px #00000018;touch-action:manipulation}
+#shareCatalogueBtn:active{transform:translateY(1px)}
+#shareStatus{font-size:11px;color:#dbeafe;min-height:13px;text-align:right}
+@media(max-width:520px){header{padding:10px 8px}.brand{padding:0;gap:8px}.brand-identity{gap:8px}.brand-identity .site-logo{width:44px;height:44px}.brand-identity h1{font-size:19px}.brand-identity .sub{max-width:185px;font-size:11px;line-height:1.3}.brand-actions{max-width:132px}#shareCatalogueBtn{padding:9px 9px;font-size:12px}.install-card{margin-left:10px;margin-right:10px}}
 </style>
 </head>
 <body>
 <header>
   <div class="wrap brand">
-    <img src="logo.png" class="site-logo" alt="White Pack">
-    <div>
-      <h1 id="business">White Pack</h1>
-      <div class="sub">Product Catalogue</div>
+    <div class="brand-identity">
+      <img src="logo.png" class="site-logo" alt="White Pack logo">
+      <div>
+        <h1 id="business">White Pack</h1>
+        <div class="sub">Product Catalogue · Where Quality Meets Affordability</div>
+      </div>
+    </div>
+    <div class="brand-actions">
+      <button id="shareCatalogueBtn" type="button" aria-label="Share White Pack catalogue">↗ Share Catalogue</button>
+      <div id="shareStatus" role="status" aria-live="polite"></div>
     </div>
   </div>
 </header>
@@ -466,6 +482,33 @@ window.addEventListener("popstate",()=>{
     sessionStorage.setItem('wpInstallDismissed','1');
   });
 })();
+
+
+// Share the public catalogue link (never an admin page).
+(function setupCatalogueSharing(){
+  const btn=document.getElementById('shareCatalogueBtn');
+  const status=document.getElementById('shareStatus');
+  if(!btn||!status)return;
+  const canonicalUrl=new URL('.',window.location.href).href;
+  btn.addEventListener('click',async()=>{
+    const payload={title:'White Pack Catalogue',text:'Explore the White Pack product catalogue.',url:canonicalUrl};
+    status.textContent='';
+    if(navigator.share){
+      try{await navigator.share(payload);status.textContent='Catalogue link ready to share.';}
+      catch(err){if(err&&err.name!=='AbortError') status.textContent='Could not open sharing. Copy the website link from your browser.';}
+      return;
+    }
+    try{
+      if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(canonicalUrl);status.textContent='Catalogue link copied. Paste it into WhatsApp or a message.';return;}
+      const field=document.createElement('textarea');field.value=canonicalUrl;field.setAttribute('readonly','');field.style.position='fixed';field.style.opacity='0';document.body.appendChild(field);field.select();
+      const ok=document.execCommand('copy');field.remove();
+      status.textContent=ok?'Catalogue link copied. Paste it into WhatsApp or a message.':'Website link: '+canonicalUrl;
+    }catch(_){status.textContent='Website link: '+canonicalUrl;}
+  });
+})();
+
+// One root-scoped service worker supports the catalogue, private admin and quotation app.
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('App install support unavailable:',err)));}
 
 renderCart();
 

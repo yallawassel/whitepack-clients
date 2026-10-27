@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#173b63">
+<meta name="application-name" content="White Pack Quotation">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="WP Quotation">
+<link rel="icon" type="image/png" sizes="32x32" href="quotation-icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="quotation-icon-180.png">
+<link rel="manifest" href="quotation-manifest.webmanifest">
 <title>White Pack — Quotation Builder</title>
 <style>
 :root{--ink:#172033;--muted:#667085;--line:#e4e7ec;--soft:#f6f8fb;--brand:#173b63;--accent:#d8a84e}
@@ -63,10 +71,19 @@ footer{text-align:center;color:var(--muted);font-size:11px;margin:18px 0}
  .print-grand{border-top:2px solid #173b63;margin-top:5px;padding-top:8px;font-size:14pt;font-weight:900}
  .print-foot{margin-top:24px;padding-top:8px;border-top:1px solid #d8dee8;font-size:8pt;color:#667085;display:flex;justify-content:space-between}
 }
+
+/* White Pack Quotation app identity and install control */
+.quote-brand{display:flex;align-items:center;gap:13px;min-width:0}
+.quote-app-icon{width:58px;height:58px;object-fit:contain;border-radius:15px;box-shadow:0 4px 14px #0003;flex:0 0 auto}
+.quote-brand h1{letter-spacing:-.35px}
+#installAppBtn{border:1px solid #f5d992;box-shadow:0 2px 8px #0002}
+#quoteInstallHelp{max-width:1180px;margin:0 auto 12px;padding:0 14px;color:#173b63;font-size:13px;line-height:1.5}
+@media(max-width:520px){header{padding:13px 10px}.quote-app-icon{width:46px;height:46px;border-radius:12px}.quote-brand{gap:9px}.quote-brand h1{font-size:19px}.quote-brand .sub{font-size:11px;max-width:240px}.head{align-items:flex-start}.head>.row{width:100%;justify-content:flex-start}.head>.row button{margin-top:0}}
 </style>
 </head>
 <body>
-<header><div class="head"><div><h1>WHITE PACK <span style="color:#e7bd69">/ QUOTATIONS</span></h1><div class="sub">Professional quotation builder · Product photos · Client-specific prices · PDF-ready</div></div><div class="row"><button class="secondary" onclick="window.location.href='admin.html'">← Back to Admin</button></div></div></header>
+<header><div class="head"><div class="quote-brand"><img class="quote-app-icon" src="quotation-icon-192.png" alt="White Pack Quotation app icon"><div><h1>WHITE PACK <span style="color:#e7bd69">/ QUOTATIONS</span></h1><div class="sub">Professional quotation builder · Client-specific pricing · PDF-ready</div></div></div><div class="row"><button id="installAppBtn" class="gold" type="button">📲 Install Quotation App</button><button class="secondary" onclick="window.location.href='admin.html'">← Back to Admin</button></div></div></header>
+<div id="quoteInstallHelp" role="status" aria-live="polite" hidden></div>
 <div class="wrap">
  <section class="panel" id="authPanel">
   <h2>🔐 Admin sign in</h2><p class="hint">Sign in using the same authorized White Pack admin account you use for admin.html. This page reads the catalogue from the existing Supabase products table and does not change product prices in the catalogue.</p>
@@ -333,6 +350,25 @@ function resetQuote(){
  items=[];activeArchiveId=null;['clientName','contact','phone','clientEmail','address','notes'].forEach(id=>$(id).value='');
  $('discount').value='0';$('fee').value='0';initQuote();renderProducts();renderCart();$('saveStatus').textContent='New quotation started. Previous saved quotations remain in the archive.';
 }
+</script>
+
+<script>
+(function setupQuotationPWA(){
+  const button=document.getElementById('installAppBtn');
+  const help=document.getElementById('quoteInstallHelp');
+  let pending=null;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  if(standalone){button.hidden=true;}
+  window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();pending=event;});
+  button.addEventListener('click',async()=>{
+    if(pending){pending.prompt();try{const result=await pending.userChoice;if(result&&result.outcome==='accepted'){button.hidden=true;help.hidden=true;}}catch(_){}pending=null;return;}
+    help.hidden=false;
+    help.textContent=ios?'To install on iPhone/iPad: open this page in Safari (not inside WhatsApp), tap Share, choose “Add to Home Screen”, then tap Add. The dedicated Quotation icon will appear on your home screen.':(/android/i.test(navigator.userAgent)?'To install on Android: open this page in Chrome, tap ⋮, then choose “Install app” or “Add to Home screen”.':'To install on desktop: use the install icon in Chrome/Edge’s address bar, or open the browser menu and choose “Install White Pack Quotation”.');
+  });
+  window.addEventListener('appinstalled',()=>{pending=null;button.hidden=true;help.hidden=false;help.textContent='White Pack Quotation has been installed.';});
+  if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('Service worker registration failed',err)));
+})();
 </script>
 </body>
 </html>
