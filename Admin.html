@@ -1,0 +1,1066 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#087cf0">
+<meta name="application-name" content="White Pack Admin">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="WP Admin">
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="manifest" href="admin-manifest.webmanifest">
+<title>White Pack — Admin</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f3f4f6;color:#111827}
+.wrap{max-width:850px;margin:auto;padding:14px}
+.panel{background:#fff;padding:16px;border-radius:16px;margin-bottom:14px;box-shadow:0 2px 10px #0000000b}
+h1{margin:0 0 8px;font-size:25px}
+h2{margin:0 0 10px}
+label{display:block;font-weight:700;margin:12px 0 5px}
+input,textarea,select{width:100%;padding:12px;border:1px solid #d1d5db;border-radius:10px;font-size:16px;background:#fff}
+.filePicker{display:none}
+button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.photo{touch-action:manipulation}
+textarea{min-height:80px;resize:vertical}
+.photo{height:210px;border:2px dashed #cbd5e1;border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#fafafa;cursor:pointer}
+.photo img{width:100%;height:100%;object-fit:contain;display:none}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:8px;font-size:15px;cursor:pointer}
+.primary{background:#111827;color:#fff}
+.secondary{background:#e5e7eb;color:#111827}
+.danger{background:#fee2e2;color:#991b1b}
+.edit{background:#dbeafe;color:#1e40af}
+.hint{color:#667085;font-size:14px;line-height:1.5}
+.ok{padding:12px;border-radius:10px;background:#ecfdf3;color:#166534;margin-top:10px;display:none}
+.item{display:flex;gap:10px;align-items:center;background:#f8fafc;padding:9px;border-radius:12px;margin:8px 0}
+.item .productPhotoWrap{width:70px;flex:0 0 70px;display:flex;flex-direction:column;gap:4px}.item img{width:70px;height:70px;object-fit:contain;border-radius:8px;background:#fff}.item .changePhotoBtn{margin:0!important;padding:6px 4px!important;font-size:11px;background:#dbeafe;color:#1e40af;white-space:nowrap}.item .photoReplaceInput{display:none}
+.item .productInfo{flex:1;min-width:0}
+.item .productPrice{display:block;font-size:14px;font-weight:800;color:#111827;margin-top:4px;line-height:1.5}
+.inlinePriceGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px;max-width:440px}.inlinePriceUnit{min-width:0;background:#fff;border:1px solid #dbe2ea;border-radius:9px;padding:6px}.inlinePriceUnit label{font-size:11px;color:#475569;margin:0 0 4px}.inlinePriceUnit input{font-size:13px;padding:7px 6px;margin:0 0 5px;min-width:0}.inlinePriceUnit input:last-child{margin-bottom:0}.inlinePriceUnit .unitLabel{font-weight:700}.inlineSaved{font-size:11px;color:#15803d;min-height:13px;margin-top:3px}
+@media(max-width:560px){.item{align-items:flex-start;flex-wrap:wrap}.item .productPhotoWrap{width:58px;flex-basis:58px}.item .productPhotoWrap img{width:58px;height:58px}.item .changePhotoBtn{font-size:10px;padding:5px 2px!important}.item .productInfo{flex:1 1 calc(100% - 80px)}.item .productActions{width:100%;justify-content:flex-start;padding-left:66px}.inlinePriceGrid{max-width:none}.inlinePriceUnit input{font-size:14px}}
+.priceFields{display:grid;grid-template-columns:1fr 1fr;gap:10px}.priceFields>div{min-width:0}.priceFields label{margin-top:8px}
+.item .productCategory{display:block;font-size:12px;color:#667085;margin-top:2px}
+.item .productActions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.item .productActions button{margin-top:0}.positionControl{display:flex;align-items:center;gap:5px;margin-top:6px}.positionControl input{width:62px;padding:8px 5px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;text-align:center}.positionControl button{margin:0!important;padding:8px 10px!important;background:#d1fae5;color:#065f46}
+.small{font-size:12px;color:#667085}
+.note{background:#fff7ed;color:#9a3412;padding:12px;border-radius:10px;font-size:14px;line-height:1.45}
+.badge{display:inline-block;padding:5px 8px;border-radius:999px;background:#e5e7eb;font-size:12px;margin-top:5px}
+.searchBox{display:flex;gap:8px;margin:12px 0 8px;align-items:center}
+.searchBox input{flex:1;min-width:0}
+.searchClear{margin-top:0;white-space:nowrap}
+.searchInfo{margin:4px 0 8px}.categoryItem{display:flex;gap:7px;align-items:center;background:#f8fafc;padding:9px;border-radius:12px;margin:7px 0}.categoryItem .catName{flex:1;font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis}.orderBtn{padding:8px 11px!important;margin:0!important;background:#e5e7eb;color:#111827}.categoryRenameBtn{padding:8px 10px!important;margin:0!important;background:#dbeafe;color:#1e40af}.categoryItem .catName{overflow-wrap:anywhere}
+
+/* Professional, installable White Pack Admin shell */
+body{background:linear-gradient(180deg,#eef5fc 0,#f5f7fb 240px,#f5f7fb 100%);color:#132238;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;padding-bottom:24px}
+.wrap{max-width:1120px;padding:18px 14px}
+.panel{border:1px solid #e0e9f3;border-radius:18px;box-shadow:0 5px 22px #15385a0c;padding:18px}
+.brand-panel{display:flex;align-items:center;justify-content:space-between;gap:16px;background:linear-gradient(120deg,#102c4e,#145c91);color:#fff;border:0;padding:17px 19px;margin-bottom:16px;overflow:hidden;position:relative}
+.brand-main{display:flex;align-items:center;gap:14px;min-width:0}
+.brand-main img{width:66px;height:66px;object-fit:contain;background:#fff;border-radius:16px;padding:4px;flex:0 0 auto;box-shadow:0 3px 12px #0002}
+.brand-copy h1{margin:0 0 5px;font-size:24px;letter-spacing:-.4px}
+.brand-copy p{margin:0;color:#dbeafe;font-size:13px;line-height:1.45}
+.brand-actions{display:flex;flex-direction:column;align-items:flex-end;gap:5px;max-width:255px}
+#adminInstallBtn{background:#fff;color:#124c7c;border:0;border-radius:11px;padding:11px 13px;font-weight:900;white-space:nowrap;box-shadow:0 2px 8px #0002}
+#adminInstallHelp{font-size:12px;line-height:1.45;color:#e0efff;text-align:right;max-width:250px}
+#authPanel{max-width:730px;margin:0 auto 16px}
+#editorArea>.panel{margin-bottom:16px}
+input,textarea,select{border-color:#cdd8e5;border-radius:11px;transition:border-color .15s,box-shadow .15s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:#2583d8;box-shadow:0 0 0 3px #2583d81b}
+button{transition:transform .12s,filter .12s}button:hover{filter:brightness(.97)}button:active{transform:translateY(1px)}
+.primary{background:linear-gradient(120deg,#0759a6,#087cf0)}
+.secondary{background:#e9f1f9;color:#173b63}
+.edit{background:#e2f1ff;color:#0759a6}
+h2{letter-spacing:-.2px}
+@media(max-width:560px){.wrap{padding:10px}.brand-panel{align-items:flex-start;padding:14px;gap:10px}.brand-main{gap:9px}.brand-main img{width:48px;height:48px;border-radius:12px}.brand-copy h1{font-size:18px}.brand-copy p{font-size:11px}.brand-actions{max-width:132px}#adminInstallBtn{white-space:normal;padding:9px 10px;font-size:12px}#adminInstallHelp{font-size:11px}.panel{padding:13px}}
+
+/* Multi-product photo uploader */
+.bulkUploadGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:14px}
+.bulkUploadCard{border:1px solid #dbe5f0;border-radius:12px;padding:11px;background:#f8fbff;min-width:0}
+.bulkUploadCard img{width:100%;height:150px;object-fit:contain;background:white;border-radius:9px}
+.bulkUploadCard label{font-size:12px;margin:8px 0 3px}
+.bulkUploadCard input{padding:9px;font-size:14px}
+.bulkUploadCard .bulkPrices{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.bulkUploadCard .bulkInclude{display:flex;align-items:center;gap:7px;font-size:13px}
+.bulkUploadCard .bulkInclude input{width:auto}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="panel brand-panel">
+  <div class="brand-main">
+    <img src="logo.png" alt="White Pack logo">
+    <div class="brand-copy">
+      <h1>White Pack Admin</h1>
+      <p>Product management · Secure sign-in · Live catalogue updates</p>
+    </div>
+  </div>
+  <div class="brand-actions">
+    <button id="adminInstallBtn" type="button">📲 Install Admin App</button>
+    <div id="adminInstallHelp" role="status" aria-live="polite">Add this private admin tool to your home screen or desktop.</div>
+  </div>
+</div>
+
+<div class="panel" id="authPanel">
+  <h2>🔐 Supabase Admin Sign In</h2>
+  <div class="hint">Sign in with the email and password for the authorized White Pack admin account. Only authenticated users listed in wp_product_admins can save catalogue changes.</div>
+  <label for="authEmail">Email</label>
+  <input id="authEmail" type="email" autocomplete="username" placeholder="Admin email">
+  <label for="authPassword">Password</label>
+  <input id="authPassword" type="password" autocomplete="current-password" placeholder="Password">
+  <div class="row"><button class="primary" id="signInBtn" type="button" onclick="signIn()">Sign in</button><button class="secondary" id="signOutBtn" type="button" onclick="signOut()" hidden>Sign out</button></div>
+  <div id="authStatus" class="hint" role="status" style="margin-top:8px"></div>
+</div>
+
+<div id="editorArea" hidden>
+<div class="panel" id="quickUploadPanel">
+  <h2>📤 Upload Products &amp; Images</h2>
+  <p class="hint">Choose several product photos from your phone or computer. Review the product names, categories and prices before saving them to White Pack Supabase. Existing products are not replaced.</p>
+  <button class="primary" type="button" id="openBulkUpload" onclick="document.getElementById('bulkProductPhotos').click()">📷 Select Product Images</button>
+  <input id="bulkProductPhotos" type="file" accept="image/*" multiple hidden>
+  <div id="bulkUploadPreview" class="bulkUploadGrid"></div>
+  <div id="bulkUploadControls" hidden>
+    <button class="primary" id="saveBulkProducts" type="button" onclick="saveBulkProducts()">💾 Upload Selected Products</button>
+    <button class="secondary" type="button" onclick="clearBulkProducts()">Clear selection</button>
+  </div>
+  <div id="bulkUploadStatus" class="hint" role="status" aria-live="polite"></div>
+</div>
+<div class="panel">
+  <label>Business Name</label>
+  <input id="biz" value="White Pack">
+
+  <div class="panel" style="padding:12px;margin:14px 0;background:#f8fafc;border:1px solid #e2e8f0;box-shadow:none">
+    <h2 style="font-size:18px;margin:0 0 6px">📲 Order WhatsApp Number</h2>
+    <div class="hint">Change the phone number that receives customer orders. Use the international country code, numbers only (example: 96181085811). This setting is saved to Supabase and applies to the public catalogue after refresh.</div>
+    <label for="orderWhatsApp">WhatsApp number for incoming orders</label>
+    <input id="orderWhatsApp" type="tel" inputmode="numeric" autocomplete="tel" placeholder="96181085811" maxlength="20">
+    <button type="button" class="primary" id="saveSettingsBtn" onclick="saveSettings()">💾 Save Company Settings</button>
+    <div id="settingsStatus" class="hint" aria-live="polite" style="margin-top:8px"></div>
+  </div>
+
+  <label>Product Photo</label>
+  <div class="photo" id="photoBox" role="button" tabindex="0" aria-label="Choose product photo">
+    <img id="preview">
+    <span id="pt">📷 Tap here to choose a product photo</span>
+  </div>
+  <input id="file" type="file" accept="image/*" class="filePicker">
+  <div class="hint" style="margin-top:6px">Photos are automatically optimized to sharp WebP when supported (up to 1200 × 1200 px) to keep the catalogue clear and fast.</div>
+
+  <label>Product Name</label>
+  <input id="name" placeholder="Example: Kraft Paper Bag">
+
+  <label>Description</label>
+  <textarea id="desc" placeholder="Size, quantity, material, etc."></textarea>
+
+  <div class="priceFields">
+    <div><label>First unit label (Box)</label><input id="price1Label" placeholder="Box"><label>First price (USD)</label><input id="price1" inputmode="decimal" placeholder="120.00"></div>
+    <div><label>Second unit label (Packet)</label><input id="price2Label" placeholder="Packet"><label>Second price (USD)</label><input id="price2" inputmode="decimal" placeholder="12.50"></div>
+  </div>
+  <div class="hint">For older products, the existing price is kept as the first price. Category cover tip: if the first product in a category has no price, its photo appears on the main category screen only and it is hidden from the products inside that category.</div>
+
+  <label>Category</label>
+  <input id="cat" placeholder="Paper Bags">
+
+  <div class="row">
+    <button class="primary" id="addBtn" onclick="saveProduct()">➕ Add Product</button>
+    <button type="button" class="secondary" onclick="clearForm()">Clear</button>
+  </div>
+  <div id="status" class="ok"></div>
+</div>
+
+<div class="panel">
+  <h2>📂 Category Order</h2>
+  <div class="hint">Use the arrows to change category order, or tap Rename to change a category name for every product in that category at once. Changes save to Supabase automatically.</div>
+  <div id="categoryList"></div>
+</div>
+
+<div class="panel">
+  <h2>Products <span id="count" class="badge">0</span></h2>
+  <div class="hint">Designed for up to 1,000 products. Edit unit labels and prices directly in each row. Tap 📷 Change photo under any product image to replace it immediately—no need to press Edit. Changes save to Supabase automatically.</div>
+
+  <label for="categoryFilter">Filter products by category</label>
+  <select id="categoryFilter">
+    <option value="">All categories</option>
+  </select>
+  <div class="searchBox">
+    <input id="searchInput" type="search"
+           placeholder="🔎 Search product name or description..."
+           autocomplete="off">
+    <button type="button" class="secondary searchClear" id="clearSearch">Clear</button>
+  </div>
+  <div class="hint">Fast reorder: enter the product’s new position within its category (for example, 6 → 1) and tap Move. You can still use the arrows. Changes save to Supabase automatically.</div>
+
+  <div id="searchInfo" class="hint searchInfo"></div>
+  <div id="list"></div>
+  <div class="row">
+    <button class="primary" onclick="downloadJSON()">⬇️ Download products.json</button>
+    <button class="secondary" onclick="document.getElementById('importFile').click()">📥 Import products.json</button>
+    <input id="importFile" type="file" accept=".json,application/json" hidden>
+  </div>
+  <div class="note" style="margin-top:12px">
+    After downloading, upload <b>products.json</b> to the <b>whitepack-clients</b> repository
+    and replace the old file. Your customer catalogue will then use the updated products.
+  </div>
+</div>
+</div>
+
+</div>
+
+<script>
+// Public client settings only. Never put a service_role/secret key in this file.
+const SUPABASE_URL = 'https://gaphiedcwueunmfssisz.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_XnMvCbQGs2tGHXQa5Cjbew_vTTM7ubG';
+const SUPABASE_BUCKET = 'wp-product-images';
+const SUPABASE_TABLE = 'wp_products';
+const META_ID = '00000000-0000-4000-8000-000000000001';
+const SESSION_KEY = 'whitepack_supabase_session_v1';
+let supabaseSession = null;
+let currentUser = null;
+let remoteLoaded = false;
+let remoteRows = [];
+let syncingRemote = false;
+let data = {businessName:'White Pack', whatsappOrderNumber:'96181085811', products:[]};
+let photo = '';
+let editIndex = -1;
+const DB_NAME='WhitePackAdminDB', DB_VERSION=1, STORE='catalogue';
+const dbReady=openDB();
+
+const biz = document.getElementById('biz');
+const orderWhatsApp = document.getElementById('orderWhatsApp');
+const settingsStatus = document.getElementById('settingsStatus');
+const file = document.getElementById('file');
+const photoBox = document.getElementById('photoBox');
+const preview = document.getElementById('preview');
+const pt = document.getElementById('pt');
+const nameEl = document.getElementById('name');
+const desc = document.getElementById('desc');
+const price1Label = document.getElementById('price1Label');
+const price1 = document.getElementById('price1');
+const price2Label = document.getElementById('price2Label');
+const price2 = document.getElementById('price2');
+const cat = document.getElementById('cat');
+const list = document.getElementById('list');
+const count = document.getElementById('count');
+const status = document.getElementById('status');
+const addBtn = document.getElementById('addBtn');
+const searchInput = document.getElementById('searchInput');
+const clearSearch = document.getElementById('clearSearch');
+const searchInfo = document.getElementById('searchInfo');
+const categoryFilter = document.getElementById('categoryFilter');
+const categoryList = document.getElementById('categoryList');
+
+initializeApp();
+
+file.addEventListener('change', async function(e){
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  if(!f.type || !f.type.startsWith('image/')){
+    alert('Please choose an image file.');
+    file.value='';
+    return;
+  }
+  try {
+    show('⏳ Processing photo...');
+    photo = await compressImage(f, 1200, 0.84);
+    preview.src = photo;
+    preview.style.display = 'block';
+    pt.style.display = 'none';
+    show('✅ Photo ready — ' + Math.max(1, Math.round((photo.length * 3 / 4) / 1024)) + ' KB, optimized for sharp catalogue display.');
+  } catch(err) {
+    console.error(err);
+    photo='';
+    preview.removeAttribute('src');
+    preview.style.display='none';
+    pt.style.display='block';
+    alert('Could not read this photo. Please try another JPG or PNG.');
+  }
+});
+
+photoBox.addEventListener('click', function(e){
+  if(e.target !== file) file.click();
+});
+
+photoBox.addEventListener('keydown', function(e){
+  if(e.key === 'Enter' || e.key === ' '){
+    e.preventDefault();
+    file.click();
+  }
+});
+
+// Multi-image product uploader; works with the existing White Pack product schema.
+let bulkProducts=[];
+const bulkPhotosInput=document.getElementById('bulkProductPhotos');
+const bulkPreview=document.getElementById('bulkUploadPreview');
+const bulkStatus=document.getElementById('bulkUploadStatus');
+const bulkControls=document.getElementById('bulkUploadControls');
+const bulkSaveButton=document.getElementById('saveBulkProducts');
+function bulkMessage(message,error=false){bulkStatus.textContent=message;bulkStatus.style.color=error?'#b91c1c':'#166534';}
+function clearBulkProducts(){
+  if(bulkSaveButton.disabled)return;
+  bulkProducts=[];bulkPhotosInput.value='';bulkPreview.replaceChildren();bulkControls.hidden=true;bulkMessage('Selection cleared.');
+}
+bulkPhotosInput.addEventListener('change',async()=>{
+  const files=Array.from(bulkPhotosInput.files||[]);
+  if(!files.length)return;
+  if(bulkSaveButton.disabled)return;
+  bulkProducts=[];bulkPreview.replaceChildren();bulkControls.hidden=true;
+  bulkMessage('Preparing '+files.length+' photo(s)…');
+  const existingCategories=getCategories();
+  for(let i=0;i<files.length;i++){
+    const file=files[i];
+    if(!file.type.startsWith('image/')){bulkMessage('Skipped non-image file: '+file.name,true);continue;}
+    const row={file,previewUrl:URL.createObjectURL(file)};
+    bulkProducts.push(row);
+    const card=document.createElement('div');card.className='bulkUploadCard';
+    const img=document.createElement('img');img.src=row.previewUrl;img.alt='Selected product photo';card.append(img);
+    const addField=(labelText,value='',type='text')=>{
+      const label=document.createElement('label');label.textContent=labelText;
+      const input=document.createElement('input');input.type=type;input.value=value;
+      card.append(label,input);return input;
+    };
+    const suggestedName=file.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').trim();
+    row.name=addField('Product name *',suggestedName);
+    row.category=addField('Category *',existingCategories[0]||'Products');
+    const priceWrap=document.createElement('div');priceWrap.className='bulkPrices';
+    card.append(priceWrap);
+    const priceField=(text)=>{const container=document.createElement('div');const label=document.createElement('label');label.textContent=text;const input=document.createElement('input');input.type='number';input.min='0';input.step='0.01';container.append(label,input);priceWrap.append(container);return input;};
+    row.price1=priceField('Box price (USD)');row.price2=priceField('Packet price (USD)');
+    const includeLabel=document.createElement('label');includeLabel.className='bulkInclude';
+    row.include=document.createElement('input');row.include.type='checkbox';row.include.checked=true;
+    includeLabel.append(row.include,document.createTextNode('Include this product'));card.append(includeLabel);
+    bulkPreview.append(card);
+  }
+  bulkControls.hidden=!bulkProducts.length;
+  bulkMessage(bulkProducts.length+' photo(s) ready for review. Enter names and categories, then tap Upload Selected Products.');
+});
+async function saveBulkProducts(){
+  if(!currentUser||!remoteLoaded){bulkMessage('Please sign in and wait for Supabase to load.',true);return;}
+  if(syncingRemote){bulkMessage('Another save is running. Try again shortly.',true);return;}
+  const selected=bulkProducts.filter(r=>r.include.checked);
+  if(!selected.length){bulkMessage('Select at least one product.',true);return;}
+  const existingNames=new Set(data.products.map(p=>String(p.name||'').trim().toLocaleLowerCase()));
+  const seen=new Set();
+  for(const r of selected){
+    const name=r.name.value.trim(),category=r.category.value.trim();
+    if(!name||!category){bulkMessage('Every selected product needs a name and category.',true);return;}
+    const key=name.toLocaleLowerCase();
+    if(existingNames.has(key)||seen.has(key)){bulkMessage('Duplicate product name: '+name+'. Uncheck it or rename it before uploading.',true);return;}
+    seen.add(key);
+    for(const price of [r.price1,r.price2])if(price.value!==''&&(!Number.isFinite(Number(price.value))||Number(price.value)<0)){bulkMessage('Invalid price for '+name,true);return;}
+  }
+  bulkSaveButton.disabled=true;bulkPhotosInput.disabled=true;
+  const oldProducts=data.products.slice();
+  try{
+    for(let i=0;i<selected.length;i++){
+      const r=selected[i];bulkMessage('Optimizing photo '+(i+1)+' of '+selected.length+'…');
+      const optimized=await compressImage(r.file,1200,0.84);
+      const p1=r.price1.value.trim(),p2=r.price2.value.trim();
+      data.products.push({name:r.name.value.trim(),category:r.category.value.trim(),description:'',price:p1,price1Label:'Box',price1:p1,price2Label:'Packet',price2:p2,photo:optimized});
+    }
+    bulkMessage('Uploading '+selected.length+' products and photos to Supabase…');
+    await saveCatalogue(data);
+    render();clearBulkProductsAfterSave();
+    bulkMessage('✅ '+selected.length+' products uploaded successfully to Supabase.');
+    show('✅ '+selected.length+' products uploaded.');
+  }catch(err){
+    data.products=oldProducts;render();
+    bulkMessage('Upload failed: '+(err.message||'Unknown error')+'. Please retry. No existing products were intentionally removed.',true);
+    console.error('Bulk upload failed',err);
+  }finally{bulkSaveButton.disabled=false;bulkPhotosInput.disabled=false;}
+}
+function clearBulkProductsAfterSave(){
+  bulkProducts.forEach(r=>URL.revokeObjectURL(r.previewUrl));
+  bulkProducts=[];bulkPhotosInput.value='';bulkPreview.replaceChildren();bulkControls.hidden=true;
+}
+
+function compressImage(file,maxSize=1200,quality=0.84){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=function(e){
+      const img=new Image();
+      img.onload=async function(){
+        try{
+          let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+          if(!w||!h) throw new Error('Invalid image');
+          const scale=Math.min(1,maxSize/Math.max(w,h));
+          w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+          const canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+          const ctx=canvas.getContext('2d',{alpha:false});
+          if(!ctx) throw new Error('Canvas unavailable');
+          ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
+          const encode=(type,q)=>new Promise((res,rej)=>{
+            canvas.toBlob(blob=>blob?res(blob):rej(new Error('Image encoding failed')),type,q);
+          });
+          let type='image/webp', blob=null;
+          try{
+            blob=await encode(type,quality);
+            if(!blob.type || blob.type!=='image/webp') throw new Error('WebP encoding unsupported');
+          }catch(_){
+            type='image/jpeg';
+            blob=await encode(type,quality);
+          }
+          for(const q of [0.80,0.76,0.72,0.68]){
+            if(blob.size<=280*1024) break;
+            blob=await encode(type,q);
+          }
+          if(blob.size>380*1024 && Math.max(w,h)>900){
+            const scaleDown=900/Math.max(w,h);
+            const nw=Math.max(1,Math.round(w*scaleDown)), nh=Math.max(1,Math.round(h*scaleDown));
+            canvas.width=nw; canvas.height=nh;
+            const ctx2=canvas.getContext('2d',{alpha:false});
+            ctx2.fillStyle='#fff'; ctx2.fillRect(0,0,nw,nh); ctx2.drawImage(img,0,0,nw,nh);
+            blob=await encode(type,0.76);
+          }
+          const outReader=new FileReader();
+          outReader.onload=()=>resolve(outReader.result);
+          outReader.onerror=()=>reject(new Error('Could not read optimized image'));
+          outReader.readAsDataURL(blob);
+        }catch(err){reject(err);}
+      };
+      img.onerror=()=>reject(new Error('Image decode failed'));
+      img.src=e.target.result;
+    };
+    reader.onerror=()=>reject(new Error('File read failed'));
+    reader.readAsDataURL(file);
+  });
+}
+async function saveSettings(){
+  const digits=orderWhatsApp.value.trim().replace(/\D/g,'');
+  if(digits.length<8||digits.length>15){
+    settingsStatus.textContent='Enter a valid international WhatsApp number (8–15 digits, including country code).';
+    settingsStatus.style.color='#b91c1c';
+    return;
+  }
+  const previous={businessName:data.businessName,whatsappOrderNumber:data.whatsappOrderNumber};
+  data.businessName=biz.value.trim()||'White Pack';
+  data.whatsappOrderNumber=digits;
+  const btn=document.getElementById('saveSettingsBtn');
+  btn.disabled=true;
+  settingsStatus.textContent='Saving settings to Supabase…';
+  settingsStatus.style.color='#475569';
+  try{
+    await saveCatalogue(data);
+    settingsStatus.textContent='✅ Settings saved. New orders will open WhatsApp number +' + digits + '.';
+    settingsStatus.style.color='#166534';
+    show('Company settings saved to Supabase.');
+  }catch(e){
+    data.businessName=previous.businessName;
+    data.whatsappOrderNumber=previous.whatsappOrderNumber;
+    orderWhatsApp.value=data.whatsappOrderNumber||'96181085811';
+    settingsStatus.textContent='Could not save settings. Check your admin sign-in and connection, then try again.';
+    settingsStatus.style.color='#b91c1c';
+  }finally{btn.disabled=false;}
+}
+
+async function saveProduct(){
+  const n=nameEl.value.trim();
+  if(!n){alert('Enter a product name.');return;}
+  if(!photo && editIndex<0){alert('Choose a product photo.');return;}
+
+  data.businessName=biz.value.trim() || 'White Pack';
+  data.whatsappOrderNumber=(orderWhatsApp.value.trim().replace(/\D/g,''))||data.whatsappOrderNumber||'96181085811';
+  const firstLabel=price1Label.value.trim() || 'Box';
+  const firstPrice=price1.value.replace(/[^0-9.]/g,'');
+  const secondLabel=price2Label.value.trim() || 'Packet';
+  const secondPrice=price2.value.replace(/[^0-9.]/g,'');
+  const product={
+    ...(editIndex>=0 ? data.products[editIndex] : {}),
+    name:n,
+    description:desc.value.trim(),
+    price:firstPrice, // backward compatibility with the old catalogue field
+    price1Label:firstLabel,
+    price1:firstPrice,
+    price2Label:secondLabel,
+    price2:secondPrice,
+    category:cat.value.trim() || 'Products',
+    photo: photo || (editIndex>=0 ? data.products[editIndex].photo : '')
+  };
+
+  const oldProducts=data.products.slice();
+
+  if(editIndex>=0) data.products[editIndex]=product;
+  else data.products.push(product);
+
+  try{ await saveCatalogue(data); }catch(err){ data.products=oldProducts; alert('Could not save the catalogue.'); return; }
+
+  show(editIndex>=0 ? '✅ Product updated.' : '✅ Product added.');
+  clearForm();
+  render();
+}
+
+function editProduct(i){
+  const p=data.products[i];
+  editIndex=i;
+  biz.value=data.businessName||'White Pack';
+  nameEl.value=p.name||'';
+  desc.value=p.description||'';
+  price1Label.value=p.price1Label||'Box';
+  price1.value=p.price1??p.price??'';
+  price2Label.value=p.price2Label||'Packet';
+  price2.value=p.price2??'';
+  cat.value=p.category||'Products';
+  photo=p.photo||'';
+  if(photo){preview.src=photo;preview.style.display='block';pt.style.display='none';}
+  addBtn.textContent='💾 Save Changes';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function del(i){
+  if(!confirm('Delete this product?')) return;
+  data.products.splice(i,1);
+  try{ await saveCatalogue(data); }catch(err){ alert('Could not save the catalogue to Supabase. Please check your sign-in and connection.'); return; }
+  render();
+  show('Product deleted from Supabase.');
+}
+
+function clearForm(){
+  editIndex=-1;
+  photo='';
+  nameEl.value='';
+  desc.value='';
+  price1Label.value='Box';
+  price1.value='';
+  price2Label.value='Packet';
+  price2.value='';
+  cat.value='';
+  file.value='';
+  preview.src='';
+  preview.style.display='none';
+  pt.style.display='block';
+  addBtn.textContent='➕ Add Product';
+}
+
+const authPanel=document.getElementById('authPanel');
+const editorArea=document.getElementById('editorArea');
+const authStatus=document.getElementById('authStatus');
+const authEmail=document.getElementById('authEmail');
+const authPassword=document.getElementById('authPassword');
+const signInBtn=document.getElementById('signInBtn');
+const signOutBtn=document.getElementById('signOutBtn');
+function authMessage(message,isError=false){authStatus.textContent=message;authStatus.style.color=isError?'#b91c1c':'#166534';}
+function apiHeaders(token){return {'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+(token||SUPABASE_PUBLISHABLE_KEY),'Content-Type':'application/json'};}
+async function apiJson(url,options={}){
+  const response=await fetch(url,options);
+  const raw=await response.text(); let body=null; try{body=raw?JSON.parse(raw):null;}catch(_){body={message:raw};}
+  if(!response.ok) throw new Error((body&&(body.msg||body.message||body.error_description||body.error))||('Supabase request failed ('+response.status+')'));
+  return body;
+}
+function saveSession(session){supabaseSession=session;try{if(session)localStorage.setItem(SESSION_KEY,JSON.stringify(session));else localStorage.removeItem(SESSION_KEY);}catch(_){} }
+async function refreshSessionIfNeeded(){
+  if(!supabaseSession||!supabaseSession.refresh_token)return false;
+  if(!supabaseSession.expires_at||Date.now()<supabaseSession.expires_at*1000-60000)return true;
+  try{const refreshed=await apiJson(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:apiHeaders(),body:JSON.stringify({refresh_token:supabaseSession.refresh_token})});
+    refreshed.expires_at=Math.floor(Date.now()/1000)+(refreshed.expires_in||3600);saveSession(refreshed);return true;
+  }catch(e){saveSession(null);currentUser=null;return false;}
+}
+async function authFetch(url,options={}){
+  if(!await refreshSessionIfNeeded()) throw new Error('Your session expired. Please sign in again.');
+  const headers={...apiHeaders(supabaseSession.access_token),...(options.headers||{})};
+  return apiJson(url,{...options,headers});
+}
+async function signIn(){
+  const email=authEmail.value.trim(),password=authPassword.value;
+  if(!email||!password){authMessage('Enter your admin email and password.',true);return;}
+  signInBtn.disabled=true;authMessage('Signing in…');
+  try{
+    const session=await apiJson(SUPABASE_URL+'/auth/v1/token?grant_type=password',{method:'POST',headers:apiHeaders(),body:JSON.stringify({email,password})});
+    session.expires_at=Math.floor(Date.now()/1000)+(session.expires_in||3600);saveSession(session);
+    await activateAdmin();authPassword.value='';
+  }catch(e){saveSession(null);authMessage('Sign-in failed: '+e.message,true);}
+  finally{signInBtn.disabled=false;}
+}
+async function signOut(){saveSession(null);currentUser=null;remoteLoaded=false;editorArea.hidden=true;signOutBtn.hidden=true;signInBtn.hidden=false;authPanel.hidden=false;authMessage('Signed out.');}
+async function initializeApp(){
+  try{const saved=await dbGet();if(saved&&Array.isArray(saved.products))data=saved;data.whatsappOrderNumber=data.whatsappOrderNumber||'96181085811';normalizePriceOrder(data.products);biz.value=data.businessName||'White Pack';orderWhatsApp.value=data.whatsappOrderNumber;}
+  catch(e){console.warn('Local cache unavailable',e);}
+  let stored=null;try{stored=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch(_){}
+  if(stored){saveSession(stored);try{await activateAdmin();return;}catch(e){saveSession(null);authMessage('Please sign in again.');}}
+  authPanel.hidden=false;editorArea.hidden=true;
+}
+async function activateAdmin(){
+  if(!await refreshSessionIfNeeded())throw new Error('Please sign in again.');
+  const user=await authFetch(SUPABASE_URL+'/auth/v1/user',{method:'GET',headers:{}});
+  currentUser=user;
+  authMessage('Signed in. Loading catalogue from Supabase…');
+  const rows=await authFetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE+'?select=id,product_data,sort_order,updated_at&order=sort_order.asc',{method:'GET',headers:{}});
+  if(!Array.isArray(rows))throw new Error('Unexpected product table response.');
+  remoteRows=rows;
+  const meta=rows.find(r=>r.id===META_ID||r.product_data&&r.product_data._wp_meta===true);
+  const products=rows.filter(r=>r.id!==META_ID&&!(r.product_data&&r.product_data._wp_meta===true)).map(r=>({...r.product_data,_supabaseId:r.id}));
+  data={businessName:(meta&&meta.product_data&&meta.product_data.businessName)||'White Pack',whatsappOrderNumber:(meta&&meta.product_data&&meta.product_data.whatsappOrderNumber)||'96181085811',categoryOrder:(meta&&meta.product_data&&Array.isArray(meta.product_data.categoryOrder))?meta.product_data.categoryOrder:[],products};
+  normalizePriceOrder(data.products);biz.value=data.businessName||'White Pack';orderWhatsApp.value=data.whatsappOrderNumber||'96181085811';
+  remoteLoaded=true;await dbPut(data);render();
+  authPanel.hidden=false;editorArea.hidden=false;signInBtn.hidden=true;signOutBtn.hidden=false;
+  authMessage('Connected to Supabase. '+products.length+' products loaded.');
+}
+async function uploadPhotoIfNeeded(product){
+  if(!product.photo||!product.photo.startsWith('data:image/'))return product.photo||'';
+  const match=product.photo.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/s);
+  if(!match)throw new Error('A product photo has an invalid image format.');
+  const mime=match[1],base64=match[2];
+  const ext=mime.includes('png')?'png':mime.includes('webp')?'webp':'jpg';
+  // Use a timestamp plus UUID to avoid object-name collisions during JSON imports.
+  const makePath=()=> 'products/'+Date.now()+'-'+crypto.randomUUID()+'.'+ext;
+  const bytes=Uint8Array.from(atob(base64),c=>c.charCodeAt(0));
+  let path=makePath();
+  let response=await fetch(SUPABASE_URL+'/storage/v1/object/'+SUPABASE_BUCKET+'/'+path,{method:'POST',headers:{'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+supabaseSession.access_token,'Content-Type':mime,'x-upsert':'false'},body:bytes});
+  // If Storage reports an existing object, retry once with a fresh unique name.
+  if(!response.ok){
+    const firstError=await response.clone().text();
+    if(/already exists|duplicate/i.test(firstError)){
+      path=makePath();
+      response=await fetch(SUPABASE_URL+'/storage/v1/object/'+SUPABASE_BUCKET+'/'+path,{method:'POST',headers:{'apikey':SUPABASE_PUBLISHABLE_KEY,'Authorization':'Bearer '+supabaseSession.access_token,'Content-Type':mime,'x-upsert':'false'},body:bytes});
+    }
+  }
+  const raw=await response.text();if(!response.ok){let msg=raw;try{const j=JSON.parse(raw);msg=j.message||j.error||raw;}catch(_){}throw new Error('Photo upload failed: '+msg);}
+  return SUPABASE_URL+'/storage/v1/object/public/'+SUPABASE_BUCKET+'/'+path;
+}
+async function syncCatalogueToSupabase(v){
+  if(!currentUser||!remoteLoaded)return;
+  if(syncingRemote)throw new Error('A Supabase save is already running. Please wait and try again.');
+  syncingRemote=true;
+  try{
+    const rows=[];
+    rows.push({id:META_ID,product_data:{_wp_meta:true,businessName:v.businessName||'White Pack',whatsappOrderNumber:String(v.whatsappOrderNumber||'96181085811'),categoryOrder:Array.isArray(v.categoryOrder)?v.categoryOrder:[]},sort_order:-1,updated_at:new Date().toISOString()});
+    for(let i=0;i<(v.products||[]).length;i++){
+      const p=v.products[i];
+      if(!p._supabaseId)p._supabaseId=crypto.randomUUID();
+      p.photo=await uploadPhotoIfNeeded(p);
+      const productData={...p};delete productData._supabaseId;
+      rows.push({id:p._supabaseId,product_data:productData,sort_order:i,updated_at:new Date().toISOString()});
+    }
+    // Bulk upsert keeps large catalogues to a small number of requests.
+    await authFetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE+'?on_conflict=id',{method:'POST',headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(rows)});
+    const keep=new Set(rows.map(r=>r.id));
+    const stale=remoteRows.filter(r=>!keep.has(r.id));
+    for(const row of stale){await authFetch(SUPABASE_URL+'/rest/v1/'+SUPABASE_TABLE+'?id=eq.'+encodeURIComponent(row.id),{method:'DELETE',headers:{'Prefer':'return=minimal'}});}
+    remoteRows=rows.map(r=>({id:r.id,product_data:r.product_data,sort_order:r.sort_order,updated_at:r.updated_at}));
+    // Store the remote image URLs and generated row IDs in the local cache too.
+    await dbPut(v);
+  }finally{syncingRemote=false;}
+}
+async function saveCatalogue(v){
+  await dbPut(v);
+  if(currentUser&&remoteLoaded){await syncCatalogueToSupabase(v);}
+}
+function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,DB_VERSION);r.onupgradeneeded=()=>r.result.createObjectStore(STORE);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+async function dbGet(){const db=await dbReady;return new Promise((resolve,reject)=>{const r=db.transaction(STORE,'readonly').objectStore(STORE).get('catalogue');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+async function dbPut(v){const db=await dbReady;return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(v,'catalogue');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}
+async function persist(){try{await saveCatalogue(data);return true;}catch(e){console.error(e);return false;}}
+
+function render(){
+  const q=(searchInput ? searchInput.value : '').trim().toLowerCase();
+  const selectedCategory=(categoryFilter ? categoryFilter.value : '').trim();
+  const allProducts=data.products||[];
+
+  // Keep the category filter options up to date without resetting the user's selection.
+  if(categoryFilter){
+    const previous=categoryFilter.value;
+    const cats=getCategories();
+    categoryFilter.innerHTML='<option value="">All categories</option>'+cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    categoryFilter.value=cats.includes(previous)?previous:'';
+  }
+
+  count.textContent=allProducts.length;
+
+  if(!allProducts.length){
+    if(searchInfo) searchInfo.textContent='';
+    list.innerHTML='<div class="hint">No products yet. Add your first product above.</div>';
+    return;
+  }
+
+  const activeCategory=categoryFilter ? categoryFilter.value.trim() : '';
+  const matches=allProducts.map((p,i)=>({p,i})).filter(({p})=>{
+    const productCategory=(p.category||'Products').trim()||'Products';
+    if(activeCategory && productCategory!==activeCategory) return false;
+    if(!q) return true;
+    return [
+      p.name,
+      p.description,
+      p.price, p.price1Label, p.price1, p.price2Label, p.price2
+    ].some(v=>String(v||'').toLowerCase().includes(q));
+  });
+
+  if(searchInfo){
+    searchInfo.textContent=q
+      ? `Showing ${matches.length} of ${allProducts.length} products`
+      : `${allProducts.length} products`;
+  }
+
+  if(!matches.length){
+    list.innerHTML='<div class="hint">🔎 No products found. Try another search.</div>';
+    return;
+  }
+
+  renderCategories();
+
+  list.innerHTML=matches.map(({p,i})=>`
+    <div class="item">
+      <div class="productPhotoWrap">
+        <img src="${p.photo||''}" alt="Photo of ${esc(p.name)}" loading="lazy" decoding="async">
+        <button type="button" class="changePhotoBtn" onclick="document.getElementById('replacePhoto_${i}').click()">📷 Change photo</button>
+        <input class="photoReplaceInput" id="replacePhoto_${i}" type="file" accept="image/*" onchange="changeProductPhoto(${i},this)">
+      </div>
+      <div class="productInfo">
+        <b>${esc(p.name)}</b>
+        <div class="inlinePriceGrid" aria-label="Inline unit and price editor">
+          <div class="inlinePriceUnit">
+            <label>First unit / price</label>
+            <input class="unitLabel" aria-label="First unit label" value="${esc(p.price1Label||'Box')}" onchange="updateInlinePrice(${i},'price1Label',this.value)" placeholder="Box">
+            <input aria-label="First price in USD" inputmode="decimal" value="${esc(p.price1??p.price??'')}" onchange="updateInlinePrice(${i},'price1',this.value)" placeholder="Price USD">
+          </div>
+          <div class="inlinePriceUnit">
+            <label>Second unit / price</label>
+            <input class="unitLabel" aria-label="Second unit label" value="${esc(p.price2Label||'Packet')}" onchange="updateInlinePrice(${i},'price2Label',this.value)" placeholder="Packet">
+            <input aria-label="Second price in USD" inputmode="decimal" value="${esc(p.price2??'')}" onchange="updateInlinePrice(${i},'price2',this.value)" placeholder="Price USD">
+          </div>
+        </div>
+        <div class="inlineSaved" id="inlineSaved_${i}"></div>
+        <span class="productCategory">📂 ${esc(p.category||'Products')}</span>
+      </div>
+      <div class="productActions">
+        <button class="orderBtn" onclick="moveProduct(${i},-1)" title="Move up">⬆️</button>
+        <button class="orderBtn" onclick="moveProduct(${i},1)" title="Move down">⬇️</button>
+        <div class="positionControl">
+          <label style="margin:0;font-size:12px">Position</label>
+          <input id="position_${i}" type="number" min="1" max="${(data.products||[]).filter(x=>((x.category||'Products').trim()||'Products')===((p.category||'Products').trim()||'Products')).length}" value="${(data.products||[]).slice(0,i+1).filter(x=>((x.category||'Products').trim()||'Products')===((p.category||'Products').trim()||'Products')).length}" aria-label="New position for ${esc(p.name)}">
+          <button type="button" onclick="moveProductToPosition(${i})">Move</button>
+        </div>
+        <button class="edit" onclick="editProduct(${i})">Edit</button>
+        <button class="danger" onclick="del(${i})">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+
+async function changeProductPhoto(i,input){
+  const f=input && input.files && input.files[0];
+  if(input) input.value=''; // allow selecting the same photo again
+  if(!f) return;
+  if(!f.type || !f.type.startsWith('image/')){alert('Please choose an image file.');return;}
+  const product=data.products[i];
+  if(!product){alert('This product could not be found. Please refresh the admin page.');return;}
+  const oldPhoto=product.photo||'';
+  const button=document.querySelector(`button[onclick="document.getElementById('replacePhoto_${i}').click()"]`);
+  if(button){button.disabled=true;button.textContent='⏳ Saving…';}
+  show('⏳ Optimizing and saving the new product photo…');
+  try{
+    const optimized=await compressImage(f,1200,0.84);
+    product.photo=optimized;
+    await saveCatalogue(data);
+    render();
+    show('✅ Photo changed and saved to Supabase.');
+  }catch(err){
+    console.error('Product photo replacement failed:',err);
+    product.photo=oldPhoto;
+    render();
+    alert('Could not replace this photo. Your previous photo has been kept. Check your admin sign-in and connection, then try again.');
+  }
+}
+
+async function updateInlinePrice(i, field, value){
+  const p=data.products[i];
+  if(!p || !['price1Label','price1','price2Label','price2'].includes(field)) return;
+  const previous={...p};
+  if(field==='price1Label') p.price1Label=value.trim()||'Box';
+  else if(field==='price2Label') p.price2Label=value.trim()||'Packet';
+  else {
+    const cleaned=String(value).replace(/[^0-9.]/g,'');
+    if((cleaned.match(/\./g)||[]).length>1){alert('Enter a valid price.');render();return;}
+    p[field]=cleaned;
+    if(field==='price1') p.price=cleaned; // legacy compatibility
+  }
+  try{
+    await saveCatalogue(data);
+    const indicator=document.getElementById('inlineSaved_'+i);
+    if(indicator) indicator.textContent='✓ Saved to Supabase';
+    show('✅ Price/unit saved to Supabase.');
+  }catch(err){
+    data.products[i]=previous;
+    alert('Could not save this price. Please try again.');
+    render();
+  }
+}
+
+function getCategories(){
+  const seen=new Set(), cats=[];
+  for(const p of (data.products||[])){ const c=(p.category||'Products').trim()||'Products'; if(!seen.has(c)){seen.add(c);cats.push(c);} }
+  const saved=Array.isArray(data.categoryOrder)?data.categoryOrder:[];
+  return [...saved.filter(c=>cats.includes(c)), ...cats.filter(c=>!saved.includes(c))];
+}
+
+function renderCategories(){
+  const cats=getCategories(); data.categoryOrder=cats;
+  categoryList.innerHTML=cats.length?cats.map((c,i)=>`<div class="categoryItem"><button class="orderBtn" onclick="moveCategory(${i},-1)" ${i===0?'disabled':''}>⬆️</button><button class="orderBtn" onclick="moveCategory(${i},1)" ${i===cats.length-1?'disabled':''}>⬇️</button><span class="catName">${esc(c)}</span><button type="button" class="categoryRenameBtn" onclick="renameCategory(${JSON.stringify(c).replace(/"/g,'&quot;')})">✏️ Rename</button></div>`).join(''):'<div class="hint">No categories yet.</div>';
+}
+
+async function moveCategory(i,d){
+  // Build the currently displayed category order, then move exactly one category.
+  const cats=getCategories();
+  const j=i+d;
+  if(i<0 || i>=cats.length || j<0 || j>=cats.length) return;
+
+  const previousOrder=cats.slice();
+  [cats[i],cats[j]]=[cats[j],cats[i]];
+  data.categoryOrder=cats.slice();
+
+  // Save the order (including the Supabase metadata row) before re-rendering.
+  const saved=await persist();
+  if(saved){
+    render();
+    renderCategories();
+    show('✅ Category order saved. The new order is stored in your catalogue.');
+  }else{
+    data.categoryOrder=previousOrder;
+    render();
+    renderCategories();
+    alert('Could not save category order. Your previous order has been restored. Check your connection and try again.');
+  }
+}
+
+async function renameCategory(oldName){
+  const newName=prompt('Rename category "'+oldName+'" to:',oldName);
+  if(newName===null)return;
+  const cleaned=newName.trim();
+  if(!cleaned){alert('Category name cannot be empty.');return;}
+  if(cleaned===oldName)return;
+  if(getCategories().includes(cleaned)){alert('A category with that name already exists. Choose a different name.');return;}
+  const oldProducts=data.products.map(p=>({...p}));
+  const oldOrder=Array.isArray(data.categoryOrder)?data.categoryOrder.slice():[];
+  data.products.forEach(p=>{
+    if(((p.category||'Products').trim()||'Products')===oldName)p.category=cleaned;
+  });
+  data.categoryOrder=getCategories().map(c=>c===oldName?cleaned:c);
+  try{
+    await saveCatalogue(data);
+    render();
+    show('✅ Category renamed to "'+cleaned+'". All products in this category were updated and saved to Supabase.');
+  }catch(err){
+    data.products=oldProducts;
+    data.categoryOrder=oldOrder;
+    render();
+    alert('Could not save the category rename to Supabase. Please check your connection and try again.');
+  }
+}
+
+async function moveProduct(i,d){
+  const products=data.products||[];
+  const product=products[i];
+  if(!product) return;
+  const category=(product.category||'Products').trim()||'Products';
+
+  // Find this product's position among products in its own category.
+  // Swap with the previous/next product in that category, even if other
+  // categories appear between them in the full catalogue.
+  const categoryIndexes=[];
+  products.forEach((p,index)=>{
+    if(((p.category||'Products').trim()||'Products')===category) categoryIndexes.push(index);
+  });
+  const position=categoryIndexes.indexOf(i);
+  const targetPosition=position+d;
+  if(position<0 || targetPosition<0 || targetPosition>=categoryIndexes.length) return;
+  const j=categoryIndexes[targetPosition];
+  [products[i],products[j]]=[products[j],products[i]];
+
+  if(await persist()){
+    render();
+    show('✅ Product order saved to Supabase within '+category+'.');
+  } else {
+    [products[i],products[j]]=[products[j],products[i]];
+    alert('Could not save product order.');
+    render();
+  }
+}
+
+async function moveProductToPosition(i){
+  const products=data.products||[];
+  const product=products[i];
+  if(!product) return;
+  const category=(product.category||'Products').trim()||'Products';
+  const categoryIndexes=[];
+  products.forEach((p,index)=>{
+    if(((p.category||'Products').trim()||'Products')===category) categoryIndexes.push(index);
+  });
+  const input=document.getElementById('position_'+i);
+  const requested=Number.parseInt(input?.value,10);
+  if(!Number.isInteger(requested)||requested<1||requested>categoryIndexes.length){
+    alert('Enter a position from 1 to '+categoryIndexes.length+'.');
+    return;
+  }
+  const oldPosition=categoryIndexes.indexOf(i);
+  const newPosition=requested-1;
+  if(oldPosition===newPosition) { show('Product is already at position '+requested+'.'); return; }
+  const originalCategoryProducts=categoryIndexes.map(index=>products[index]);
+  const categoryProducts=originalCategoryProducts.slice();
+  const moved=categoryProducts.splice(oldPosition,1)[0];
+  categoryProducts.splice(newPosition,0,moved);
+  categoryIndexes.forEach((index,j)=>products[index]=categoryProducts[j]);
+  if(await persist()){
+    render();
+    show('✅ Moved to position '+requested+' in '+category+'.');
+  }else{
+    // Restore the original order if the save failed.
+    categoryIndexes.forEach((index,j)=>products[index]=originalCategoryProducts[j]);
+    alert('Could not save product order.');
+    render();
+  }
+}
+
+async function optimizeAllPhotos(){
+  for(const p of (data.products||[])){
+    if(!p.photo || !p.photo.startsWith('data:image')) continue;
+    p.photo = await compressDataUrl(p.photo,400,0.55);
+  }
+}
+function compressDataUrl(dataUrl,maxSize=400,quality=0.55){
+  return new Promise(resolve=>{
+    if(!dataUrl || !dataUrl.startsWith('data:image')){resolve(dataUrl);return;}
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+      const scale=Math.min(1,maxSize/Math.max(w,h));
+      w=Math.max(1,Math.round(w*scale)); h=Math.max(1,Math.round(h*scale));
+      const c=document.createElement('canvas'); c.width=maxSize; c.height=maxSize;
+      const ctx=c.getContext('2d',{alpha:false});
+      if(!ctx){resolve(dataUrl);return;}
+      ctx.fillStyle='#fff'; ctx.fillRect(0,0,maxSize,maxSize);
+      ctx.drawImage(img,Math.round((maxSize-w)/2),Math.round((maxSize-h)/2),w,h);
+      resolve(c.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=()=>resolve(dataUrl);
+    img.src=dataUrl;
+  });
+}
+async function downloadJSON(){
+  data.businessName=biz.value.trim()||'White Pack';
+  show('⏳ Optimizing existing photos…');
+  await optimizeAllPhotos();
+  try{await saveCatalogue(data);}catch(e){alert('Could not save the catalogue to Supabase before download. Please retry.');show('❌ Save failed; JSON was not downloaded.');return;}
+  const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='products.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  show('✅ products.json downloaded. Catalogue is also saved in Supabase.');
+}
+
+// Reliable JSON import: reset the picker so the same file can be selected again,
+// validate before replacing the current catalogue, and keep a local copy even if
+// the remote Supabase sync reports an error.
+const importInput=document.getElementById('importFile');
+importInput.addEventListener('change', async e=>{
+  const f=e.target.files && e.target.files[0];
+  // Clear immediately; this allows importing the same file twice in a row.
+  e.target.value='';
+  if(!f) return;
+  if(!f.size){alert('This JSON file is empty (0 KB). Please choose the original products.json file.');return;}
+  show('⏳ Reading '+f.name+'…');
+  try{
+    const raw=await f.text();
+    if(!raw.trim()) throw new Error('The selected file is empty.');
+    let parsed;
+    try{parsed=JSON.parse(raw);}catch(_){throw new Error('The file is not valid JSON. Please choose products.json, not the admin HTML file.');}
+    // Accept both the normal {products:[...]} catalogue and a plain product array.
+    const products=Array.isArray(parsed)?parsed:parsed && parsed.products;
+    if(!Array.isArray(products)) throw new Error('No products array was found. Expected a catalogue containing "products".');
+    if(products.length===0) throw new Error('This file contains zero products, so the current catalogue was not changed.');
+    if(products.some(p=>!p || typeof p!=='object' || Array.isArray(p))) throw new Error('One or more product entries are invalid. The current catalogue was not changed.');
+    const imported={
+      businessName:(!Array.isArray(parsed)&&parsed.businessName)||data.businessName||'White Pack',
+      whatsappOrderNumber:(!Array.isArray(parsed)&&parsed.whatsappOrderNumber)||data.whatsappOrderNumber||'96181085811',
+      products:products,
+      categoryOrder:(!Array.isArray(parsed)&&Array.isArray(parsed.categoryOrder))?parsed.categoryOrder:[]
+    };
+    normalizePriceOrder(imported.products);
+    // Save locally first, so a network/storage issue cannot erase the import.
+    await dbPut(imported);
+    data=imported;
+    biz.value=data.businessName;
+    orderWhatsApp.value=data.whatsappOrderNumber||'96181085811';
+    render();
+    clearForm();
+    try{
+      if(currentUser && remoteLoaded){
+        show('⏳ Imported '+products.length+' products locally. Syncing to Supabase…');
+        await syncCatalogueToSupabase(data);
+        await dbPut(data);
+        render();
+        show('✅ Imported '+products.length+' products and saved to Supabase.');
+      }else{
+        show('✅ Imported '+products.length+' products on this device. Sign in to sync them to Supabase.');
+      }
+    }catch(syncErr){
+      console.error('Supabase import sync failed:',syncErr);
+      render();
+      alert('The JSON was imported on this device ('+products.length+' products), but Supabase sync failed: '+(syncErr.message||'Unknown error')+'\n\nYour imported catalogue is kept locally. Please do not re-import repeatedly; check the error and retry sync after fixing it.');
+      show('⚠️ Imported locally; Supabase sync needs attention.');
+    }
+  }catch(err){
+    console.error('JSON import failed:',err);
+    alert('Could not import products.json. '+(err.message||'Please choose a valid JSON file.'));
+    show('❌ Import failed. Current catalogue was not replaced.');
+  }
+});
+
+function show(t){
+  status.style.display='block';
+  status.textContent=t;
+  setTimeout(()=>status.style.display='none',3500);
+}
+
+function normalizePriceOrder(products){
+  for(const p of (products||[])){
+    let l1=String(p.price1Label||'').trim(), l2=String(p.price2Label||'').trim();
+    if((p.price1===undefined||p.price1===null||String(p.price1).trim()==='') && p.price!==undefined && p.price!==null && String(p.price).trim()!=='') p.price1=p.price;
+    if(l1.toLowerCase()==='packet' && l2.toLowerCase()==='box' && p.price2!==undefined && p.price2!==null && String(p.price2).trim()!==''){
+      const oldFirst=p.price1??p.price;
+      p.price1=p.price2; p.price2=oldFirst; p.price1Label='Box'; p.price2Label='Packet';
+    }else{
+      p.price1Label=l1||'Box'; p.price2Label=l2||'Packet';
+    }
+    if(p.price1!==undefined && p.price1!==null && String(p.price1).trim()!=='') p.price=p.price1;
+  }
+}
+
+function esc(s){
+  return String(s||'').replace(/[&<>"']/g,m=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  }[m]));
+}
+
+searchInput.addEventListener('input', render);
+categoryFilter.addEventListener('change', render);
+clearSearch.addEventListener('click', ()=>{
+  searchInput.value='';
+  render();
+  searchInput.focus();
+});
+
+</script>
+
+<script>
+(function setupAdminPWA(){
+  const button=document.getElementById('adminInstallBtn');
+  const help=document.getElementById('adminInstallHelp');
+  let pending=null;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  if(standalone){button.hidden=true;help.textContent='White Pack Admin is running as an app.';}
+  window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();pending=event;button.textContent='📲 Install Admin App';});
+  button.addEventListener('click',async()=>{
+    if(pending){pending.prompt();try{const result=await pending.userChoice;if(result&&result.outcome==='accepted'){button.hidden=true;help.textContent='White Pack Admin has been installed.';}}catch(_){}pending=null;return;}
+    help.textContent=ios?'On iPhone/iPad: open this page in Safari, tap Share, choose “Add to Home Screen”, then tap Add. This Admin app still requires your authorized sign-in.':(/android/i.test(navigator.userAgent)?'On Android: open this page in Chrome, tap ⋮, then choose “Install app” or “Add to Home screen”.':'On desktop Chrome or Edge: use the install icon in the address bar, or open the browser menu and choose “Install White Pack Admin”.');
+  });
+  window.addEventListener('appinstalled',()=>{pending=null;button.hidden=true;help.textContent='White Pack Admin has been installed.';});
+  if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('Service worker registration failed',err)));
+})();
+</script>
+</body>
+</html>
