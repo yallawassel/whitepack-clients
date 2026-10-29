@@ -133,6 +133,13 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 #shareCatalogueBtn:active{transform:translateY(1px)}
 #shareStatus{font-size:11px;color:#dbeafe;min-height:13px;text-align:right}
 @media(max-width:520px){header{padding:10px 8px}.brand{padding:0;gap:8px}.brand-identity{gap:8px}.brand-identity .site-logo{width:44px;height:44px}.brand-identity h1{font-size:19px}.brand-identity .sub{max-width:185px;font-size:11px;line-height:1.3}.brand-actions{max-width:132px}#shareCatalogueBtn{padding:9px 9px;font-size:12px}.install-card{margin-left:10px;margin-right:10px}}
+body[dir="rtl"]{direction:rtl}
+body[dir="rtl"] .brand,body[dir="rtl"] .brand-identity,body[dir="rtl"] .install-card,body[dir="rtl"] .cartitem{direction:rtl}
+body[dir="rtl"] .cartbar{right:auto;left:16px}
+body[dir="rtl"] .carttotal{text-align:left}
+body[dir="rtl"] .toolbar input{text-align:right}
+#languageToggle{touch-action:manipulation;white-space:nowrap}
+@media(max-width:520px){#languageToggle{font-size:12px!important;padding:8px!important}}
 </style>
 </head>
 <body>
@@ -146,6 +153,7 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
       </div>
     </div>
     <div class="brand-actions">
+      <button id="languageToggle" type="button" style="border:1px solid #b8d8ff;background:#eaf4ff;color:#0757ad;border-radius:12px;padding:9px 12px;font-weight:900;font-size:14px">العربية</button>
       <button id="shareCatalogueBtn" type="button" aria-label="Share White Pack catalogue">↗ Share Catalogue</button>
       <div id="shareStatus" role="status" aria-live="polite"></div>
     </div>
@@ -197,8 +205,96 @@ h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
 let products=[],active="",categoryOrder=[],orderWhatsAppNumber='96181085811';
 let cart=[];
 const selectedUnits={};
-
+let catalogueLanguage=localStorage.getItem('whitepack_language')==='ar'?'ar':'en';
+const uiArabic={
+'Choose a Category':'اختر فئة','No categories found.':'لم يتم العثور على فئات.','No products found.':'لم يتم العثور على منتجات.',
+'Your order is empty.':'طلبك فارغ.','Remove':'حذف','Total:':'المجموع:','Add to Order':'أضف إلى الطلب',
+'Customer name *':'اسم الزبون *','Phone number *':'رقم الهاتف *','Delivery address':'عنوان التوصيل',
+'Share my delivery location (optional)':'مشاركة موقعي للتوصيل (اختياري)','Location is optional. Your browser will ask permission.':'الموقع اختياري. سيطلب المتصفح الإذن.',
+'Order notes (optional)':'ملاحظات الطلب (اختياري)','Delivery instructions':'تعليمات التوصيل',
+'Send Order to WhatsApp':'إرسال الطلب عبر واتساب','Please add products first.':'يرجى إضافة منتجات أولاً.',
+'Please enter your name and phone number.':'يرجى إدخال الاسم ورقم الهاتف.',
+'Please enter an address or share your delivery location.':'يرجى إدخال العنوان أو مشاركة موقعك.',
+'Quantity:':'الكمية:','Box':'كرتونة','Packet':'باكيت','Unit':'وحدة',
+'Product Catalogue · Where Quality Meets Affordability':'كتالوج المنتجات · الجودة بأسعار مناسبة',
+'Add White Pack to your home screen':'أضف وايت باك إلى الشاشة الرئيسية',
+'Open the catalogue quickly like an app on your phone.':'افتح الكتالوج بسرعة مثل أي تطبيق على هاتفك.',
+'Install / Add':'تثبيت / إضافة','Install':'تثبيت','How to add':'طريقة الإضافة',
+'White Pack':'وايت باك'
+};
+const productPhraseArabic={
+ 'plastic gloves':'قفازات بلاستيكية','disposable gloves':'قفازات للاستعمال مرة واحدة','gloves':'قفازات',
+ 'hygiene products':'منتجات النظافة','hygiene':'مستلزمات النظافة','cutleries':'أدوات المائدة البلاستيكية',
+ 'cutlery':'أدوات المائدة البلاستيكية','plastic cutlery':'أدوات مائدة بلاستيكية',
+ 'plastic cups':'أكواب بلاستيكية','paper cups':'أكواب ورقية','cups':'أكواب',
+ 'food packaging':'تغليف المواد الغذائية','food containers':'علب طعام','containers':'حافظات',
+ 'paper bags':'أكياس ورقية','plastic bags':'أكياس نايلون','shopping bags':'أكياس تسوق',
+ 'napkins':'مناديل','tissues':'مناديل ورقية','kitchen rolls':'رولات مطبخ',
+ 'cleaning products':'مواد تنظيف','cleaning':'مواد تنظيف','detergents':'منظفات',
+ 'pizza boxes':'علب بيتزا','pizza box':'علبة بيتزا','burger boxes':'علب برغر',
+ 'kraft bags':'أكياس كرافت','kraft bowls':'أوعية كرافت','plastic plates':'صحون بلاستيكية',
+ 'paper plates':'صحون ورقية','straws':'شفاطات','straw':'شفاطة',
+ 'fuel gel':'جل وقود','stretch film':'نايلون ستريتش','crystal trays':'صواني كريستال',
+ 'disposable items':'مستلزمات للاستعمال مرة واحدة','disposable':'للاستعمال مرة واحدة',
+ 'medical supplies':'مستلزمات طبية','hair nets':'شبكات شعر','bouffant caps':'قبعات شعر واقية'
+};
+const productArabic={
+'paper cups':'أكواب ورقية','paper cup':'كوب ورقي','plastic cups':'أكواب بلاستيكية','plastic cup':'كوب بلاستيك',
+'glove':'قفاز','gloves':'قفازات','hygiene':'نظافة','cutleries':'أدوات المائدة','cutlery':'أدوات المائدة',
+'shopping bags':'أكياس تسوق','shopping bag':'كيس تسوق','kitchen rolls':'رولات مطبخ','kitchen roll':'رول مطبخ',
+'stretch film':'نايلون ستريتش','hand soap':'صابون لليدين','fuel gel':'جل وقود',
+'paper':'ورق','bag':'كيس','bags':'أكياس','plastic':'بلاستيك','nylon':'نايلون','cup':'كوب','cups':'أكواب',
+'box':'علبة','boxes':'علب','carton':'كرتون','cartons':'كراتين','kraft':'كرافت','bowl':'وعاء','bowls':'أوعية',
+'salad':'سلطة','container':'حافظة','containers':'حافظات','plate':'صحن','plates':'صحون','black':'أسود',
+'white':'أبيض','napkin':'منديل','napkins':'مناديل','tissue':'مناديل ورقية','tissues':'مناديل ورقية',
+'kitchen':'مطبخ','roll':'رول','rolls':'رولات','stretch':'ستريتش','film':'فيلم','meat':'لحمة','food':'طعام',
+'bread':'خبز','fork':'شوكة','forks':'شوك','spoon':'ملعقة','spoons':'ملاعق','knife':'سكين','knives':'سكاكين',
+'detergent':'منظف','detergents':'منظفات','soap':'صابون','javel':'جافيل','degreaser':'مزيل دهون','fuel':'وقود',
+'gel':'جل','fries':'بطاطا مقلية','pizza':'بيتزا','burger':'برغر','crystal':'كريستال','tray':'صينية','trays':'صواني',
+'packet':'باكيت','pack':'عبوة','large':'كبير','small':'صغير','medium':'وسط','pcs':'قطعة','piece':'قطعة','pieces':'قطع',
+'clear':'شفاف','with':'مع','and':'و','for':'لـ'
+};
 const $=id=>document.getElementById(id);
+function translateProduct(value){
+ if(catalogueLanguage!=='ar'||!value)return String(value||'');
+ let out=String(value);
+ // Translate known full category/product phrases first, then translate individual words.
+ for(const [en,ar] of Object.entries(productPhraseArabic).sort((a,b)=>b[0].length-a[0].length)){
+   out=out.replace(new RegExp('(^|[^A-Za-z])'+en.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&')+'(?=$|[^A-Za-z])','gi'),(m,left)=>left+ar);
+ }
+ for(const [en,ar] of Object.entries(productArabic).sort((a,b)=>b[0].length-a[0].length)){
+   out=out.replace(new RegExp('(^|[^A-Za-z])'+en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^A-Za-z])','gi'),(m,left)=>left+ar);
+ }
+ return out.replace(/\s+/g,' ').trim();
+}
+function ui(text){return catalogueLanguage==='ar'?(uiArabic[text]||translateProduct(text)):text;}
+function applyLanguage(){
+ const ar=catalogueLanguage==='ar';
+ document.documentElement.lang=ar?'ar':'en';document.body.dir=ar?'rtl':'ltr';
+ $('languageToggle').textContent=ar?'English':'العربية';
+ $('search').placeholder=ar?'🔍 ابحث عن المنتجات أو الفئات...':'🔍 Search products or categories...';
+ // Update static page labels using stable text values.
+ const exact={
+ 'Choose a Category':'اختر فئة','Share Catalogue':'مشاركة الكتالوج','🛒 Order':'🛒 الطلب',
+ '← All Categories':'← كل الفئات','Your Order':'طلبك','Customer name *':'اسم الزبون *',
+ 'Phone number *':'رقم الهاتف *','Delivery address':'عنوان التوصيل','Order notes (optional)':'ملاحظات الطلب (اختياري)',
+ '📍 Share my delivery location (optional)':'📍 مشاركة موقعي للتوصيل (اختياري)',
+ '📲 Send Order to WhatsApp':'📲 إرسال الطلب عبر واتساب'
+ };
+ const reverse=Object.fromEntries(Object.entries(exact).map(([a,b])=>[b,a]));
+ const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
+ while((n=walker.nextNode())){
+   const raw=n.nodeValue.trim();if(!raw)continue;
+   if(ar&&exact[raw])n.nodeValue=n.nodeValue.replace(raw,exact[raw]);
+   else if(!ar&&reverse[raw])n.nodeValue=n.nodeValue.replace(raw,reverse[raw]);
+ }
+ $('languageToggle').onclick=()=>{
+   catalogueLanguage=catalogueLanguage==='en'?'ar':'en';
+   localStorage.setItem('whitepack_language',catalogueLanguage);
+   applyLanguage();renderCats();if(active)showCategory(active);renderCart();
+ };
+}
+
 const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 function cats(){
   const actual=[...new Set(products.map(p=>String(p.category||"").trim()).filter(Boolean))];
@@ -225,11 +321,11 @@ function renderCats(){
  const q=$("search").value.toLowerCase().trim();
  const html=cats().map(c=>{
   const items=products.filter(p=>String(p.category||"").trim()===c);
-  if(q&&!(`${c} ${items.map(p=>p.name+" "+(p.description||"")).join(" ")}`.toLowerCase().includes(q)))return"";
+  if(q&&!(`${c} ${translateProduct(c)} ${items.map(p=>p.name+" "+translateProduct(p.name)+" "+(p.description||"")+" "+translateProduct(p.description||"")).join(" ")}`.toLowerCase().includes(q)))return"";
   const im=photo(c);
-  return `<button class="category" data-c="${esc(c)}">${im?`<img src="${esc(im)}" loading="lazy" decoding="async" alt="">`:`<div class="placeholder">📦</div>`}<div class="info"><div class="name">${esc(c)}</div><div class="count">${items.length} product${items.length===1?"":"s"}</div></div></button>`;
+  return `<button class="category" data-c="${esc(c)}">${im?`<img src="${esc(im)}" loading="lazy" decoding="async" alt="">`:`<div class="placeholder">📦</div>`}<div class="info"><div class="name">${esc(translateProduct(c))}</div><div class="count">${items.length} ${catalogueLanguage==="ar"?"منتج":"product"+(items.length===1?"":"s")}</div></div></button>`;
  }).join("");
- $("categoryGrid").innerHTML=html||'<div class="empty">No categories found.</div>';
+ $("categoryGrid").innerHTML=html||`<div class="empty">${ui("No categories found.")}</div>`;
  document.querySelectorAll(".category").forEach(b=>b.onclick=()=>openCat(b.dataset.c));
 }
 
@@ -238,7 +334,7 @@ function showCategory(c){
   $("search").value="";
   $("categories").style.display="none";
   $("products").style.display="block";
-  $("categoryTitle").textContent=c;
+  $("categoryTitle").textContent=translateProduct(c);
   renderProducts();
   scrollTo(0,0);
 }
@@ -267,22 +363,22 @@ function selectedOption(p){const opts=priceOptions(p);if(!opts.length)return {la
 function selectPrice(i,key){const list=visibleCategoryProducts(active).filter(p=>`${p.name||''} ${p.description||''}`.toLowerCase().includes($('search').value.toLowerCase().trim()));const p=list[i];if(!p)return;selectedUnits[productKey(p)]=key;renderProducts();}
 function renderProducts(){
  const q=$("search").value.toLowerCase().trim();
- const a=visibleCategoryProducts(active).filter(p=>`${p.name||""} ${p.description||""}`.toLowerCase().includes(q));
+ const a=visibleCategoryProducts(active).filter(p=>`${p.name||""} ${translateProduct(p.name||"")} ${p.description||""} ${translateProduct(p.description||"")}`.toLowerCase().includes(q));
  $("productGrid").innerHTML=a.length?a.map((p,i)=>`
  <article class="product">
   <img src="${esc(p.photo||"")}" loading="lazy" decoding="async" alt="${esc(p.name)}" onclick="zoomProduct(this.src,this.alt)">
   <div class="body">
-   <div class="name">${esc(p.name)}</div>
-   ${p.description?`<div class="desc">${esc(p.description)}</div>`:""}
-   ${priceOptions(p).length?`<div class="priceChoices">${priceOptions(p).map(o=>`<button type="button" class="priceChoice ${selectedOption(p).key===o.key?'active':''}" onclick="selectPrice(${i},'${o.key}')">${esc(o.label)}<small>$${esc(String(o.price).replace(/^\$/,''))}</small></button>`).join('')}</div>`:''}
+   <div class="name">${esc(translateProduct(p.name))}</div>
+   ${p.description?`<div class="desc">${esc(translateProduct(p.description))}</div>`:""}
+   ${priceOptions(p).length?`<div class="priceChoices">${priceOptions(p).map(o=>`<button type="button" class="priceChoice ${selectedOption(p).key===o.key?'active':''}" onclick="selectPrice(${i},'${o.key}')">${esc(ui(o.label))}<small>$${esc(String(o.price).replace(/^\$/,''))}</small></button>`).join('')}</div>`:''}
    <div class="qtyrow">
     <button class="qtybtn" onclick="changeQty(${i},-1)">−</button>
     <div class="qty" id="q_${i}">1</div>
     <button class="qtybtn" onclick="changeQty(${i},1)">+</button>
    </div>
-   <button class="addbtn" onclick="addToCart(${i})">🛒 Add to Order</button>
+   <button class="addbtn" onclick="addToCart(${i})">🛒 ${ui("Add to Order")}</button>
   </div>
- </article>`).join(""):'<div class="empty">No products found.</div>';
+ </article>`).join(""):`<div class="empty">${ui("No products found.")}</div>`;
 }
 
 function changeQty(i,n){
@@ -331,7 +427,7 @@ function renderCart(){
  const count=cart.reduce((s,x)=>s+x.qty,0);
  $("cartCount").textContent=count;
  if(!cart.length){
-  $("cartItems").innerHTML='<div class="cartempty">Your order is empty.</div>';
+  $("cartItems").innerHTML=`<div class="cartempty">${ui("Your order is empty.")}</div>`;
   $("cartTotal").textContent="";
   return;
  }
@@ -339,13 +435,13 @@ function renderCart(){
   <div class="cartitem">
    <img src="${esc(x.p.photo||"")}" loading="lazy" decoding="async" alt="">
    <div>
-    <div class="cartname">${esc(x.p.name)}</div>
+    <div class="cartname">${esc(translateProduct(x.p.name))}</div>
     <div class="cartprice">${x.unit?`${esc(x.unit)} · `:''}Quantity: ${x.qty}${x.unitPrice!==undefined&&x.unitPrice!==''?` · $${esc(String(x.unitPrice).replace(/^\$/,''))} each`:''}</div>
    </div>
-   <button class="remove" onclick="removeCart(${i})">Remove</button>
+   <button class="remove" onclick="removeCart(${i})">${ui("Remove")}</button>
   </div>`).join("");
  const total=cart.reduce((s,x)=>s+(parseFloat(String(x.unitPrice??x.p.price??"").replace(/[^0-9.-]/g,""))||0)*x.qty,0);
- $("cartTotal").textContent=total>0?`Total: $${total.toFixed(2)}`:`${count} item${count===1?"":"s"}`;
+ $("cartTotal").textContent=total>0?`${ui("Total:")} $${total.toFixed(2)}`:`${count} ${catalogueLanguage==="ar"?"منتج":"item"+(count===1?"":"s")}`;
 }
 
 function removeCart(i){cart.splice(i,1);renderCart()}
@@ -377,7 +473,7 @@ $("sendWhatsApp").onclick=async()=>{
   const address=$("deliveryAddress").value.trim(),notes=$("orderNotes").value.trim();
   if(!name||!phone){error.textContent="Please enter your name and phone number.";return;}
   if(!address&&!deliveryCoords){error.textContent="Please enter an address or share your delivery location.";return;}
-  const items=cart.map(x=>({id:x.p.id??null,name:x.p.name,unit:x.unit,quantity:x.qty,unit_price:parseMoney(x.unitPrice??x.p.price),line_total:parseMoney(x.unitPrice??x.p.price)*x.qty}));
+  const items=cart.map(x=>({id:x.p.id??null,name:translateProduct(x.p.name),unit:ui(x.unit),quantity:x.qty,unit_price:parseMoney(x.unitPrice??x.p.price),line_total:parseMoney(x.unitPrice??x.p.price)*x.qty}));
   const total=items.reduce((sum,x)=>sum+x.line_total,0);
   const btn=$("sendWhatsApp");btn.disabled=true;btn.textContent="Saving order…";
   try{
@@ -510,6 +606,7 @@ window.addEventListener("popstate",()=>{
 // One root-scoped service worker supports the catalogue, private admin and quotation app.
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('App install support unavailable:',err)));}
 
+applyLanguage();
 renderCart();
 
 // Load the live catalogue from the same Supabase table used by admin.html.
@@ -569,6 +666,7 @@ async function loadCatalogue(){
     }
   }
   if(!history.state || history.state.page!=='home') history.replaceState({page:'home'},'',location.pathname+location.search);
+  applyLanguage();
   renderCats();
   console.info('White Pack catalogue loaded from '+source+': '+products.length+' products.');
 }
