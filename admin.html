@@ -136,6 +136,34 @@ h2{letter-spacing:-.2px}
 .preview-products.presentation-showcase span,.preview-products.presentation-showcase small{margin:5px 6px}
 
 
+
+/* Pro admin workspace */
+.admin-shell{display:grid;grid-template-columns:225px minmax(0,1fr);gap:16px;align-items:start;margin-top:14px}
+.admin-sidebar{position:sticky;top:12px;background:#102c4e;border-radius:18px;padding:12px;color:#eaf3ff;box-shadow:0 8px 28px #12375b18}
+.admin-sidebar .side-label{font-size:10px;font-weight:900;letter-spacing:.14em;color:#8fb6d8;padding:10px 10px 8px}
+.admin-nav{display:flex;flex-direction:column;gap:5px}
+.admin-nav button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin:0;padding:12px;border-radius:11px;background:transparent;color:#dbeafe;font-weight:750}
+.admin-nav button.active{background:#fff;color:#12385f;box-shadow:0 3px 12px #0002}
+.admin-nav button .nav-icon{width:22px;text-align:center;font-size:17px}
+.admin-main{min-width:0}
+.admin-page{display:none;min-width:0}
+.admin-page.active{display:block}
+.admin-page>.panel{margin-bottom:14px}
+.admin-page-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:2px 2px 14px}
+.admin-page-title h2{font-size:23px;margin:0 0 5px}
+.admin-page-title p{margin:0;color:#64748b;font-size:13px;line-height:1.5}
+.admin-stat-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.admin-stat{background:#fff;border:1px solid #e0e9f3;border-radius:15px;padding:15px;box-shadow:0 4px 16px #15385a08}
+.admin-stat .stat-label{font-size:12px;color:#64748b;font-weight:700}
+.admin-stat .stat-value{font-size:25px;font-weight:900;color:#12385f;margin-top:5px}
+.admin-stat .stat-sub{font-size:11px;color:#94a3b8;margin-top:3px}
+.admin-quick-actions{display:flex;flex-wrap:wrap;gap:8px}
+.admin-quick-actions button{margin:0}
+.admin-page .panel h2{font-size:19px}
+#productEditorPanel{border:1px solid #dce7f2;background:#fff}
+@media(max-width:760px){.admin-shell{grid-template-columns:1fr;gap:10px}.admin-sidebar{position:static;padding:8px}.admin-sidebar .side-label{display:none}.admin-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.admin-nav button{justify-content:center;flex-direction:column;gap:3px;padding:9px 5px;font-size:11px;text-align:center}.admin-nav button .nav-icon{font-size:18px}.admin-stat-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.admin-stat{padding:11px}.admin-stat .stat-value{font-size:20px}.admin-page-title h2{font-size:20px}}
+@media(max-width:390px){.admin-nav{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-stat-grid{grid-template-columns:1fr 1fr}}
+
 </style>
 </head>
 <body>
@@ -1385,5 +1413,87 @@ clearSearch.addEventListener('click', ()=>{
 
 setupVisualDesigner();
 </script>
+
+<script>
+(function setupProAdminWorkspace(){
+  const editor=document.getElementById('editorArea');
+  if(!editor||editor.dataset.proLayout==='1')return;
+  editor.dataset.proLayout='1';
+  const direct=Array.from(editor.children);
+  const upload=direct.find(x=>x.id==='quickUploadPanel');
+  const main=direct.find(x=>x.classList.contains('panel')&&x.querySelector('#biz'));
+  const categoryPanel=direct.find(x=>x.querySelector('#categoryList'));
+  const productsPanel=direct.find(x=>x.querySelector('#list'));
+  if(!main||!upload||!categoryPanel||!productsPanel)return;
+
+  const allNodes=Array.from(main.children);
+  const bizLabel=allNodes.find(x=>x.tagName==='LABEL'&&x.nextElementSibling?.id==='biz');
+  const bizInput=document.getElementById('biz');
+  const settingsPanel=allNodes.find(x=>x.querySelector('#orderWhatsApp'));
+  const designer=document.getElementById('catalogueDesigner');
+  const productStart=allNodes.findIndex(x=>x.id==='photoBox')-1;
+  const productNodes=allNodes.slice(productStart).filter(x=>x!==bizLabel&&x!==bizInput&&x!==settingsPanel&&x!==designer);
+  const productPanel=document.createElement('div');productPanel.className='panel';productPanel.id='productEditorPanel';
+  const productHeading=document.createElement('h2');productHeading.textContent='➕ Add or Edit Product';productPanel.append(productHeading);
+  productNodes.forEach(n=>productPanel.append(n));
+  const settingsPanelWrap=document.createElement('div');settingsPanelWrap.className='panel';
+  settingsPanelWrap.append(bizLabel,bizInput);
+  const bizHelp=document.createElement('p');bizHelp.className='hint';bizHelp.textContent='Manage the business name and order contact details shown to customers.';settingsPanelWrap.append(bizHelp);
+  if(settingsPanel)settingsPanelWrap.append(settingsPanel);
+  const designPanel=document.createElement('div');designPanel.append(designer);
+  main.remove();
+
+  const shell=document.createElement('div');shell.className='admin-shell';
+  const sidebar=document.createElement('aside');sidebar.className='admin-sidebar';
+  sidebar.innerHTML='<div class="side-label">WHITE PACK WORKSPACE</div><nav class="admin-nav" aria-label="Admin sections"></nav>';
+  const nav=sidebar.querySelector('.admin-nav');
+  const workspace=document.createElement('div');workspace.className='admin-main';
+  const makePage=(id,title,subtitle)=>{const p=document.createElement('section');p.className='admin-page';p.id='adminPage-'+id;p.innerHTML='<div class="admin-page-title"><div><h2>'+title+'</h2><p>'+subtitle+'</p></div></div>';workspace.append(p);return p;};
+  const dashboard=makePage('dashboard','Overview','Your catalogue workspace at a glance.');
+  const products=makePage('products','Products','Add products, upload photos, edit details and manage stock.');
+  const categories=makePage('categories','Categories','Organize category names and storefront order.');
+  const design=makePage('design','Storefront Design','Customize the public catalogue appearance and product presentation.');
+  const settings=makePage('settings','Business Settings','Manage your business identity and order contact settings.');
+
+  const statGrid=document.createElement('div');statGrid.className='admin-stat-grid';
+  statGrid.innerHTML='<div class="admin-stat"><div class="stat-label">CATALOGUE PRODUCTS</div><div class="stat-value" id="proStatProducts">0</div><div class="stat-sub">Products saved</div></div><div class="admin-stat"><div class="stat-label">CATEGORIES</div><div class="stat-value" id="proStatCategories">0</div><div class="stat-sub">Product groups</div></div><div class="admin-stat"><div class="stat-label">STOCK TRACKING</div><div class="stat-value" id="proStatStock">0</div><div class="stat-sub">Products with stock set</div></div>';
+  dashboard.append(statGrid);
+  const quick=document.createElement('div');quick.className='panel';quick.innerHTML='<h2>Quick actions</h2><p class="hint">Jump directly to the task you need.</p><div class="admin-quick-actions"><button class="primary" data-go="products">➕ Add Product</button><button class="secondary" data-go="products">📤 Upload Photos</button><button class="secondary" data-go="design">🎨 Customize Storefront</button><button class="secondary" data-go="settings">⚙️ Business Settings</button></div>';
+  dashboard.append(quick);
+  products.append(upload,productPanel,productsPanel);
+  categories.append(categoryPanel);
+  design.append(designer);
+  settings.append(settingsPanelWrap);
+  shell.append(sidebar,workspace);
+  editor.prepend(shell);
+
+  const items=[
+    ['dashboard','⌂','Overview'],['products','▦','Products'],['categories','▤','Categories'],['design','✦','Store Design'],['settings','⚙','Settings']
+  ];
+  function activate(id){
+    workspace.querySelectorAll('.admin-page').forEach(p=>p.classList.toggle('active',p.id==='adminPage-'+id));
+    nav.querySelectorAll('button').forEach(b=>{const active=b.dataset.page===id;b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});
+    try{sessionStorage.setItem('wpAdminPage',id)}catch(_){}
+    if(id==='products')document.getElementById('name')?.focus({preventScroll:true});
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  items.forEach(([id,icon,label])=>{const b=document.createElement('button');b.type='button';b.dataset.page=id;b.innerHTML='<span class="nav-icon">'+icon+'</span><span>'+label+'</span>';b.addEventListener('click',()=>activate(id));nav.append(b);});
+  quick.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>activate(b.dataset.go)));
+  function updateStats(){
+    const productsData=(typeof data!=='undefined'&&Array.isArray(data.products))?data.products:[];
+    const cats=new Set(productsData.map(p=>String(p.category||'Products').trim()).filter(Boolean));
+    document.getElementById('proStatProducts').textContent=productsData.length;
+    document.getElementById('proStatCategories').textContent=cats.size;
+    document.getElementById('proStatStock').textContent=productsData.filter(p=>p.stockPieces!==null&&p.stockPieces!==undefined&&p.stockPieces!=='').length;
+  }
+  // Refresh the overview whenever catalogue rendering occurs or navigation returns.
+  const originalRender=window.render;
+  if(typeof originalRender==='function')window.render=function(){const result=originalRender.apply(this,arguments);updateStats();return result;};
+  updateStats();
+  let initial='dashboard';try{const saved=sessionStorage.getItem('wpAdminPage');if(items.some(x=>x[0]===saved))initial=saved;}catch(_){}
+  activate(initial);
+})();
+</script>
+
 </body>
 </html>
