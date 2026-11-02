@@ -737,7 +737,7 @@ async function loadCatalogueFromSupabase(){
   const meta = rows.find(r=>r.id===CATALOGUE_META_ID || (r.product_data && r.product_data._wp_meta===true));
   const liveProducts = rows
     .filter(r=>r.id!==CATALOGUE_META_ID && !(r.product_data && r.product_data._wp_meta===true))
-    .map(r=>r.product_data)
+    .map(r=>({...((r.product_data && typeof r.product_data==='object') ? r.product_data : {}), id:r.id, _supabaseId:r.id}))
     .filter(p=>p && typeof p==='object');
   if(liveProducts.length===0) throw new Error('Supabase returned no products.');
   return {
