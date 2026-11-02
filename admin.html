@@ -39,7 +39,7 @@ button{padding:12px 15px;border:0;border-radius:10px;font-weight:700;margin-top:
 .item .productPhotoWrap{width:70px;flex:0 0 70px;display:flex;flex-direction:column;gap:4px}.item img{width:70px;height:70px;object-fit:contain;border-radius:8px;background:#fff}.item .changePhotoBtn{margin:0!important;padding:6px 4px!important;font-size:11px;background:#dbeafe;color:#1e40af;white-space:nowrap}.item .photoReplaceInput{display:none}
 .item .productInfo{flex:1;min-width:0}
 .item .productPrice{display:block;font-size:14px;font-weight:800;color:#111827;margin-top:4px;line-height:1.5}
-.inlinePriceGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:8px;max-width:440px}.inlinePriceUnit{min-width:0;background:#fff;border:1px solid #dbe2ea;border-radius:9px;padding:6px}.inlinePriceUnit label{font-size:11px;color:#475569;margin:0 0 4px}.inlinePriceUnit input{font-size:13px;padding:7px 6px;margin:0 0 5px;min-width:0}.inlinePriceUnit input:last-child{margin-bottom:0}.inlinePriceUnit .unitLabel{font-weight:700}.inlineSaved{font-size:11px;color:#15803d;min-height:13px;margin-top:3px}
+.inlinePriceGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:8px;max-width:620px}.inlinePriceUnit{min-width:0;background:#fff;border:1px solid #dbe2ea;border-radius:9px;padding:6px}.inlinePriceUnit label{font-size:11px;color:#475569;margin:0 0 4px}.inlinePriceUnit input{font-size:13px;padding:7px 6px;margin:0 0 5px;min-width:0}.inlinePriceUnit input:last-child{margin-bottom:0}.inlinePriceUnit .unitLabel{font-weight:700}.inlineSaved{font-size:11px;color:#15803d;min-height:13px;margin-top:3px}
 @media(max-width:560px){.item{align-items:flex-start;flex-wrap:wrap}.item .productPhotoWrap{width:58px;flex-basis:58px}.item .productPhotoWrap img{width:58px;height:58px}.item .changePhotoBtn{font-size:10px;padding:5px 2px!important}.item .productInfo{flex:1 1 calc(100% - 80px)}.item .productActions{width:100%;justify-content:flex-start;padding-left:66px}.inlinePriceGrid{max-width:none}.inlinePriceUnit input{font-size:14px}}
 .priceFields{display:grid;grid-template-columns:1fr 1fr;gap:10px}.priceFields>div{min-width:0}.priceFields label{margin-top:8px}
 .item .productCategory{display:block;font-size:12px;color:#667085;margin-top:2px}
@@ -255,6 +255,17 @@ h2{letter-spacing:-.2px}
   <div class="priceFields">
     <div><label>First unit label (Box)</label><input id="price1Label" placeholder="Box"><label>First price (USD)</label><input id="price1" inputmode="decimal" placeholder="120.00"></div>
     <div><label>Second unit label (Packet)</label><input id="price2Label" placeholder="Packet"><label>Second price (USD)</label><input id="price2" inputmode="decimal" placeholder="12.50"></div>
+    <div><label>Third unit label (Pc)</label><input id="price3Label" placeholder="Pc"><label>Third price (USD)</label><input id="price3" inputmode="decimal" placeholder="0.50"></div>
+  </div>
+  <div class="panel" style="padding:12px;margin:12px 0;background:#f8fafc;border:1px solid #e2e8f0;box-shadow:none">
+    <h3 style="margin:0 0 6px">📦 Piece-based stock</h3>
+    <div class="hint">Enter available stock in boxes. Stock is tracked internally as pieces. Set each product's conversion; for piece-only products use 1 piece per box.</div>
+    <div class="priceFields">
+      <div><label>Stock (boxes)</label><input id="stockBoxes" type="number" min="0" step="0.01" placeholder="e.g. 10"></div>
+      <div><label>Pieces per box</label><input id="piecesPerBox" type="number" min="1" step="1" placeholder="e.g. 24"></div>
+      <div><label>Pieces per packet</label><input id="piecesPerPacket" type="number" min="1" step="1" placeholder="e.g. 6"></div>
+    </div>
+    <div class="hint">Leave stock blank for products not yet tracked.</div>
   </div>
   <div class="hint">For older products, the existing price is kept as the first price. Category cover tip: if the first product in a category has no price, its photo appears on the main category screen only and it is hidden from the products inside that category.</div>
 
@@ -344,6 +355,11 @@ const price1Label = document.getElementById('price1Label');
 const price1 = document.getElementById('price1');
 const price2Label = document.getElementById('price2Label');
 const price2 = document.getElementById('price2');
+const price3Label = document.getElementById('price3Label');
+const price3 = document.getElementById('price3');
+const stockBoxes = document.getElementById('stockBoxes');
+const piecesPerBox = document.getElementById('piecesPerBox');
+const piecesPerPacket = document.getElementById('piecesPerPacket');
 const cat = document.getElementById('cat');
 const list = document.getElementById('list');
 const count = document.getElementById('count');
@@ -355,6 +371,7 @@ const searchInfo = document.getElementById('searchInfo');
 const categoryFilter = document.getElementById('categoryFilter');
 const categoryList = document.getElementById('categoryList');
 
+window.saveProduct=saveProduct;window.clearForm=clearForm;window.moveProduct=moveProduct;window.moveProductToPosition=moveProductToPosition;window.del=del;window.updateInlinePrice=updateInlinePrice;window.changeProductPhoto=changeProductPhoto;window.editProduct=editProduct;
 initializeApp();
 
 file.addEventListener('change', async function(e){
@@ -638,6 +655,14 @@ async function saveProduct(){
     price1:firstPrice,
     price2Label:secondLabel,
     price2:secondPrice,
+    price3Label:price3Label.value.trim() || 'Pc',
+    price3:price3.value.replace(/[^0-9.]/g,''),
+    piecesPerBox:Math.max(1,parseInt(piecesPerBox.value,10)||1),
+    piecesPerPacket:Math.max(1,parseInt(piecesPerPacket.value,10)||1),
+    ...(stockBoxes.value.trim()!=='' ? {
+      stockBoxes:Number(stockBoxes.value),
+      stockPieces:Math.max(0,Number(stockBoxes.value)||0)*Math.max(1,parseInt(piecesPerBox.value,10)||1)
+    } : {stockBoxes:null,stockPieces:null}),
     category:cat.value.trim() || 'Products',
     photo: photo || (editIndex>=0 ? data.products[editIndex].photo : '')
   };
@@ -655,21 +680,27 @@ async function saveProduct(){
 }
 
 function editProduct(i){
-  const p=data.products[i];
-  editIndex=i;
+  const index=Number(i), p=(data.products||[])[index];
+  if(!p){alert('This product could not be found. Please refresh the Admin page.');return;}
+  editIndex=index;
   biz.value=data.businessName||'White Pack';
-  nameEl.value=p.name||'';
-  desc.value=p.description||'';
-  price1Label.value=p.price1Label||'Box';
-  price1.value=p.price1??p.price??'';
-  price2Label.value=p.price2Label||'Packet';
-  price2.value=p.price2??'';
-  cat.value=p.category||'Products';
-  photo=p.photo||'';
+  nameEl.value=p.name||''; desc.value=p.description||'';
+  price1Label.value=p.price1Label||'Box'; price1.value=p.price1??p.price??'';
+  price2Label.value=p.price2Label||'Packet'; price2.value=p.price2??'';
+  price3Label.value=p.price3Label||'Pc'; price3.value=p.price3??'';
+  const ppb=Math.max(1,Number.parseInt(p.piecesPerBox,10)||1);
+  piecesPerBox.value=ppb; piecesPerPacket.value=Math.max(1,Number.parseInt(p.piecesPerPacket,10)||1);
+  const hasStock=(p.stockPieces!==undefined&&p.stockPieces!==null)||(p.stockBoxes!==undefined&&p.stockBoxes!==null);
+  stockBoxes.value=hasStock?String(Number(p.stockBoxes??(Number(p.stockPieces||0)/ppb))):'';
+  cat.value=p.category||'Products'; photo=p.photo||'';
   if(photo){preview.src=photo;preview.style.display='block';pt.style.display='none';}
+  else{preview.removeAttribute('src');preview.style.display='none';pt.style.display='block';}
   addBtn.textContent='💾 Save Changes';
   window.scrollTo({top:0,behavior:'smooth'});
+  nameEl.focus({preventScroll:true});
+  show('Editing: '+(p.name||'product')+'. Make changes and tap Save Changes.');
 }
+window.editProduct=editProduct;
 
 async function del(i){
   if(!confirm('Delete this product?')) return;
@@ -688,6 +719,8 @@ function clearForm(){
   price1.value='';
   price2Label.value='Packet';
   price2.value='';
+  price3Label.value='Pc'; price3.value='';
+  stockBoxes.value=''; piecesPerBox.value=''; piecesPerPacket.value='';
   cat.value='';
   file.value='';
   preview.src='';
@@ -890,6 +923,16 @@ function render(){
             <input class="unitLabel" aria-label="Second unit label" value="${esc(p.price2Label||'Packet')}" onchange="updateInlinePrice(${i},'price2Label',this.value)" placeholder="Packet">
             <input aria-label="Second price in USD" inputmode="decimal" value="${esc(p.price2??'')}" onchange="updateInlinePrice(${i},'price2',this.value)" placeholder="Price USD">
           </div>
+          <div class="inlinePriceUnit">
+            <label>Third unit / price</label>
+            <input class="unitLabel" aria-label="Third unit label" value="${esc(p.price3Label||'Pc')}" onchange="updateInlinePrice(${i},'price3Label',this.value)" placeholder="Pc">
+            <input aria-label="Third price in USD" inputmode="decimal" value="${esc(p.price3??'')}" onchange="updateInlinePrice(${i},'price3',this.value)" placeholder="Price USD">
+          </div>
+        </div>
+        <div class="inlinePriceGrid" aria-label="Piece stock editor">
+          <div class="inlinePriceUnit"><label>Stock (boxes)</label><input type="number" min="0" step="0.01" value="${p.stockPieces!==undefined?Number(p.stockPieces)/(Math.max(1,Number(p.piecesPerBox)||1)):esc(p.stockBoxes??'')}" onchange="updateInlineStock(${i},'stockBoxes',this.value)" placeholder="Not tracked"></div>
+          <div class="inlinePriceUnit"><label>Pieces / box</label><input type="number" min="1" step="1" value="${esc(p.piecesPerBox??1)}" onchange="updateInlineStock(${i},'piecesPerBox',this.value)" placeholder="24"></div>
+          <div class="inlinePriceUnit"><label>Pieces / packet</label><input type="number" min="1" step="1" value="${esc(p.piecesPerPacket??1)}" onchange="updateInlineStock(${i},'piecesPerPacket',this.value)" placeholder="6"></div>
         </div>
         <div class="inlineSaved" id="inlineSaved_${i}"></div>
         <span class="productCategory">📂 ${esc(p.category||'Products')}</span>
@@ -937,10 +980,11 @@ async function changeProductPhoto(i,input){
 
 async function updateInlinePrice(i, field, value){
   const p=data.products[i];
-  if(!p || !['price1Label','price1','price2Label','price2'].includes(field)) return;
+  if(!p || !['price1Label','price1','price2Label','price2','price3Label','price3'].includes(field)) return;
   const previous={...p};
   if(field==='price1Label') p.price1Label=value.trim()||'Box';
   else if(field==='price2Label') p.price2Label=value.trim()||'Packet';
+  else if(field==='price3Label') p.price3Label=value.trim()||'Pc';
   else {
     const cleaned=String(value).replace(/[^0-9.]/g,'');
     if((cleaned.match(/\./g)||[]).length>1){alert('Enter a valid price.');render();return;}
@@ -959,6 +1003,27 @@ async function updateInlinePrice(i, field, value){
   }
 }
 
+async function updateInlineStock(i,field,value){
+  const p=data.products[i]; if(!p)return;
+  if(!['stockBoxes','piecesPerBox','piecesPerPacket'].includes(field))return;
+  const previous={...p};
+  const oldPpb=Math.max(1,parseInt(p.piecesPerBox,10)||1);
+  const ppb=Math.max(1,parseInt(field==='piecesPerBox'?value:p.piecesPerBox,10)||1);
+  const ppp=Math.max(1,parseInt(field==='piecesPerPacket'?value:p.piecesPerPacket,10)||1);
+  p.piecesPerBox=ppb;p.piecesPerPacket=ppp;
+  if(field==='stockBoxes'){
+    const raw=String(value).trim();
+    if(raw===''){delete p.stockBoxes;delete p.stockPieces;}
+    else if(Number.isFinite(Number(raw))&&Number(raw)>=0){p.stockBoxes=Number(raw);p.stockPieces=Number(raw)*ppb;}
+    else{alert('Enter a valid stock quantity.');data.products[i]=previous;render();return;}
+  }else if(p.stockBoxes!==undefined||p.stockPieces!==undefined){
+    const boxes=Number(p.stockBoxes??(Number(p.stockPieces||0)/oldPpb));
+    p.stockBoxes=boxes;p.stockPieces=boxes*ppb;
+  }
+  try{await saveCatalogue(data);show('✅ Piece stock saved to Supabase.');const el=document.getElementById('inlineSaved_'+i);if(el)el.textContent='✓ Stock saved';}
+  catch(e){data.products[i]=previous;alert('Could not save stock. Please try again.');render();}
+}
+window.updateInlineStock=updateInlineStock;
 function getCategories(){
   const seen=new Set(), cats=[];
   for(const p of (data.products||[])){ const c=(p.category||'Products').trim()||'Products'; if(!seen.has(c)){seen.add(c);cats.push(c);} }
