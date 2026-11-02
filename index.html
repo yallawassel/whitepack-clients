@@ -568,14 +568,42 @@ const ordersDb = window.supabase.createClient(
   'sb_publishable_XnMvCbQGs2tGHXQa5Cjbew_vTTM7ubG'
 );
 let deliveryCoords=null;
-$("shareLocation").onclick=()=>{
-  if(!navigator.geolocation){$("locationHint").textContent="Location is unavailable on this device. Enter your address instead.";return;}
-  $("locationHint").textContent="Requesting your permission…";
+const locationButton=$("shareLocation"),locationHint=$("locationHint");
+locationButton.onclick=()=>{
+  deliveryCoords=null;
+  if(!window.isSecureContext){
+    locationHint.textContent="Location sharing requires a secure HTTPS site. Open the catalogue using its https:// address, not http:// or a local file.";
+    return;
+  }
+  if(!navigator.geolocation){
+    locationHint.textContent="This browser/device does not support location sharing. Enter your delivery address instead.";
+    return;
+  }
+  locationButton.disabled=true;
+  locationButton.textContent="📍 Getting location…";
+  locationHint.textContent="Allow location access in your browser prompt. If asked, choose Precise location.";
   navigator.geolocation.getCurrentPosition(pos=>{
-    deliveryCoords={lat:pos.coords.latitude,lng:pos.coords.longitude};
-    $("locationHint").textContent="✓ Location selected. It will be shared with White Pack when you submit your order.";
-  },()=>{$("locationHint").textContent="Location was not shared. You can enter your address instead.";deliveryCoords=null;},
-  {enableHighAccuracy:true,timeout:15000,maximumAge:0});
+    const lat=pos.coords.latitude,lng=pos.coords.longitude;
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)){
+      deliveryCoords=null;
+      locationHint.textContent="Could not read valid coordinates. Please enter your address instead.";
+    }else{
+      deliveryCoords={lat,lng};
+      locationHint.textContent=`✓ Location selected (${lat.toFixed(5)}, ${lng.toFixed(5)}). It will be shared when you submit your order.`;
+      locationButton.textContent="📍 Location selected — share again";
+    }
+    locationButton.disabled=false;
+  },err=>{
+    deliveryCoords=null;
+    const messages={
+      1:"Location permission was denied. In your browser site settings, allow Location for this catalogue, then try again.",
+      2:"Your device could not determine its location. Turn on GPS/Location services and try again.",
+      3:"Location request timed out. Move to an area with better GPS signal and try again."
+    };
+    locationHint.textContent=(messages[err?.code]||"Location could not be retrieved.")+" You can enter your delivery address instead.";
+    locationButton.textContent="📍 Share my delivery location (optional)";
+    locationButton.disabled=false;
+  },{enableHighAccuracy:true,timeout:30000,maximumAge:0});
 };
 const parseMoney=v=>Number.parseFloat(String(v??'').replace(/[^0-9.-]/g,''))||0;
 $("sendWhatsApp").onclick=async()=>{
@@ -604,7 +632,16 @@ $("sendWhatsApp").onclick=async()=>{
     if(notes)msg+=`\nNotes: ${notes}`;
     msg+='\nOrder saved in White Pack system.';
     error.style.color='#166534';error.textContent=`Order #${saved.order_number} saved. Opening WhatsApp…`;
+    // Keep the currently displayed catalogue in sync with the stock deduction
+    // confirmed by Supabase. stockPieces is the single source of truth; unit
+    // changes must never restore the original box count.
+    for(const line of cart){
+      if(!stockTracked(line.p)) continue;
+      const deduction=Math.max(1,Number(line.piecesPerUnit)||1)*Math.max(0,Number(line.qty)||0);
+      line.p.stockPieces=Math.max(0,Number(line.p.stockPieces)-deduction);
+    }
     cart=[];renderCart();
+    if($('products').style.display==='block')renderProducts();
     // On mobile a browser may block popups after an asynchronous request.
     const recipient=String(orderWhatsAppNumber||'96181085811').replace(/\D/g,'')||'96181085811';
     const link='https://wa.me/'+recipient+'?text='+encodeURIComponent(msg);
