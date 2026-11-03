@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#087cf0">
+<meta name="application-name" content="White Pack Catalogue">
+<title>White Pack Catalogue</title>
+<link rel="icon" type="image/png" sizes="32x32" href="icon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="icon-48.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="White Pack">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="White Pack Product Catalogue - Where Quality Meets Affordability">
+<meta property="og:type" content="website">
+<meta property="og:title" content="White Pack Catalogue">
+<meta property="og:description" content="Where Quality Meets Affordability">
+<meta property="og:image" content="logo.png">
+<meta property="og:image:alt" content="White Pack logo">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="White Pack Catalogue">
+<meta name="twitter:description" content="Where Quality Meets Affordability">
+<meta name="twitter:image" content="logo.png">
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f6f8;color:#111827}
+header{background:#111827;color:#fff;padding:10px 14px;position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:12px}
+.site-logo{width:58px;height:58px;object-fit:contain;border-radius:50%;background:#fff}
+
+.wrap{max-width:1100px;margin:auto;padding:12px}
+h1{margin:0;font-size:24px}.sub{opacity:.75;margin-top:4px;font-size:14px}
+.toolbar{position:sticky;top:76px;z-index:15;background:#f5f6f8;padding:8px 0}
+.search{width:100%;padding:14px 15px;border:1px solid #ddd;border-radius:14px;font-size:16px;background:#fff;outline:none}
+.title{font-size:22px;font-weight:900;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.category{background:#fff;border:0;border-radius:18px;overflow:hidden;padding:0;text-align:left;box-shadow:0 2px 12px #0001}
+.category img,.placeholder{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:#fff}
+.placeholder{display:grid;place-items:center;font-size:42px;background:#e5e7eb}
+.info{padding:12px}.name{font-size:17px;font-weight:900}.count{color:#6b7280;font-size:13px;margin-top:4px}
+#products{display:none}
+.back{border:0;background:#111827;color:#fff;border-radius:12px;padding:11px 15px;font-size:15px;font-weight:700;margin:3px 0 10px}
+.product{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px #0001}
+.product img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:#fff}
+.body{padding:12px}.desc{color:#596273;font-size:13px;line-height:1.4;margin-top:5px}.price{font-size:20px;font-weight:900;margin-top:9px}.priceChoices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}.priceChoice{border:1px solid #d1d5db;border-radius:10px;background:#fff;color:#111827;padding:9px 6px;font-size:13px;font-weight:800;min-width:0;overflow-wrap:anywhere}.priceChoice.active{background:#111827;color:#fff;border-color:#111827}.priceChoice:disabled{opacity:.38;cursor:not-allowed;text-decoration:line-through}.priceChoice small{display:block;font-size:15px;margin-top:3px}
+.empty{text-align:center;padding:45px 20px;color:#6b7280;background:#fff;border-radius:16px}
+@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:420px){.site-logo{width:50px;height:50px}h1{font-size:21px}}
+
+/* Home-screen installation invitation */
+.install-card{max-width:1100px;margin:10px auto 0;padding:13px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff;border:1px solid #dbe2ea;border-radius:15px;box-shadow:0 2px 10px #0000000a}
+.install-card[hidden]{display:none}
+.install-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.install-copy strong{font-size:15px}
+.install-copy span{font-size:13px;color:#596273;line-height:1.35}
+.install-actions{display:flex;align-items:center;gap:7px;flex-shrink:0}
+#installAction{border:0;border-radius:10px;background:#111827;color:#fff;padding:10px 12px;font-weight:800;font-size:14px}
+.install-dismiss{border:0;background:#f3f4f6;color:#374151;border-radius:9px;width:34px;height:34px;font-size:22px}
+.install-help{flex-basis:100%;margin:2px 0 0;color:#374151;font-size:13px;line-height:1.5}
+.install-card{flex-wrap:wrap}
+@media(max-width:420px){.install-card{align-items:flex-start}.install-actions{margin-left:auto}#installAction{padding:9px 10px}}
+/* Shopping cart */
+.cartbar{position:fixed;right:16px;bottom:16px;z-index:50;background:#111827;color:#fff;border:0;border-radius:999px;padding:13px 18px;font-size:16px;font-weight:900;box-shadow:0 5px 20px #0003}
+.cartbar span{background:#fff;color:#111827;border-radius:999px;padding:2px 7px;margin-left:5px}
+.qtyrow{display:flex;align-items:center;gap:8px;margin-top:10px}
+.qtybtn{width:38px;height:38px;border:0;border-radius:10px;background:#e5e7eb;font-size:21px;font-weight:900}
+.qty{min-width:32px;text-align:center;font-weight:900}
+.addbtn{width:100%;margin-top:10px;border:0;border-radius:11px;padding:11px;background:#111827;color:#fff;font-size:15px;font-weight:900}.addbtn:disabled{opacity:.45;cursor:not-allowed}
+.cartmodal{display:none;position:fixed;inset:0;background:#0008;z-index:100;padding:18px;align-items:flex-end;justify-content:center}
+.cartmodal.open{display:flex}
+.cartbox{width:min(650px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:20px;padding:18px}
+.carthead{display:flex;justify-content:space-between;align-items:center;font-size:21px;font-weight:900}
+.closecart{border:0;background:#e5e7eb;border-radius:10px;padding:8px 12px;font-size:18px}
+.cartitem{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid #eee}
+.cartitem img{width:64px;height:64px;object-fit:contain;border-radius:10px;background:#f8f8f8}
+.cartname{font-weight:800}
+.cartprice{font-size:13px;color:#6b7280;margin-top:3px}
+.remove{border:0;background:#fee2e2;color:#991b1b;border-radius:8px;padding:7px}
+.carttotal{font-size:20px;font-weight:900;text-align:right;margin:15px 0}
+.sendwa{width:100%;border:0;border-radius:13px;padding:14px;background:#16a34a;color:#fff;font-size:17px;font-weight:900}
+.cartempty{text-align:center;color:#6b7280;padding:30px 10px}
+
+/* Product image zoom */
+.zoommodal{
+  display:none;
+  position:fixed;
+  inset:0;
+  z-index:200;
+  background:rgba(0,0,0,.88);
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  cursor:zoom-out;
+}
+.zoommodal.open{display:flex}
+.zoommodal img{
+  max-width:96vw;
+  max-height:90vh;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  border-radius:12px;
+  box-shadow:0 8px 35px #0008;
+}
+.closezoom{
+  position:absolute;
+  top:14px;
+  right:16px;
+  width:44px;
+  height:44px;
+  border:0;
+  border-radius:50%;
+  background:#fff;
+  color:#111827;
+  font-size:28px;
+  line-height:44px;
+  font-weight:900;
+  cursor:pointer;
+}
+.product img{cursor:zoom-in}
+
+/* Delivery checkout */
+.checkout{display:grid;gap:10px;margin:16px 0}.checkout label{font-size:14px;font-weight:700}.checkout input,.checkout textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit}.locationbtn{border:1px solid #111827;background:#fff;border-radius:10px;padding:12px;font-weight:700}.locationhint{font-size:13px;color:#475569}.ordererror{color:#b91c1c;font-size:14px;white-space:pre-wrap}.sendwa:disabled{opacity:.6}
+
+/* Brand header and share link */
+.brand{max-width:1100px;justify-content:space-between;gap:14px}
+.brand-identity{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-actions{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
+#shareCatalogueBtn{border:1px solid #b8d8ff;background:#fff;color:#0757ad;border-radius:12px;padding:11px 14px;font-weight:900;font-size:14px;cursor:pointer;box-shadow:0 2px 8px #00000018;touch-action:manipulation}
+#shareCatalogueBtn:active{transform:translateY(1px)}
+#shareStatus{font-size:11px;color:#dbeafe;min-height:13px;text-align:right}
+@media(max-width:520px){header{padding:10px 8px}.brand{padding:0;gap:8px}.brand-identity{gap:8px}.brand-identity .site-logo{width:44px;height:44px}.brand-identity h1{font-size:19px}.brand-identity .sub{max-width:185px;font-size:11px;line-height:1.3}.brand-actions{max-width:132px}#shareCatalogueBtn{padding:9px 9px;font-size:12px}.install-card{margin-left:10px;margin-right:10px}}
+body[dir="rtl"]{direction:rtl}
+body[dir="rtl"] .brand,body[dir="rtl"] .brand-identity,body[dir="rtl"] .install-card,body[dir="rtl"] .cartitem{direction:rtl}
+body[dir="rtl"] .cartbar{right:auto;left:16px}
+body[dir="rtl"] .carttotal{text-align:left}
+body[dir="rtl"] .toolbar input{text-align:right}
+#languageToggle{touch-action:manipulation;white-space:nowrap}
+@media(max-width:520px){#languageToggle{font-size:12px!important;padding:8px!important}}
+
+/* Catalogue design templates (selected by the admin and published through Supabase) */
+body.theme-modern{--page:#f5f6f8;--ink:#111827;--accent:#111827;--card:#fff;--radius:16px}
+body.theme-clean{--page:#fff;--ink:#172033;--accent:#2563eb;--card:#fff;--radius:8px}
+body.theme-bold{--page:#fff7ed;--ink:#431407;--accent:#ea580c;--card:#fff;--radius:22px}
+body.theme-elegant{--page:#f8f5f0;--ink:#292524;--accent:#57534e;--card:#fffdf9;--radius:5px}
+body[class*="theme-"]{background:var(--page);color:var(--ink)}
+body.theme-clean header{background:#fff;color:#172033;border-bottom:1px solid #e5e7eb}
+body.theme-bold header{background:#9a3412;color:#fff}
+body.theme-elegant header{background:#292524;color:#fafaf9}
+body.theme-clean .category,body.theme-clean .product{border:1px solid #e5e7eb;box-shadow:none}
+body.theme-bold .category,body.theme-bold .product{border-radius:22px;box-shadow:0 5px 18px #9a34121a}
+body.theme-elegant .category,body.theme-elegant .product{border:1px solid #e7e0d7;box-shadow:none}
+body.theme-clean .back,body.theme-clean .addbtn,body.theme-clean .cartbar,body.theme-clean .priceChoice.active{background:#2563eb;border-color:#2563eb}
+body.theme-bold .back,body.theme-bold .addbtn,body.theme-bold .cartbar,body.theme-bold .priceChoice.active{background:#ea580c;border-color:#ea580c}
+body.theme-elegant .back,body.theme-elegant .addbtn,body.theme-elegant .cartbar,body.theme-elegant .priceChoice.active{background:#57534e;border-color:#57534e}
+body.theme-bold .info,body.theme-bold .body{padding:14px}
+body.theme-elegant .name{font-family:Georgia,serif;letter-spacing:.1px}
+
+
+/* Published visual designer settings */
+body{--design-primary:#111827;--design-accent:#087cf0;--design-page:#f5f6f8;--design-card:#fff;--design-radius:16px;--design-columns:3;--design-ratio:1;--design-fit:contain}
+body[class*="theme-"]{background:var(--design-page);color:var(--ink)}
+header{background:var(--design-primary)}
+.category,.product{background:var(--design-card);border-radius:var(--design-radius)}
+.category img,.placeholder{aspect-ratio:var(--design-ratio);object-fit:var(--design-fit)}
+.product img{aspect-ratio:var(--design-ratio);object-fit:var(--design-fit)}
+.category .count{display:var(--show-category-count,block)}
+.product .desc{display:var(--show-description,block)}
+#categoryGrid,#productGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(min-width:700px){#categoryGrid,#productGrid{grid-template-columns:repeat(var(--design-columns,3),minmax(0,1fr))}}
+/* Ensure published visual-designer controls take precedence over template defaults */
+body[class*="theme-"]{background-color:var(--design-page,#f5f6f8)!important;color:var(--ink,#111827)}
+body[class*="theme-"] header{background:var(--design-primary,#111827)!important}
+body[class*="theme-"] .category,body[class*="theme-"] .product{background-color:var(--design-card,#fff)!important}
+body[class*="theme-"] .product .desc{display:var(--show-description,block)!important}
+body[class*="theme-"] .category .count{display:var(--show-category-count,block)!important}
+body[class*="theme-"] .back,body[class*="theme-"] .addbtn,body[class*="theme-"] .cartbar,body[class*="theme-"] .priceChoice.active{background:var(--design-accent,#087cf0)!important;border-color:var(--design-accent,#087cf0)!important}
+
+/* Product presentation modes selected in Admin */
+body.presentation-editorial #productGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.presentation-editorial .product:first-child{grid-column:1/-1}
+body.presentation-editorial .product:first-child img{aspect-ratio:1.55}
+body.presentation-horizontal #productGrid{grid-template-columns:1fr}
+body.presentation-horizontal .product{display:grid;grid-template-columns:minmax(110px,34%) 1fr;align-items:stretch}
+body.presentation-horizontal .product img{height:100%;min-height:150px;aspect-ratio:auto}
+body.presentation-horizontal .product .body{display:flex;flex-direction:column;justify-content:center}
+body.presentation-horizontal .product .priceChoices{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.presentation-minimal .product{box-shadow:none;border:1px solid #e5e7eb}
+body.presentation-minimal .product .body{padding:9px 4px}
+body.presentation-minimal .product img{background:transparent}
+body.presentation-minimal .product .name{font-size:15px}
+body.presentation-minimal .product .desc{display:none}
+body.presentation-minimal .product .priceChoices{display:flex;flex-wrap:wrap}
+body.presentation-showcase .product{position:relative;overflow:hidden;border:0;box-shadow:0 6px 20px #0002}
+body.presentation-showcase .product img{aspect-ratio:1.12}
+body.presentation-showcase .product .body{padding:11px}
+body.presentation-showcase .product .name{font-size:18px}
+body.presentation-showcase .product .priceChoices{display:flex;flex-wrap:wrap}
+@media(max-width:520px){
+ body.presentation-editorial #productGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ body.presentation-horizontal .product{grid-template-columns:110px minmax(0,1fr)}
+ body.presentation-horizontal .product .body{padding:9px}
+ body.presentation-horizontal .product .name{font-size:15px}
+ body.presentation-horizontal .product .priceChoices{grid-template-columns:1fr}
+}
+body.design-compact .product .body{padding:8px}
+body.design-compact .product .name{font-size:15px}
+body.theme-market .product{box-shadow:none;border:1px solid #dbe4e8}
+body.theme-market header{background:#0f766e}
+body.theme-market .back,body.theme-market .addbtn,body.theme-market .cartbar,body.theme-market .priceChoice.active{background:var(--design-accent);border-color:var(--design-accent)}
+body.theme-modern .back,body.theme-modern .addbtn,body.theme-modern .cartbar,body.theme-modern .priceChoice.active{background:var(--design-accent);border-color:var(--design-accent)}
+body.theme-clean .back,body.theme-clean .addbtn,body.theme-clean .cartbar,body.theme-clean .priceChoice.active{background:var(--design-accent);border-color:var(--design-accent)}
+body.theme-bold .back,body.theme-bold .addbtn,body.theme-bold .cartbar,body.theme-bold .priceChoice.active{background:var(--design-accent);border-color:var(--design-accent)}
+body.theme-elegant .back,body.theme-elegant .addbtn,body.theme-elegant .cartbar,body.theme-elegant .priceChoice.active{background:var(--design-accent);border-color:var(--design-accent)}
+#catalogueBanner{display:none;max-width:1100px;margin:12px auto;border-radius:18px;overflow:hidden;background:#e5e7eb}
+#catalogueBanner img{display:block;width:100%;max-height:360px;object-fit:cover}
+#catalogueBanner[hidden]{display:none}
+
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap brand">
+    <div class="brand-identity">
+      <img src="logo.png" class="site-logo" alt="White Pack logo">
+      <div>
+        <h1 id="business">White Pack</h1>
+        <div class="sub">Product Catalogue · Where Quality Meets Affordability</div>
+      </div>
+    </div>
+    <div class="brand-actions">
+      <button id="languageToggle" type="button" style="border:1px solid #b8d8ff;background:#eaf4ff;color:#0757ad;border-radius:12px;padding:9px 12px;font-weight:900;font-size:14px">العربية</button>
+      <button id="shareCatalogueBtn" type="button" aria-label="Share White Pack catalogue">↗ Share Catalogue</button>
+      <div id="shareStatus" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+</header>
+<section id="catalogueBanner" hidden aria-label="Store banner"><img id="catalogueBannerImage" alt="Store banner"></section>
+<section id="installCard" class="install-card" aria-label="Install White Pack Catalogue" hidden>
+  <div class="install-copy">
+    <strong>📲 Add White Pack to your home screen</strong>
+    <span>Open the catalogue quickly like an app on your phone.</span>
+  </div>
+  <div class="install-actions">
+    <button id="installAction" type="button">Install / Add</button>
+    <button id="installDismiss" class="install-dismiss" type="button" aria-label="Dismiss install message">×</button>
+  </div>
+  <p id="installHelp" class="install-help" hidden></p>
+</section>
+<main class="wrap">
+<div class="toolbar"><input id="search" class="search" autocomplete="off" placeholder="🔍 Search products or categories..."></div>
+<section id="categories"><div class="title">Choose a Category</div><div id="categoryGrid" class="grid"></div></section>
+<section id="products"><button id="back" class="back">← All Categories</button><div id="categoryTitle" class="title"></div><div id="productGrid" class="grid"></div></section>
+</main>
+<button id="cartBar" class="cartbar">🛒 Order <span id="cartCount">0</span></button>
+
+<div id="zoomModal" class="zoommodal" aria-hidden="true">
+  <button id="closeZoom" class="closezoom" aria-label="Close">×</button>
+  <img id="zoomImage" src="" alt="Product image">
+</div>
+
+<div id="cartModal" class="cartmodal">
+  <div class="cartbox">
+    <div class="carthead"><div>🛒 Your Order</div><button id="closeCart" class="closecart">✕</button></div>
+    <div id="cartItems"></div>
+    <div id="cartTotal" class="carttotal"></div>
+    <div class="checkout">
+      <label for="customerName">Customer name *</label><input id="customerName" autocomplete="name" maxlength="120" required placeholder="Your full name">
+      <label for="customerPhone">Phone number *</label><input id="customerPhone" type="tel" autocomplete="tel" maxlength="40" required placeholder="03 123 456">
+      <label for="deliveryAddress">Delivery address</label><textarea id="deliveryAddress" rows="2" maxlength="500" placeholder="Area, street, building, floor"></textarea>
+      <button id="shareLocation" type="button" class="locationbtn">📍 Share my delivery location (optional)</button>
+      <div id="locationHint" class="locationhint" aria-live="polite">Location is optional. Your browser will ask permission.</div>
+      <label for="orderNotes">Order notes (optional)</label><textarea id="orderNotes" rows="2" maxlength="500" placeholder="Delivery instructions"></textarea>
+      <div id="orderError" class="ordererror" role="alert"></div>
+    </div>
+    <button id="sendWhatsApp" class="sendwa">📲 Send Order to WhatsApp</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+let products=[],active="",categoryOrder=[],orderWhatsAppNumber='96181085811',catalogueTheme='modern',catalogueDesign={};
+let cart=[];
+const selectedUnits={};
+let catalogueLanguage=localStorage.getItem('whitepack_language')==='ar'?'ar':'en';
+const uiArabic={
+'Choose a Category':'اختر فئة','No categories found.':'لم يتم العثور على فئات.','No products found.':'لم يتم العثور على منتجات.',
+'Your order is empty.':'طلبك فارغ.','Remove':'حذف','Total:':'المجموع:','Add to Order':'أضف إلى الطلب',
+'Customer name *':'اسم الزبون *','Phone number *':'رقم الهاتف *','Delivery address':'عنوان التوصيل',
+'Share my delivery location (optional)':'مشاركة موقعي للتوصيل (اختياري)','Location is optional. Your browser will ask permission.':'الموقع اختياري. سيطلب المتصفح الإذن.',
+'Order notes (optional)':'ملاحظات الطلب (اختياري)','Delivery instructions':'تعليمات التوصيل',
+'Send Order to WhatsApp':'إرسال الطلب عبر واتساب','Please add products first.':'يرجى إضافة منتجات أولاً.',
+'Please enter your name and phone number.':'يرجى إدخال الاسم ورقم الهاتف.',
+'Please enter an address or share your delivery location.':'يرجى إدخال العنوان أو مشاركة موقعك.',
+'Quantity:':'الكمية:','Box':'كرتونة','Packet':'باكيت','Unit':'وحدة',
+'Product Catalogue · Where Quality Meets Affordability':'كتالوج المنتجات · الجودة بأسعار مناسبة',
+'Add White Pack to your home screen':'أضف وايت باك إلى الشاشة الرئيسية',
+'Open the catalogue quickly like an app on your phone.':'افتح الكتالوج بسرعة مثل أي تطبيق على هاتفك.',
+'Install / Add':'تثبيت / إضافة','Install':'تثبيت','How to add':'طريقة الإضافة',
+'White Pack':'وايت باك'
+};
+const productPhraseArabic={
+ 'plastic gloves':'قفازات بلاستيكية','disposable gloves':'قفازات للاستعمال مرة واحدة','gloves':'قفازات',
+ 'hygiene products':'منتجات النظافة','hygiene':'مستلزمات النظافة','cutleries':'أدوات المائدة البلاستيكية',
+ 'cutlery':'أدوات المائدة البلاستيكية','plastic cutlery':'أدوات مائدة بلاستيكية',
+ 'plastic cups':'أكواب بلاستيكية','paper cups':'أكواب ورقية','cups':'أكواب',
+ 'food packaging':'تغليف المواد الغذائية','food containers':'علب طعام','containers':'حافظات',
+ 'paper bags':'أكياس ورقية','plastic bags':'أكياس نايلون','shopping bags':'أكياس تسوق',
+ 'napkins':'مناديل','tissues':'مناديل ورقية','kitchen rolls':'رولات مطبخ',
+ 'cleaning products':'مواد تنظيف','cleaning':'مواد تنظيف','detergents':'منظفات',
+ 'pizza boxes':'علب بيتزا','pizza box':'علبة بيتزا','burger boxes':'علب برغر',
+ 'kraft bags':'أكياس كرافت','kraft bowls':'أوعية كرافت','plastic plates':'صحون بلاستيكية',
+ 'paper plates':'صحون ورقية','straws':'شفاطات','straw':'شفاطة',
+ 'fuel gel':'جل وقود','stretch film':'نايلون ستريتش','crystal trays':'صواني كريستال',
+ 'disposable items':'مستلزمات للاستعمال مرة واحدة','disposable':'للاستعمال مرة واحدة',
+ 'medical supplies':'مستلزمات طبية','hair nets':'شبكات شعر','bouffant caps':'قبعات شعر واقية'
+};
+const productArabic={
+'paper cups':'أكواب ورقية','paper cup':'كوب ورقي','plastic cups':'أكواب بلاستيكية','plastic cup':'كوب بلاستيك',
+'glove':'قفاز','gloves':'قفازات','hygiene':'نظافة','cutleries':'أدوات المائدة','cutlery':'أدوات المائدة',
+'shopping bags':'أكياس تسوق','shopping bag':'كيس تسوق','kitchen rolls':'رولات مطبخ','kitchen roll':'رول مطبخ',
+'stretch film':'نايلون ستريتش','hand soap':'صابون لليدين','fuel gel':'جل وقود',
+'paper':'ورق','bag':'كيس','bags':'أكياس','plastic':'بلاستيك','nylon':'نايلون','cup':'كوب','cups':'أكواب',
+'box':'علبة','boxes':'علب','carton':'كرتون','cartons':'كراتين','kraft':'كرافت','bowl':'وعاء','bowls':'أوعية',
+'salad':'سلطة','container':'حافظة','containers':'حافظات','plate':'صحن','plates':'صحون','black':'أسود',
+'white':'أبيض','napkin':'منديل','napkins':'مناديل','tissue':'مناديل ورقية','tissues':'مناديل ورقية',
+'kitchen':'مطبخ','roll':'رول','rolls':'رولات','stretch':'ستريتش','film':'فيلم','meat':'لحمة','food':'طعام',
+'bread':'خبز','fork':'شوكة','forks':'شوك','spoon':'ملعقة','spoons':'ملاعق','knife':'سكين','knives':'سكاكين',
+'detergent':'منظف','detergents':'منظفات','soap':'صابون','javel':'جافيل','degreaser':'مزيل دهون','fuel':'وقود',
+'gel':'جل','fries':'بطاطا مقلية','pizza':'بيتزا','burger':'برغر','crystal':'كريستال','tray':'صينية','trays':'صواني',
+'packet':'باكيت','pack':'عبوة','large':'كبير','small':'صغير','medium':'وسط','pcs':'قطعة','piece':'قطعة','pieces':'قطع',
+'clear':'شفاف','with':'مع','and':'و','for':'لـ'
+};
+const $=id=>document.getElementById(id);
+function translateProduct(value){
+ if(catalogueLanguage!=='ar'||!value)return String(value||'');
+ let out=String(value);
+ // Translate known full category/product phrases first, then translate individual words.
+ for(const [en,ar] of Object.entries(productPhraseArabic).sort((a,b)=>b[0].length-a[0].length)){
+   out=out.replace(new RegExp('(^|[^A-Za-z])'+en.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\\\$&')+'(?=$|[^A-Za-z])','gi'),(m,left)=>left+ar);
+ }
+ for(const [en,ar] of Object.entries(productArabic).sort((a,b)=>b[0].length-a[0].length)){
+   out=out.replace(new RegExp('(^|[^A-Za-z])'+en.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^A-Za-z])','gi'),(m,left)=>left+ar);
+ }
+ return out.replace(/\s+/g,' ').trim();
+}
+function ui(text){return catalogueLanguage==='ar'?(uiArabic[text]||translateProduct(text)):text;}
+
+function applyCatalogueTheme(theme,design){
+ const allowed=['modern','clean','bold','elegant','market'];
+ catalogueTheme=allowed.includes(theme)?theme:'modern';
+ catalogueDesign={primary:'#111827',accent:'#087cf0',background:'#f5f6f8',card:'#ffffff',columns:3,imageRatio:1,imageFit:'contain',showDescription:true,showCategoryCount:true,compactCards:false,presentation:'standard',bannerPhoto:'',...(design||{})};
+ document.body.classList.remove(...allowed.map(t=>'theme-'+t),'design-compact',...['standard','editorial','horizontal','minimal','showcase'].map(x=>'presentation-'+x));
+ document.body.classList.add('theme-'+catalogueTheme,'presentation-'+(['standard','editorial','horizontal','minimal','showcase'].includes((design||{}).presentation)?(design||{}).presentation:'standard'));
+ const d=catalogueDesign,root=document.documentElement;
+ root.style.setProperty('--design-primary',d.primary||'#111827');root.style.setProperty('--design-accent',d.accent||'#087cf0');
+ root.style.setProperty('--design-page',d.background||'#f5f6f8');root.style.setProperty('--design-card',d.card||'#fff');
+ root.style.setProperty('--design-columns',String(Math.max(2,Math.min(4,Number(d.columns)||3))));
+ root.style.setProperty('--design-ratio',String(Number(d.imageRatio)||1));root.style.setProperty('--design-fit',d.imageFit==='cover'?'cover':'contain');
+ root.style.setProperty('--show-description',d.showDescription===false?'none':'block');root.style.setProperty('--show-category-count',d.showCategoryCount===false?'none':'block');
+ if(d.compactCards)document.body.classList.add('design-compact');
+ const banner=document.getElementById('catalogueBanner'),img=document.getElementById('catalogueBannerImage');
+ if(d.bannerPhoto){img.src=d.bannerPhoto;banner.hidden=false;banner.style.display='block';}else{banner.hidden=true;banner.style.display='none';img.removeAttribute('src');}
+}
+
+function applyLanguage(){
+ const ar=catalogueLanguage==='ar';
+ document.documentElement.lang=ar?'ar':'en';document.body.dir=ar?'rtl':'ltr';
+ $('languageToggle').textContent=ar?'English':'العربية';
+ $('search').placeholder=ar?'🔍 ابحث عن المنتجات أو الفئات...':'🔍 Search products or categories...';
+ // Update static page labels using stable text values.
+ const exact={
+ 'Choose a Category':'اختر فئة','Share Catalogue':'مشاركة الكتالوج','🛒 Order':'🛒 الطلب',
+ '← All Categories':'← كل الفئات','Your Order':'طلبك','Customer name *':'اسم الزبون *',
+ 'Phone number *':'رقم الهاتف *','Delivery address':'عنوان التوصيل','Order notes (optional)':'ملاحظات الطلب (اختياري)',
+ '📍 Share my delivery location (optional)':'📍 مشاركة موقعي للتوصيل (اختياري)',
+ '📲 Send Order to WhatsApp':'📲 إرسال الطلب عبر واتساب'
+ };
+ const reverse=Object.fromEntries(Object.entries(exact).map(([a,b])=>[b,a]));
+ const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
+ while((n=walker.nextNode())){
+   const raw=n.nodeValue.trim();if(!raw)continue;
+   if(ar&&exact[raw])n.nodeValue=n.nodeValue.replace(raw,exact[raw]);
+   else if(!ar&&reverse[raw])n.nodeValue=n.nodeValue.replace(raw,reverse[raw]);
+ }
+ $('languageToggle').onclick=()=>{
+   catalogueLanguage=catalogueLanguage==='en'?'ar':'en';
+   localStorage.setItem('whitepack_language',catalogueLanguage);
+   applyLanguage();renderCats();if(active)showCategory(active);renderCart();
+ };
+}
+
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+function cats(){
+  const actual=[...new Set(products.map(p=>String(p.category||"").trim()).filter(Boolean))];
+  // Use the same category order saved by Admin.
+  const saved=Array.isArray(categoryOrder)?categoryOrder:[];
+  return [...saved.filter(c=>actual.includes(c)), ...actual.filter(c=>!saved.includes(c))];
+}
+function photo(c){return products.find(p=>String(p.category||"").trim()===c&&p.photo)?.photo||""}
+
+// If a category's first product has no price, use it as the category-cover image
+// on the home screen only. Keep it out of the product list inside that category.
+function isCategoryCover(p){
+  const category=String(p.category||"").trim();
+  if(!category || priceOptions(p).length) return false;
+  const first=products.find(item=>String(item.category||"").trim()===category);
+  return first===p;
+}
+function visibleCategoryProducts(category){
+  return products.filter(p=>String(p.category||"").trim()===category&&!isCategoryCover(p));
+}
+
+function renderCats(){
+ $("categories").style.display="block";$("products").style.display="none";
+ const q=$("search").value.toLowerCase().trim();
+ const html=cats().map(c=>{
+  const items=products.filter(p=>String(p.category||"").trim()===c);
+  if(q&&!(`${c} ${translateProduct(c)} ${items.map(p=>p.name+" "+translateProduct(p.name)+" "+(p.description||"")+" "+translateProduct(p.description||"")).join(" ")}`.toLowerCase().includes(q)))return"";
+  const im=photo(c);
+  return `<button class="category" data-c="${esc(c)}">${im?`<img src="${esc(im)}" loading="lazy" decoding="async" alt="">`:`<div class="placeholder">📦</div>`}<div class="info"><div class="name">${esc(translateProduct(c))}</div><div class="count">${items.length} ${catalogueLanguage==="ar"?"منتج":"product"+(items.length===1?"":"s")}</div></div></button>`;
+ }).join("");
+ $("categoryGrid").innerHTML=html||`<div class="empty">${ui("No categories found.")}</div>`;
+ document.querySelectorAll(".category").forEach(b=>b.onclick=()=>openCat(b.dataset.c));
+}
+
+function showCategory(c){
+  active=c;
+  $("search").value="";
+  $("categories").style.display="none";
+  $("products").style.display="block";
+  $("categoryTitle").textContent=translateProduct(c);
+  renderProducts();
+  scrollTo(0,0);
+}
+
+function showHome(){
+  active="";
+  $("search").value="";
+  renderCats();
+  scrollTo(0,0);
+}
+
+function openCat(c){
+  showCategory(c);
+  history.pushState({page:"category",category:c},"","#category="+encodeURIComponent(c));
+}
+
+function productKey(p){return String(p.id??p.barcode??p.name??'product');}
+function priceOptions(p){
+ const out=[];
+ const p1=p.price1??p.price;
+ if(p1!==undefined&&p1!==null&&String(p1)!=='')out.push({label:p.price1Label||'Box',price:p1,key:'1',pieces:Math.max(1,Number.parseInt(p.piecesPerBox,10)||1)});
+ if(p.price2!==undefined&&p.price2!==null&&String(p.price2)!=='')out.push({label:p.price2Label||'Packet',price:p.price2,key:'2',pieces:Math.max(1,Number.parseInt(p.piecesPerPacket,10)||1)});
+ if(p.price3!==undefined&&p.price3!==null&&String(p.price3)!=='')out.push({label:p.price3Label||'Pc',price:p.price3,key:'3',pieces:1});
+ return out;
+}
+function stockTracked(p){return p.stockPieces!==undefined&&p.stockPieces!==null&&Number.isFinite(Number(p.stockPieces));}
+function stockRemainingPieces(p){
+ if(!stockTracked(p))return Infinity;
+ const already=cart.filter(x=>productKey(x.p)===productKey(p)).reduce((sum,x)=>sum+x.qty*(Number(x.piecesPerUnit)||1),0);
+ return Math.max(0,Number(p.stockPieces)-already);
+}
+function unitAvailable(p,option){
+ if(!stockTracked(p))return true;
+ return stockRemainingPieces(p)>=Math.max(1,Number(option.pieces)||1);
+}
+function stockLabel(p){
+ if(!stockTracked(p))return '';
+ const anyAvailable=priceOptions(p).some(o=>unitAvailable(p,o));
+ return anyAvailable?'':(catalogueLanguage==='ar'?'نفذت الكمية':'Out of stock');
+}
+function selectedOption(p){const opts=priceOptions(p);if(!opts.length)return {label:'',price:'',key:'1',pieces:1};return opts.find(o=>o.key===selectedUnits[productKey(p)]&&unitAvailable(p,o))||opts.find(o=>unitAvailable(p,o))||opts[0];}
+function selectPrice(i,key){const list=visibleCategoryProducts(active).filter(p=>`${p.name||''} ${p.description||''}`.toLowerCase().includes($('search').value.toLowerCase().trim()));const p=list[i];if(!p)return;selectedUnits[productKey(p)]=key;renderProducts();}
+function renderProducts(){
+ const q=$("search").value.toLowerCase().trim();
+ const a=visibleCategoryProducts(active).filter(p=>`${p.name||""} ${translateProduct(p.name||"")} ${p.description||""} ${translateProduct(p.description||"")}`.toLowerCase().includes(q));
+ $("productGrid").innerHTML=a.length?a.map((p,i)=>`
+ <article class="product">
+  <img src="${esc(p.photo||"")}" loading="lazy" decoding="async" alt="${esc(p.name)}" onclick="zoomProduct(this.src,this.alt)">
+  <div class="body">
+   <div class="name">${esc(translateProduct(p.name))}</div>
+   ${p.description?`<div class="desc">${esc(translateProduct(p.description))}</div>`:""}
+   ${priceOptions(p).length?`<div class="priceChoices">${priceOptions(p).map(o=>`<button type="button" class="priceChoice ${selectedOption(p).key===o.key?'active':''}" ${unitAvailable(p,o)?'':'disabled'} onclick="selectPrice(${i},'${o.key}')">${esc(ui(o.label))}<small>$${esc(String(o.price).replace(/^\$/,''))}</small></button>`).join('')}</div>`:''}
+   }
+   <div class="qtyrow">
+    <button class="qtybtn" onclick="changeQty(${i},-1)">−</button>
+    <div class="qty" id="q_${i}">1</div>
+    <button class="qtybtn" onclick="changeQty(${i},1)">+</button>
+   </div>
+   <button class="addbtn" ${unitAvailable(p,selectedOption(p))?'':'disabled'} onclick="addToCart(${i})">🛒 ${ui("Add to Order")}</button>
+  </div>
+ </article>`).join(""):`<div class="empty">${ui("No products found.")}</div>`;
+}
+
+function changeQty(i,n){
+ const el=$("q_"+i); let q=Math.max(1,(parseInt(el.textContent)||1)+n);
+ const query=$("search").value.toLowerCase().trim();
+ const list=visibleCategoryProducts(active).filter(p=>`${p.name||""} ${p.description||""}`.toLowerCase().includes(query));
+ const p=list[i],option=p?selectedOption(p):null;
+ if(p&&option&&stockTracked(p)){const available=Math.floor(stockRemainingPieces(p)/Math.max(1,Number(option.pieces)||1));q=Math.min(q,Math.max(1,available));}
+ el.textContent=q;
+}
+function addToCart(i){
+ const q=Math.max(1,parseInt($("q_"+i)?.textContent)||1);
+ const query=$("search").value.toLowerCase().trim();
+ const list=visibleCategoryProducts(active).filter(p=>`${p.name||""} ${p.description||""}`.toLowerCase().includes(query));
+ const p=list[i];if(!p)return;
+ const option=selectedOption(p),factor=Math.max(1,Number(option.pieces)||1);
+ if(!unitAvailable(p,option)){alert(catalogueLanguage==='ar'?'هذه الوحدة غير متوفرة حالياً.':'This selling unit is out of stock. Please choose Packet or Pc.');return;}
+ if(stockTracked(p)){const available=Math.floor(stockRemainingPieces(p)/factor);if(q>available){alert(catalogueLanguage==='ar'?`المتاح ${available} ${ui(option.label)} فقط.`:`Only ${available} ${option.label} available. Please reduce the quantity.`);return;}}
+ const key=productKey(p)+'::'+option.key,found=cart.find(x=>x.key===key);
+ if(found)found.qty+=q;else cart.push({key,p,qty:q,unit:option.label,unitKey:option.key,unitPrice:option.price,piecesPerUnit:factor});
+ renderCart();renderProducts();
+ $("cartBar").animate([{transform:"scale(1)"},{transform:"scale(1.08)"},{transform:"scale(1)"}],{duration:250});
+}
+
+function zoomProduct(src,alt="Product image"){
+  if(!src)return;
+  $("zoomImage").src=src;
+  $("zoomImage").alt=alt;
+  $("zoomModal").classList.add("open");
+  $("zoomModal").setAttribute("aria-hidden","false");
+  document.body.style.overflow="hidden";
+}
+function closeZoom(){
+  $("zoomModal").classList.remove("open");
+  $("zoomModal").setAttribute("aria-hidden","true");
+  $("zoomImage").src="";
+  document.body.style.overflow="";
+}
+$("closeZoom").onclick=e=>{e.stopPropagation();closeZoom()};
+$("zoomModal").onclick=e=>{if(e.target===$("zoomModal"))closeZoom()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeZoom()});
+
+function renderCart(){
+ const count=cart.reduce((s,x)=>s+x.qty,0);
+ $("cartCount").textContent=count;
+ if(!cart.length){
+  $("cartItems").innerHTML=`<div class="cartempty">${ui("Your order is empty.")}</div>`;
+  $("cartTotal").textContent="";
+  return;
+ }
+ $("cartItems").innerHTML=cart.map((x,i)=>`
+  <div class="cartitem">
+   <img src="${esc(x.p.photo||"")}" loading="lazy" decoding="async" alt="">
+   <div>
+    <div class="cartname">${esc(translateProduct(x.p.name))}</div>
+    <div class="cartprice">${x.unit?`${esc(x.unit)} · `:''}Quantity: ${x.qty}${x.unitPrice!==undefined&&x.unitPrice!==''?` · $${esc(String(x.unitPrice).replace(/^\$/,''))} each`:''}</div>
+   </div>
+   <button class="remove" onclick="removeCart(${i})">${ui("Remove")}</button>
+  </div>`).join("");
+ const total=cart.reduce((s,x)=>s+(parseFloat(String(x.unitPrice??x.p.price??"").replace(/[^0-9.-]/g,""))||0)*x.qty,0);
+ $("cartTotal").textContent=total>0?`${ui("Total:")} $${total.toFixed(2)}`:`${count} ${catalogueLanguage==="ar"?"منتج":"item"+(count===1?"":"s")}`;
+}
+
+function removeCart(i){cart.splice(i,1);renderCart();if($("products").style.display==="block")renderProducts()}
+
+$("cartBar").onclick=()=>{$("cartModal").classList.add("open");renderCart()};
+$("closeCart").onclick=()=>$("cartModal").classList.remove("open");
+$("cartModal").onclick=e=>{if(e.target===$("cartModal"))$("cartModal").classList.remove("open")};
+
+// Publishable key only. Never place a secret/service-role key in a public page.
+const ordersDb = window.supabase.createClient(
+  'https://gaphiedcwueunmfssisz.supabase.co',
+  'sb_publishable_XnMvCbQGs2tGHXQa5Cjbew_vTTM7ubG'
+);
+let deliveryCoords=null;
+const locationButton=$("shareLocation"),locationHint=$("locationHint");
+locationButton.onclick=()=>{
+  deliveryCoords=null;
+  if(!window.isSecureContext){
+    locationHint.textContent="Location sharing requires a secure HTTPS site. Open the catalogue using its https:// address, not http:// or a local file.";
+    return;
+  }
+  if(!navigator.geolocation){
+    locationHint.textContent="This browser/device does not support location sharing. Enter your delivery address instead.";
+    return;
+  }
+  locationButton.disabled=true;
+  locationButton.textContent="📍 Getting location…";
+  locationHint.textContent="Allow location access in your browser prompt. If asked, choose Precise location.";
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude;
+    if(!Number.isFinite(lat)||!Number.isFinite(lng)){
+      deliveryCoords=null;
+      locationHint.textContent="Could not read valid coordinates. Please enter your address instead.";
+    }else{
+      deliveryCoords={lat,lng};
+      locationHint.textContent=`✓ Location selected (${lat.toFixed(5)}, ${lng.toFixed(5)}). It will be shared when you submit your order.`;
+      locationButton.textContent="📍 Location selected — share again";
+    }
+    locationButton.disabled=false;
+  },err=>{
+    deliveryCoords=null;
+    const messages={
+      1:"Location permission was denied. In your browser site settings, allow Location for this catalogue, then try again.",
+      2:"Your device could not determine its location. Turn on GPS/Location services and try again.",
+      3:"Location request timed out. Move to an area with better GPS signal and try again."
+    };
+    locationHint.textContent=(messages[err?.code]||"Location could not be retrieved.")+" You can enter your delivery address instead.";
+    locationButton.textContent="📍 Share my delivery location (optional)";
+    locationButton.disabled=false;
+  },{enableHighAccuracy:true,timeout:30000,maximumAge:0});
+};
+const parseMoney=v=>Number.parseFloat(String(v??'').replace(/[^0-9.-]/g,''))||0;
+$("sendWhatsApp").onclick=async()=>{
+  const error=$("orderError");error.textContent="";
+  if(!cart.length){error.textContent="Please add products first.";return;}
+  const name=$("customerName").value.trim(),phone=$("customerPhone").value.trim();
+  const address=$("deliveryAddress").value.trim(),notes=$("orderNotes").value.trim();
+  if(!name||!phone){error.textContent="Please enter your name and phone number.";return;}
+  if(!address&&!deliveryCoords){error.textContent="Please enter an address or share your delivery location.";return;}
+  const items=cart.map(x=>({id:x.p.id??x.p._supabaseId??null,product_id:x.p.id??x.p._supabaseId??null,name:translateProduct(x.p.name),unit:ui(x.unit),unit_key:x.unitKey,quantity:x.qty,stock_tracked:stockTracked(x.p),stock_pieces_per_unit:Math.max(1,Number(x.piecesPerUnit)||1),stock_deduction_pieces:stockTracked(x.p)?x.qty*Math.max(1,Number(x.piecesPerUnit)||1):null,unit_price:parseMoney(x.unitPrice??x.p.price),line_total:parseMoney(x.unitPrice??x.p.price)*x.qty}));
+  const total=items.reduce((sum,x)=>sum+x.line_total,0);
+  const btn=$("sendWhatsApp");btn.disabled=true;btn.textContent="Saving order…";
+  try{
+    const {data,error:dbError}=await ordersDb.rpc('submit_white_pack_order',{
+      p_customer_name:name,p_customer_phone:phone,p_delivery_address:address||null,
+      p_delivery_lat:deliveryCoords?.lat??null,p_delivery_lng:deliveryCoords?.lng??null,
+      p_location_shared:!!deliveryCoords,p_items:items,p_total:total,p_currency:'USD',p_notes:notes||null
+    });
+    if(dbError)throw dbError;
+    const saved=Array.isArray(data)?data[0]:data;
+    if(!saved?.order_number)throw new Error('Order was not confirmed by the database. Please contact White Pack.');
+    let msg=`Hello White Pack, I placed order #${saved.order_number}:\nCustomer: ${name}\nPhone: ${phone}\n`;
+    items.forEach((x,i)=>msg+=`${i+1}. ${x.name} (${x.unit||'Unit'}) × ${x.quantity} — $${x.line_total.toFixed(2)}\n`);
+    msg+=`\nTotal: $${total.toFixed(2)}\nAddress: ${address||'GPS location shared'}`;
+    if(deliveryCoords)msg+=`\nMap: https://www.google.com/maps?q=${deliveryCoords.lat},${deliveryCoords.lng}`;
+    if(notes)msg+=`\nNotes: ${notes}`;
+    msg+='\nOrder saved in White Pack system.';
+    error.style.color='#166534';error.textContent=`Order #${saved.order_number} saved. Opening WhatsApp…`;
+    // Keep the currently displayed catalogue in sync with the stock deduction
+    // confirmed by Supabase. stockPieces is the single source of truth; unit
+    // changes must never restore the original box count.
+    for(const line of cart){
+      if(!stockTracked(line.p)) continue;
+      const deduction=Math.max(1,Number(line.piecesPerUnit)||1)*Math.max(0,Number(line.qty)||0);
+      line.p.stockPieces=Math.max(0,Number(line.p.stockPieces)-deduction);
+    }
+    cart=[];renderCart();
+    if($('products').style.display==='block')renderProducts();
+    // On mobile a browser may block popups after an asynchronous request.
+    const recipient=String(orderWhatsAppNumber||'96181085811').replace(/\D/g,'')||'96181085811';
+    const link='https://wa.me/'+recipient+'?text='+encodeURIComponent(msg);
+    window.location.href=link;
+  }catch(e){error.style.color='#b91c1c';error.textContent='Could not save your order. Please try again or contact White Pack. '+(e?.message||'');}
+  finally{btn.disabled=false;btn.textContent='📲 Save Order & Open WhatsApp';}
+};
+
+$("search").oninput=()=>{$("products").style.display==="block"?renderProducts():renderCats()};
+
+$("back").onclick=()=>{
+  if(history.state && history.state.page==="category") history.back();
+  else showHome();
+};
+
+window.addEventListener("popstate",()=>{
+  const state=history.state;
+  if(state && state.page==="category" && state.category){
+    showCategory(state.category);
+  }else{
+    showHome();
+  }
+});
+
+// Cross-platform home-screen installation invitation.
+// Android/Chromium: use the native prompt when available.
+// iPhone/iPad: show the manual Safari "Share > Add to Home Screen" steps.
+(function setupHomeScreenInstall(){
+  const card=document.getElementById('installCard');
+  const action=document.getElementById('installAction');
+  const dismiss=document.getElementById('installDismiss');
+  const help=document.getElementById('installHelp');
+  if(!card||!action||!dismiss||!help) return;
+
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  const isInStandalone=window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone===true;
+  let installPromptEvent=null;
+
+  if(isInStandalone || sessionStorage.getItem('wpInstallDismissed')==='1'){
+    return;
+  }
+  card.hidden=false;
+
+  window.addEventListener('beforeinstallprompt', event=>{
+    event.preventDefault();
+    installPromptEvent=event;
+    action.textContent='Install';
+  });
+
+  window.addEventListener('appinstalled',()=>{
+    card.hidden=true;
+    installPromptEvent=null;
+  });
+
+  action.addEventListener('click',async()=>{
+    if(installPromptEvent){
+      installPromptEvent.prompt();
+      try{
+        const choice=await installPromptEvent.userChoice;
+        if(choice && choice.outcome==='accepted') card.hidden=true;
+      }catch(e){}
+      installPromptEvent=null;
+      return;
+    }
+
+    help.hidden=false;
+    if(isIOS){
+      help.textContent='On your iPhone/iPad: open this catalogue in Safari (not inside WhatsApp or another app), tap Share ⬆, choose “Add to Home Screen”, then tap Add. The White Pack icon will appear on your home screen.';
+      action.textContent='How to add';
+    }else if(/android/i.test(navigator.userAgent)){
+      help.textContent='In Chrome, tap the ⋮ menu and choose “Install app” or “Add to Home screen”, then confirm. If this option is missing, open the catalogue directly in Chrome and make sure you are online.';
+      action.textContent='How to add';
+    }else{
+      help.textContent='Open the catalogue in a supported browser. On a phone, use the browser menu to choose “Install app” or “Add to Home screen”. On iPhone/iPad, use Safari > Share > Add to Home Screen.';
+      action.textContent='How to add';
+    }
+  });
+
+  dismiss.addEventListener('click',()=>{
+    card.hidden=true;
+    sessionStorage.setItem('wpInstallDismissed','1');
+  });
+})();
+
+
+// Share the public catalogue link (never an admin page).
+(function setupCatalogueSharing(){
+  const btn=document.getElementById('shareCatalogueBtn');
+  const status=document.getElementById('shareStatus');
+  if(!btn||!status)return;
+  const canonicalUrl=new URL('.',window.location.href).href;
+  btn.addEventListener('click',async()=>{
+    const payload={title:'White Pack Catalogue',text:'Explore the White Pack product catalogue.',url:canonicalUrl};
+    status.textContent='';
+    if(navigator.share){
+      try{await navigator.share(payload);status.textContent='Catalogue link ready to share.';}
+      catch(err){if(err&&err.name!=='AbortError') status.textContent='Could not open sharing. Copy the website link from your browser.';}
+      return;
+    }
+    try{
+      if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(canonicalUrl);status.textContent='Catalogue link copied. Paste it into WhatsApp or a message.';return;}
+      const field=document.createElement('textarea');field.value=canonicalUrl;field.setAttribute('readonly','');field.style.position='fixed';field.style.opacity='0';document.body.appendChild(field);field.select();
+      const ok=document.execCommand('copy');field.remove();
+      status.textContent=ok?'Catalogue link copied. Paste it into WhatsApp or a message.':'Website link: '+canonicalUrl;
+    }catch(_){status.textContent='Website link: '+canonicalUrl;}
+  });
+})();
+
+// One root-scoped service worker supports the catalogue, private admin and quotation app.
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('App install support unavailable:',err)));}
+
+applyLanguage();
+renderCart();
+
+// Load the live catalogue from the same Supabase table used by admin.html.
+// products.json remains a fallback if the public read policy is not enabled yet.
+const CATALOGUE_SUPABASE_URL = 'https://gaphiedcwueunmfssisz.supabase.co';
+const CATALOGUE_SUPABASE_KEY = 'sb_publishable_XnMvCbQGs2tGHXQa5Cjbew_vTTM7ubG';
+const CATALOGUE_META_ID = '00000000-0000-4000-8000-000000000001';
+async function loadCatalogueFromSupabase(){
+  const response = await fetch(
+    CATALOGUE_SUPABASE_URL + '/rest/v1/wp_products?select=id,product_data,sort_order&order=sort_order.asc',
+    {headers:{'apikey':CATALOGUE_SUPABASE_KEY,'Authorization':'Bearer '+CATALOGUE_SUPABASE_KEY},cache:'no-store'}
+  );
+  if(!response.ok) throw new Error('Supabase catalogue request failed ('+response.status+').');
+  const rows = await response.json();
+  if(!Array.isArray(rows)) throw new Error('Unexpected Supabase catalogue response.');
+  const meta = rows.find(r=>r.id===CATALOGUE_META_ID || (r.product_data && r.product_data._wp_meta===true));
+  const liveProducts = rows
+    .filter(r=>r.id!==CATALOGUE_META_ID && !(r.product_data && r.product_data._wp_meta===true))
+    .map(r=>({...((r.product_data && typeof r.product_data==='object') ? r.product_data : {}), id:r.id, _supabaseId:r.id}))
+    .filter(p=>p && typeof p==='object');
+  if(liveProducts.length===0) throw new Error('Supabase returned no products.');
+  return {
+    products:liveProducts,
+    categoryOrder:meta && meta.product_data && Array.isArray(meta.product_data.categoryOrder) ? meta.product_data.categoryOrder : [],
+    businessName:meta && meta.product_data && meta.product_data.businessName ? meta.product_data.businessName : 'White Pack',
+    catalogueTheme:meta && meta.product_data && meta.product_data.catalogueTheme ? meta.product_data.catalogueTheme : 'modern',
+    catalogueDesign:meta && meta.product_data && meta.product_data.catalogueDesign ? meta.product_data.catalogueDesign : {},
+    whatsappOrderNumber:meta && meta.product_data && meta.product_data.whatsappOrderNumber ? meta.product_data.whatsappOrderNumber : '96181085811'
+  };
+}
+async function loadCatalogueFallback(){
+  const response=await fetch('products.json?updated='+Date.now(),{cache:'no-store'});
+  if(!response.ok) throw new Error('Could not load products.json ('+response.status+').');
+  const d=await response.json();
+  const list=Array.isArray(d)?d:d.products;
+  if(!Array.isArray(list)||!list.length) throw new Error('products.json contains no products.');
+  return {products:list,categoryOrder:Array.isArray(d.categoryOrder)?d.categoryOrder:[],businessName:d.businessName||'White Pack',whatsappOrderNumber:d.whatsappOrderNumber||'96181085811',catalogueTheme:d.catalogueTheme||'modern',catalogueDesign:d.catalogueDesign||{}};
+}
+async function loadCatalogue(){
+  let source='Supabase';
+  try{
+    const d=await loadCatalogueFromSupabase();
+    products=d.products; categoryOrder=d.categoryOrder; catalogueTheme=d.catalogueTheme||'modern'; catalogueDesign=d.catalogueDesign||{}; applyCatalogueTheme(catalogueTheme,catalogueDesign); orderWhatsAppNumber=String(d.whatsappOrderNumber||'96181085811').replace(/\D/g,'')||'96181085811';
+    $('business').textContent=d.businessName||'White Pack';
+    document.title=d.businessName||'White Pack Catalogue';
+  }catch(supabaseError){
+    console.warn('Live Supabase catalogue could not be loaded; using products.json fallback.',supabaseError);
+    source='backup products.json';
+    try{
+      const d=await loadCatalogueFallback();
+      products=d.products; categoryOrder=d.categoryOrder; catalogueTheme=d.catalogueTheme||'modern'; catalogueDesign=d.catalogueDesign||{}; applyCatalogueTheme(catalogueTheme,catalogueDesign); orderWhatsAppNumber=String(d.whatsappOrderNumber||'96181085811').replace(/\D/g,'')||'96181085811';
+      $('business').textContent=d.businessName||'White Pack';
+      document.title=d.businessName||'White Pack Catalogue';
+      console.warn('Catalogue is using the backup file, so recent admin changes may not appear until public Supabase read access is enabled.');
+    }catch(fileError){
+      $('categoryGrid').innerHTML='<div class="empty">Catalogue unavailable.<br><br>Could not load products from Supabase or products.json. Please check the public read policy for <b>wp_products</b>.</div>';
+      console.error(fileError);
+      return;
+    }
+  }
+  if(!history.state || history.state.page!=='home') history.replaceState({page:'home'},'',location.pathname+location.search);
+  applyLanguage();
+  renderCats();
+  console.info('White Pack catalogue loaded from '+source+': '+products.length+' products.');
+}
+applyCatalogueTheme(catalogueTheme);
+loadCatalogue();
+</script>
+</body></html>
