@@ -357,17 +357,34 @@ function resetQuote(){
   const button=document.getElementById('installAppBtn');
   const help=document.getElementById('quoteInstallHelp');
   let pending=null;
-  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const ua=navigator.userAgent||'';
+  const ios=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const android=/android/i.test(ua);
   const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-  if(standalone){button.hidden=true;}
+  const isHosted=location.protocol==='https:'||(location.hostname==='localhost'||location.hostname==='127.0.0.1');
+  if(standalone){button.hidden=true;help.hidden=false;help.textContent='White Pack Quotation is installed and running as an app.';}
+  if(!isHosted){help.hidden=false;help.textContent='To install this app, first publish Quotation on your HTTPS website. A local content:// or file:// page cannot be installed as a PWA.';}
   window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();pending=event;});
   button.addEventListener('click',async()=>{
-    if(pending){pending.prompt();try{const result=await pending.userChoice;if(result&&result.outcome==='accepted'){button.hidden=true;help.hidden=true;}}catch(_){}pending=null;return;}
     help.hidden=false;
-    help.textContent=ios?'To install on iPhone/iPad: open this page in Safari (not inside WhatsApp), tap Share, choose “Add to Home Screen”, then tap Add. The dedicated Quotation icon will appear on your home screen.':(/android/i.test(navigator.userAgent)?'To install on Android: open this page in Chrome, tap ⋮, then choose “Install app” or “Add to Home screen”.':'To install on desktop: use the install icon in Chrome/Edge’s address bar, or open the browser menu and choose “Install White Pack Quotation”.');
+    if(!isHosted){
+      help.textContent='This is a local file. Upload quotation.html and its manifest, icons, and service-worker.js to your HTTPS website. Then open Quotation from that website and tap Install Quotation App.';
+      return;
+    }
+    if(ios){
+      help.textContent='On iPhone/iPad, open this live HTTPS page in Safari, tap Share, choose “Add to Home Screen”, then tap Add. iOS does not allow a webpage button to launch installation directly.';
+      return;
+    }
+    if(pending){
+      try{await pending.prompt();const result=await pending.userChoice;if(result&&result.outcome==='accepted'){button.hidden=true;help.hidden=true;}}catch(_){}
+      pending=null;return;
+    }
+    help.textContent=android
+      ?'If no install prompt appeared, make sure this is the live HTTPS website in a supported browser and that the app is not already installed. You can also use the browser menu’s “Install app” option.'
+      :'Open this live HTTPS page in Chrome or Edge. When eligible, this button opens the install prompt; otherwise use the browser menu → “Install White Pack Quotation”.';
   });
   window.addEventListener('appinstalled',()=>{pending=null;button.hidden=true;help.hidden=false;help.textContent='White Pack Quotation has been installed.';});
-  if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('Service worker registration failed',err)));
+  if('serviceWorker' in navigator && isHosted)window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('Service worker registration failed',err)));
 })();
 </script>
 </body>
