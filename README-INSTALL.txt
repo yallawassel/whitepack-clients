@@ -33,3 +33,12 @@ IMPORTANT
 - Keep the Supabase secret/service-role key out of client-side files. The files should use only the existing publishable/anon key.
 - The apps are web apps installed from your website, not Play Store or App Store packages.
 - For GitHub Pages in a repository subfolder (username.github.io/repository/), preserve the supplied relative paths and publish all files in the same folder.
+
+
+LATEST PATCH (INSTALL BUTTONS + APP ICONS)
+- Admin and Quotation now use the provided dedicated icons in all required sizes.
+- Both pages capture the native beforeinstallprompt event early and the app button invokes it when Chrome/Edge provides it.
+- The shared service worker cache was bumped to v2 so updated app shell/icons are refreshed.
+- On Android, use the app's Install button when the native prompt is available. If not, Chrome menu → Install app / Add to Home screen. Do NOT choose Save page.
+- iOS requires Safari Share → Add to Home Screen.
+- Keep all existing catalogue, Supabase, order, and platform-admin files.

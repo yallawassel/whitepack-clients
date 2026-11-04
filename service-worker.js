@@ -1,4 +1,4 @@
-const CACHE_NAME = 'whitepack-pwa-shell-v1';
+const CACHE_NAME = 'whitepack-pwa-shell-v2';
 const SHELL = [
   './',
   './index.html',
@@ -18,8 +18,10 @@ const SHELL = [
   './quotation-icon-maskable-192.png',
   './quotation-icon-maskable-512.png',
   './admin-icon-32.png',
+  './admin-icon-48.png',
   './admin-icon-180.png',
   './quotation-icon-32.png',
+  './quotation-icon-48.png',
   './quotation-icon-180.png'
 ];
 self.addEventListener('install', event => {

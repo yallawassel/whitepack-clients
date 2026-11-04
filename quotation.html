@@ -11,6 +11,14 @@
 <link rel="icon" type="image/png" sizes="32x32" href="quotation-icon-32.png">
 <link rel="apple-touch-icon" sizes="180x180" href="quotation-icon-180.png">
 <link rel="manifest" href="quotation-manifest.webmanifest">
+<script>
+// Capture Chrome/Edge's native install event as early as possible.
+window.__wpDeferredInstallPrompt = window.__wpDeferredInstallPrompt || null;
+window.addEventListener('beforeinstallprompt', function(event){
+  event.preventDefault();
+  window.__wpDeferredInstallPrompt = event;
+});
+</script>
 <title>White Pack — Quotation Builder</title>
 <style>
 :root{--ink:#172033;--muted:#667085;--line:#e4e7ec;--soft:#f6f8fb;--brand:#173b63;--accent:#d8a84e}
@@ -356,35 +364,29 @@ function resetQuote(){
 (function setupQuotationPWA(){
   const button=document.getElementById('installAppBtn');
   const help=document.getElementById('quoteInstallHelp');
-  let pending=null;
+  if(!button||!help)return;
+  let pending=window.__wpDeferredInstallPrompt||null;
   const ua=navigator.userAgent||'';
   const ios=/iphone|ipad|ipod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   const android=/android/i.test(ua);
   const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
   const isHosted=location.protocol==='https:'||(location.hostname==='localhost'||location.hostname==='127.0.0.1');
-  if(standalone){button.hidden=true;help.hidden=false;help.textContent='White Pack Quotation is installed and running as an app.';}
-  if(!isHosted){help.hidden=false;help.textContent='To install this app, first publish Quotation on your HTTPS website. A local content:// or file:// page cannot be installed as a PWA.';}
-  window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();pending=event;});
+  const showHelp=(message)=>{help.hidden=false;help.textContent=message;};
+  if(standalone){button.hidden=true;showHelp('White Pack Quotation is installed and running as an app.');}
+  if(!isHosted)showHelp('This is a local file. Open the live HTTPS Quotation page from your website to install it.');
+  window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();pending=event;window.__wpDeferredInstallPrompt=event;});
   button.addEventListener('click',async()=>{
-    help.hidden=false;
-    if(!isHosted){
-      help.textContent='This is a local file. Upload quotation.html and its manifest, icons, and service-worker.js to your HTTPS website. Then open Quotation from that website and tap Install Quotation App.';
-      return;
-    }
-    if(ios){
-      help.textContent='On iPhone/iPad, open this live HTTPS page in Safari, tap Share, choose “Add to Home Screen”, then tap Add. iOS does not allow a webpage button to launch installation directly.';
-      return;
-    }
+    if(!isHosted){showHelp('Open the live HTTPS Quotation page on your website, then tap Install Quotation App.');return;}
+    if(ios){showHelp('On iPhone/iPad: open this page in Safari, tap Share → Add to Home Screen → Add. iOS does not allow a webpage to launch installation directly.');return;}
+    pending=pending||window.__wpDeferredInstallPrompt;
     if(pending){
-      try{await pending.prompt();const result=await pending.userChoice;if(result&&result.outcome==='accepted'){button.hidden=true;help.hidden=true;}}catch(_){}
-      pending=null;return;
+      try{await pending.prompt();const result=await pending.userChoice;if(result&&result.outcome==='accepted'){button.hidden=true;help.hidden=false;help.textContent='White Pack Quotation has been installed.';}}catch(err){showHelp('The browser could not open its install prompt. Use the browser menu → Install app.');}
+      pending=null;window.__wpDeferredInstallPrompt=null;return;
     }
-    help.textContent=android
-      ?'If no install prompt appeared, make sure this is the live HTTPS website in a supported browser and that the app is not already installed. You can also use the browser menu’s “Install app” option.'
-      :'Open this live HTTPS page in Chrome or Edge. When eligible, this button opens the install prompt; otherwise use the browser menu → “Install White Pack Quotation”.';
+    showHelp(android?'Chrome has not made the install prompt available yet. Open this HTTPS page in Chrome, refresh it, then use Chrome ⋮ → Install app (or Add to Home screen). Do not choose Save page.':'If the native prompt is unavailable, use Chrome/Edge menu → Install White Pack Quotation. If no install option appears, check that the page is HTTPS and the app manifest/service worker have loaded.');
   });
-  window.addEventListener('appinstalled',()=>{pending=null;button.hidden=true;help.hidden=false;help.textContent='White Pack Quotation has been installed.';});
-  if('serviceWorker' in navigator && isHosted)window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('Service worker registration failed',err)));
+  window.addEventListener('appinstalled',()=>{pending=null;window.__wpDeferredInstallPrompt=null;button.hidden=true;showHelp('White Pack Quotation has been installed.');});
+  if('serviceWorker' in navigator&&isHosted)window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js',{scope:'./'}).then(()=>navigator.serviceWorker.ready).catch(err=>{console.warn('Quotation service worker registration failed',err);showHelp('App setup could not finish. Reload the HTTPS page and try again.');}));
 })();
 </script>
 </body>
