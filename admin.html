@@ -128,7 +128,7 @@ h2{letter-spacing:-.2px}
 .preview-products div{background:#fff;border-radius:8px;padding:6px;font-size:9px;min-width:0}
 .preview-products b{display:block;height:46px;border-radius:5px;background:#e5e7eb;margin-bottom:5px}
 .preview-products span,.preview-products small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.preview-products small{font-weight:800;margin-top:3px}
+.preview-products small{font-weight:800;margin-top:3px}.preview-products i{display:block;font-style:normal;color:#64748b;font-size:8px;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.preview-products.hide-descriptions i{display:none}
 @media(max-width:650px){.template-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.designer-workspace{grid-template-columns:1fr}.designer-heading{display:block}.designer-tag{display:inline-block;margin-top:7px}}
 /* Product presentation previews */
 .preview-products.presentation-horizontal{grid-template-columns:1fr!important}
@@ -171,6 +171,23 @@ h2{letter-spacing:-.2px}
 #productEditorPanel{border:1px solid #dce7f2;background:#fff}
 @media(max-width:760px){.admin-shell{grid-template-columns:1fr;gap:10px}.admin-sidebar{position:static;padding:8px}.admin-sidebar .side-label{display:none}.admin-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.admin-nav button{justify-content:center;flex-direction:column;gap:3px;padding:9px 5px;font-size:11px;text-align:center}.admin-nav button .nav-icon{font-size:18px}.admin-stat-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.admin-stat{padding:11px}.admin-stat .stat-value{font-size:20px}.admin-page-title h2{font-size:20px}}
 @media(max-width:390px){.admin-nav{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-stat-grid{grid-template-columns:1fr 1fr}}
+
+
+/* Storefront-style live preview */
+.preview-announcement{padding:5px 8px;text-align:center;background:#087cf0;color:#fff;font-size:7px;font-weight:900;letter-spacing:.12em}
+.preview-top{padding:12px 13px;min-height:42px;align-items:center;letter-spacing:.08em}
+.preview-top small{font-size:7px;opacity:.65;margin-left:4px}
+.preview-banner{min-height:115px;margin:10px;border-radius:10px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;text-align:left;padding:16px 18px;gap:5px;box-shadow:0 5px 14px #00000010}
+.preview-banner span{font-size:7px;letter-spacing:.14em;opacity:.8}
+.preview-banner strong{font-size:14px;line-height:1.15;max-width:190px}
+.preview-banner small{font-size:8px;font-weight:700}
+.preview-section{display:flex;justify-content:space-between;align-items:center;padding:2px 10px 8px;font-size:9px}
+.preview-section span{font-size:7px;color:#64748b}
+.preview-products{gap:7px}
+.preview-products>div{border:1px solid #e8edf2;overflow:hidden;box-shadow:0 2px 8px #00000008}
+.preview-products b{height:48px!important;background:linear-gradient(135deg,#edf2f7,#fff)!important}
+.preview-products span{font-size:8px;font-weight:700}
+.preview-products small{font-size:9px}
 
 </style>
 </head>
@@ -262,8 +279,11 @@ h2{letter-spacing:-.2px}
       <div class="designer-preview-wrap">
         <h3>Preview</h3>
         <div id="designerLivePreview" class="designer-live-preview">
-          <div class="preview-top">WHITE PACK <span>☰</span></div><div class="preview-banner">Your store, your style</div>
-          <div class="preview-products"><div><b></b><span>Product name</span><small>$0.00</small></div><div><b></b><span>Product name</span><small>$0.00</small></div><div><b></b><span>Product name</span><small>$0.00</small></div></div>
+          <div class="preview-announcement">WHOLESALE PACKAGING · EVERYDAY ESSENTIALS</div>
+          <div class="preview-top"><span>WHITE PACK <small>CATALOGUE</small></span><span>⌕　☰</span></div>
+          <div class="preview-banner"><span>YOUR STORE, YOUR STYLE</span><strong>Quality packaging for every business</strong><small>Explore our collection</small></div>
+          <div class="preview-section"><b>Featured collection</b><span>View all →</span></div>
+          <div class="preview-products"><div><b></b><span>Kraft Paper Bag</span><small>$12.00</small><i>Strong kraft paper</i></div><div><b></b><span>Paper Cups</span><small>$8.50</small><i>Hot &amp; cold drinks</i></div><div><b></b><span>Food Containers</span><small>$15.00</small><i>Food grade quality</i></div><div><b></b><span>Napkins</span><small>$5.00</small><i>Soft &amp; absorbent</i></div></div>
         </div>
         <p class="hint">This preview shows the layout and colors. Your actual products and photos appear on the live catalogue.</p>
       </div>
@@ -603,16 +623,18 @@ function applyDesignToPreview(){
  const theme=document.getElementById('catalogueTheme').value||'modern',d=readDesignControls();
  document.querySelectorAll('.template-choice').forEach(b=>b.classList.toggle('selected',b.dataset.theme===theme));
  const p=document.getElementById('designerLivePreview');if(!p)return;
- const header=theme==='clean'?'#fff':theme==='bold'?'#9a3412':theme==='elegant'?'#292524':theme==='market'?'#0f766e':d.primary;
+ const header=d.primary;
  const headerInk=theme==='clean'?'#172033':'#fff';
  p.style.background=d.background;p.querySelector('.preview-top').style.background=header;p.querySelector('.preview-top').style.color=headerInk;
  p.querySelector('.preview-banner').style.background=d.bannerPhoto?`linear-gradient(#0003,#0003),url("${d.bannerPhoto}") center/cover`:`linear-gradient(120deg,${d.accent}33,${d.background})`;
  p.querySelector('.preview-banner').style.color=d.bannerPhoto?'white':d.primary;
- const cards=p.querySelectorAll('.preview-products div');p.querySelector('.preview-products').style.gridTemplateColumns=`repeat(${Math.min(4,d.columns)},minmax(0,1fr))`;
+ const cards=p.querySelectorAll('.preview-products div');p.querySelector('.preview-products').style.gridTemplateColumns=`repeat(${Math.min(4,d.columns)},minmax(0,1fr))`;p.querySelector('.preview-announcement').style.background=d.accent;p.querySelector('.preview-section').style.color=d.primary;
  cards.forEach(c=>{c.style.background=d.card;c.style.borderRadius=theme==='bold'?'14px':theme==='elegant'?'4px':'8px';c.querySelector('b').style.aspectRatio=String(d.imageRatio);c.querySelector('b').style.height='auto';c.querySelector('b').style.background=d.accent+'22';});
  p.querySelectorAll('.preview-products small').forEach(x=>x.style.color=d.accent);
  const previewProducts=p.querySelector('.preview-products');
- previewProducts.className='preview-products presentation-'+(d.presentation||'standard');
+ previewProducts.className='preview-products presentation-'+(d.presentation||'standard')+(d.showDescription?'':' hide-descriptions');
+ previewProducts.querySelectorAll('i').forEach(x=>x.style.display=d.showDescription?'block':'none');
+ previewProducts.querySelectorAll('div').forEach(c=>{c.style.boxShadow=d.compactCards?'none':'';c.style.padding=d.compactCards?'4px':'6px';});
 }
 function loadDesignControls(){
  const d={...defaultDesign,...(data.catalogueDesign||{})};
@@ -626,7 +648,19 @@ function loadDesignControls(){
  applyDesignToPreview();
 }
 function setupVisualDesigner(){
- document.querySelectorAll('.template-choice').forEach(b=>b.addEventListener('click',()=>{document.getElementById('catalogueTheme').value=b.dataset.theme;applyDesignToPreview();}));
+ const themePresets={
+  modern:{primary:'#111827',accent:'#087cf0',background:'#f5f6f8',card:'#ffffff'},
+  clean:{primary:'#ffffff',accent:'#2563eb',background:'#ffffff',card:'#ffffff'},
+  bold:{primary:'#9a3412',accent:'#ea580c',background:'#fff7ed',card:'#ffffff'},
+  elegant:{primary:'#292524',accent:'#57534e',background:'#f8f5f0',card:'#fffdf9'},
+  market:{primary:'#0f766e',accent:'#0d9488',background:'#f0fdfa',card:'#ffffff'}
+ };
+ document.querySelectorAll('.template-choice').forEach(b=>b.addEventListener('click',()=>{
+  const theme=b.dataset.theme,preset=themePresets[theme];if(!preset)return;
+  document.getElementById('catalogueTheme').value=theme;
+  for(const [key,value] of Object.entries(preset))document.getElementById('design'+key[0].toUpperCase()+key.slice(1)).value=value;
+  applyDesignToPreview();
+ }));
  ['designPrimary','designAccent','designBackground','designCard','designColumns','designImageRatio','designImageFit','designShowDescription','designShowCategoryCount','designCompactCards','designPresentation'].forEach(id=>document.getElementById(id).addEventListener('input',applyDesignToPreview));
  document.getElementById('designBannerFile').addEventListener('change',async e=>{
   const f=e.target.files&&e.target.files[0];if(!f)return;
@@ -649,7 +683,7 @@ async function saveCatalogueTheme(){
  const previousTheme=data.catalogueTheme||'modern',previousDesign=data.catalogueDesign;
  data.catalogueTheme=theme;data.catalogueDesign=readDesignControls();
  btn.disabled=true;status.textContent='Saving design to Supabase…';status.style.color='#475569';
- try{await saveCatalogue(data);status.textContent='✅ Design saved and published. Refresh the public catalogue to see it.';status.style.color='#166534';show('Catalogue design saved to Supabase.');}
+ try{await saveCatalogue(data);if(currentUser&&remoteLoaded){status.textContent='✅ Design published to Supabase. Refresh the public catalogue to see it.';status.style.color='#166534';show('Catalogue design published to Supabase.');}else{status.textContent='✅ Design saved on this device. Sign in to Admin and publish it to the public catalogue.';status.style.color='#92400e';}}
  catch(err){data.catalogueTheme=previousTheme;data.catalogueDesign=previousDesign;select.value=previousTheme;status.textContent='Could not save design. Check admin sign-in and connection.';status.style.color='#b91c1c';}
  finally{btn.disabled=false;}
 }

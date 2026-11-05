@@ -161,16 +161,18 @@ body.theme-elegant .name{font-family:Georgia,serif;letter-spacing:.1px}
 
 
 /* Published visual designer settings */
-body{--design-primary:#111827;--design-accent:#087cf0;--design-page:#f5f6f8;--design-card:#fff;--design-radius:16px;--design-columns:3;--design-ratio:1;--design-fit:contain}
-body[class*="theme-"]{background:var(--design-page);color:var(--ink)}
-header{background:var(--design-primary)}
+/* Design tokens are applied to BODY as well as the root so they cannot be shadowed by body defaults. */
+body{--design-primary:#111827;--design-accent:#087cf0;--design-page:#f5f6f8;--design-card:#fff;--design-radius:16px;--design-columns:3;--design-ratio:1;--design-fit:contain;--show-description:block;--show-category-count:block}
+body[class*="theme-"]{background:var(--design-page)!important;color:var(--ink,#111827)}
+body[class*="theme-"] header{background:var(--design-primary)!important;color:var(--header-ink,#fff)}
 .category,.product{background:var(--design-card);border-radius:var(--design-radius)}
-.category img,.placeholder{aspect-ratio:var(--design-ratio);object-fit:var(--design-fit)}
+/* Category covers stay square; product photo controls affect product cards only. */
+.category img,.category .placeholder{aspect-ratio:1;object-fit:cover}
 .product img{aspect-ratio:var(--design-ratio);object-fit:var(--design-fit)}
 .category .count{display:var(--show-category-count,block)}
 .product .desc{display:var(--show-description,block)}
 #categoryGrid,#productGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
-@media(min-width:700px){#categoryGrid,#productGrid{grid-template-columns:repeat(var(--design-columns,3),minmax(0,1fr))}}
+@media(min-width:700px){#categoryGrid{grid-template-columns:repeat(4,minmax(0,1fr))}#productGrid{grid-template-columns:repeat(var(--design-columns,3),minmax(0,1fr))}}
 /* Ensure published visual-designer controls take precedence over template defaults */
 body[class*="theme-"]{background-color:var(--design-page,#f5f6f8)!important;color:var(--ink,#111827)}
 body[class*="theme-"] header{background:var(--design-primary,#111827)!important}
@@ -219,9 +221,81 @@ body.theme-elegant .back,body.theme-elegant .addbtn,body.theme-elegant .cartbar,
 #catalogueBanner img{display:block;width:100%;max-height:360px;object-fit:cover}
 #catalogueBanner[hidden]{display:none}
 
+
+/* Shopify-inspired storefront polish */
+:root{--store-width:1240px}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:-.01em}
+.announcement{min-height:30px;padding:7px 14px;text-align:center;background:var(--design-accent,#087cf0);color:#fff;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+header{padding:13px 18px;box-shadow:0 4px 20px #10243a12;backdrop-filter:saturate(1.2);border-bottom:1px solid #ffffff18}
+.brand{max-width:var(--store-width);min-height:62px}
+.site-logo{border-radius:13px!important;width:54px;height:54px;box-shadow:0 2px 10px #00000012}
+.brand-identity h1{font-size:25px;letter-spacing:-.8px}
+.brand-identity .sub{font-size:11px;letter-spacing:.035em}
+.brand-actions{flex-direction:row;align-items:center;gap:8px}
+#languageToggle,#shareCatalogueBtn{border-radius:999px!important;padding:10px 15px!important;font-weight:800;min-height:40px}
+#shareCatalogueBtn{background:transparent;color:inherit;border-color:currentColor;box-shadow:none}
+#shareStatus{display:none}
+.wrap{max-width:var(--store-width);padding:18px 22px}
+.toolbar{top:82px;background:var(--design-page,#f5f6f8);padding:12px 0 15px}
+.search{border:1px solid #dce3eb;border-radius:999px;padding:15px 20px 15px 48px;box-shadow:0 4px 18px #142b4509;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E") no-repeat 17px center}
+.title{font-size:clamp(23px,3vw,31px);letter-spacing:-1px;margin:24px 0 17px}
+#categories .title:after{content:"";display:block;width:42px;height:3px;border-radius:9px;background:var(--design-accent);margin-top:10px}
+#catalogueBanner{max-width:var(--store-width);margin:14px auto 6px;padding:0 22px;border-radius:0;background:transparent;position:relative}
+#catalogueBanner img{height:clamp(190px,30vw,370px);max-height:none;border-radius:22px;object-fit:cover;box-shadow:0 14px 38px #10243a20}
+#catalogueBanner:after{content:"";position:absolute;inset:0 22px;border-radius:22px;background:linear-gradient(90deg,#07182b70,transparent 75%);pointer-events:none}
+#categoryGrid{gap:17px}
+.category{position:relative;text-align:left;border:1px solid #e8edf2;border-radius:17px!important;box-shadow:0 5px 18px #152b430b;transition:transform .2s,box-shadow .2s;cursor:pointer}
+.category:hover{transform:translateY(-4px);box-shadow:0 12px 28px #152b4318}
+.category img,.category .placeholder{aspect-ratio:1.12;transition:transform .35s}
+.category:hover img{transform:scale(1.035)}
+.category .info{padding:14px 15px 16px}
+.category .name{font-size:15px;letter-spacing:-.2px}
+.category .count{font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-top:6px}
+#products{min-height:55vh}
+#products .back{border-radius:999px;padding:9px 15px;background:transparent!important;color:var(--design-primary)!important;border:1px solid #cbd5e1!important;font-size:13px}
+.product-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 17px}
+.product-tools .result-count{font-size:12px;color:#64748b;font-weight:700}
+#sortProducts{width:auto;max-width:190px;padding:10px 34px 10px 13px;border:1px solid #dce3eb;border-radius:999px;background:#fff;font-size:12px;font-weight:700;color:#334155}
+#productGrid{gap:18px}
+.product{border:1px solid #e8edf2;border-radius:17px!important;overflow:hidden;box-shadow:0 5px 20px #10243a0b;transition:transform .2s,box-shadow .2s;min-width:0}
+.product:hover{transform:translateY(-3px);box-shadow:0 13px 30px #10243a18}
+.product img{background:#fff;padding:10px;transition:transform .35s}
+.product:hover img{transform:scale(1.025)}
+.product .body{padding:14px 15px 16px}
+.product .name{font-size:15px;line-height:1.35;min-height:2.6em;letter-spacing:-.25px}
+.product .desc{font-size:12px;color:#718096;min-height:2.8em}
+.product .priceChoices{gap:6px}
+.product .priceChoice{border-radius:9px;border-color:#e1e7ee;background:#f8fafc;padding:9px 6px;font-size:11px}
+.product .priceChoice small{font-size:14px}
+.product .qtyrow{justify-content:flex-start}
+.product .qtybtn{width:32px;height:32px;border-radius:50%;background:#f1f5f9;font-size:18px}
+.product .qty{min-width:24px;font-size:13px}
+.product .addbtn{border-radius:999px;padding:12px 14px;font-size:13px;letter-spacing:.01em}
+.cartbar{right:22px;bottom:22px;border-radius:999px;padding:15px 21px;background:var(--design-accent)!important;box-shadow:0 8px 25px #10243a35;font-size:14px}
+.empty{border:1px dashed #cbd5e1;background:#fff}
+.install-card{max-width:var(--store-width);margin:12px auto;border-radius:14px}
+@media(min-width:700px){.wrap{padding-left:28px;padding-right:28px}}
+@media(max-width:650px){
+ header{padding:10px 11px}.brand{min-height:52px}.site-logo{width:43px;height:43px}
+ .brand-identity h1{font-size:19px}.brand-identity .sub{font-size:9px;max-width:170px}
+ .brand-actions{gap:5px}#languageToggle,#shareCatalogueBtn{font-size:11px!important;padding:8px 10px!important;min-height:35px}
+ .wrap{padding:12px 14px}.toolbar{top:65px;padding:9px 0 12px}
+ #catalogueBanner{padding:0 14px;margin-top:9px}#catalogueBanner img{height:190px;border-radius:15px}
+ #catalogueBanner:after{inset:0 14px;border-radius:15px}
+ #categoryGrid{gap:11px}.category .info{padding:10px 11px 12px}.category .name{font-size:13px}
+ .title{margin:19px 0 13px;font-size:23px}
+ #productGrid{gap:11px}.product{border-radius:13px!important}
+ .product .body{padding:10px}.product .name{font-size:13px;min-height:2.7em}
+ .product .desc{font-size:11px;min-height:0}.product .priceChoice{font-size:10px;padding:8px 4px}
+ .product .priceChoice small{font-size:12px}.product .addbtn{font-size:11px;padding:10px 8px}
+ .product-tools{margin-bottom:12px}.cartbar{right:14px;bottom:14px;padding:13px 17px}
+}
+@media(max-width:370px){.brand-identity .sub{display:none}.brand-actions{max-width:none}.product .priceChoices{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
+<div class="announcement">Wholesale packaging · restaurant supplies · everyday essentials</div>
 <header>
   <div class="wrap brand">
     <div class="brand-identity">
@@ -253,7 +327,7 @@ body.theme-elegant .back,body.theme-elegant .addbtn,body.theme-elegant .cartbar,
 <main class="wrap">
 <div class="toolbar"><input id="search" class="search" autocomplete="off" placeholder="🔍 Search products or categories..."></div>
 <section id="categories"><div class="title">Choose a Category</div><div id="categoryGrid" class="grid"></div></section>
-<section id="products"><button id="back" class="back">← All Categories</button><div id="categoryTitle" class="title"></div><div id="productGrid" class="grid"></div></section>
+<section id="products"><button id="back" class="back">← All Categories</button><div id="categoryTitle" class="title"></div><div class="product-tools"><span class="result-count" id="productResultCount"></span><select id="sortProducts" aria-label="Sort products"><option value="default">Featured</option><option value="az">Name: A–Z</option><option value="za">Name: Z–A</option><option value="price-low">Price: Low to high</option><option value="price-high">Price: High to low</option></select></div><div id="productGrid" class="grid"></div></section>
 </main>
 <button id="cartBar" class="cartbar">🛒 Order <span id="cartCount">0</span></button>
 
@@ -287,7 +361,7 @@ let cart=[];
 const selectedUnits={};
 let catalogueLanguage=localStorage.getItem('whitepack_language')==='ar'?'ar':'en';
 const uiArabic={
-'Choose a Category':'اختر فئة','No categories found.':'لم يتم العثور على فئات.','No products found.':'لم يتم العثور على منتجات.',
+'Choose a Category':'اختر فئة','Featured':'مميز','Name: A–Z':'الاسم: أ إلى ي','Name: Z–A':'الاسم: ي إلى أ','Price: Low to high':'السعر: من الأقل للأعلى','Price: High to low':'السعر: من الأعلى للأقل','No categories found.':'لم يتم العثور على فئات.','No products found.':'لم يتم العثور على منتجات.',
 'Your order is empty.':'طلبك فارغ.','Remove':'حذف','Total:':'المجموع:','Add to Order':'أضف إلى الطلب',
 'Customer name *':'اسم الزبون *','Phone number *':'رقم الهاتف *','Delivery address':'عنوان التوصيل',
 'Share my delivery location (optional)':'مشاركة موقعي للتوصيل (اختياري)','Location is optional. Your browser will ask permission.':'الموقع اختياري. سيطلب المتصفح الإذن.',
@@ -355,13 +429,20 @@ function applyCatalogueTheme(theme,design){
  catalogueDesign={primary:'#111827',accent:'#087cf0',background:'#f5f6f8',card:'#ffffff',columns:3,imageRatio:1,imageFit:'contain',showDescription:true,showCategoryCount:true,compactCards:false,presentation:'standard',bannerPhoto:'',...(design||{})};
  document.body.classList.remove(...allowed.map(t=>'theme-'+t),'design-compact',...['standard','editorial','horizontal','minimal','showcase'].map(x=>'presentation-'+x));
  document.body.classList.add('theme-'+catalogueTheme,'presentation-'+(['standard','editorial','horizontal','minimal','showcase'].includes((design||{}).presentation)?(design||{}).presentation:'standard'));
- const d=catalogueDesign,root=document.documentElement;
- root.style.setProperty('--design-primary',d.primary||'#111827');root.style.setProperty('--design-accent',d.accent||'#087cf0');
- root.style.setProperty('--design-page',d.background||'#f5f6f8');root.style.setProperty('--design-card',d.card||'#fff');
- root.style.setProperty('--design-columns',String(Math.max(2,Math.min(4,Number(d.columns)||3))));
- root.style.setProperty('--design-ratio',String(Number(d.imageRatio)||1));root.style.setProperty('--design-fit',d.imageFit==='cover'?'cover':'contain');
- root.style.setProperty('--show-description',d.showDescription===false?'none':'block');root.style.setProperty('--show-category-count',d.showCategoryCount===false?'none':'block');
- if(d.compactCards)document.body.classList.add('design-compact');
+ const d=catalogueDesign,root=document.documentElement,body=document.body;
+ const tokens={
+  '--design-primary':d.primary||'#111827','--design-accent':d.accent||'#087cf0',
+  '--design-page':d.background||'#f5f6f8','--design-card':d.card||'#fff',
+  '--design-columns':String(Math.max(2,Math.min(4,Number(d.columns)||3))),
+  '--design-ratio':String([0.8,1,1.35].includes(Number(d.imageRatio))?Number(d.imageRatio):1),
+  '--design-fit':d.imageFit==='cover'?'cover':'contain',
+  '--show-description':d.showDescription===false?'none':'block',
+  '--show-category-count':d.showCategoryCount===false?'none':'block'
+ };
+ for(const [key,value] of Object.entries(tokens)){root.style.setProperty(key,value);body.style.setProperty(key,value);}
+ body.style.setProperty('--design-radius',catalogueTheme==='bold'?'22px':catalogueTheme==='elegant'?'5px':catalogueTheme==='clean'?'8px':'16px');
+ body.style.setProperty('--header-ink',catalogueTheme==='clean'?'#172033':'#fff');
+ document.body.classList.toggle('design-compact',!!d.compactCards);
  const banner=document.getElementById('catalogueBanner'),img=document.getElementById('catalogueBannerImage');
  if(d.bannerPhoto){img.src=d.bannerPhoto;banner.hidden=false;banner.style.display='block';}else{banner.hidden=true;banner.style.display='none';img.removeAttribute('src');}
 }
@@ -370,6 +451,8 @@ function applyLanguage(){
  const ar=catalogueLanguage==='ar';
  document.documentElement.lang=ar?'ar':'en';document.body.dir=ar?'rtl':'ltr';
  $('languageToggle').textContent=ar?'English':'العربية';
+  const sortLabels=ar?['مميز','الاسم: أ إلى ي','الاسم: ي إلى أ','السعر: من الأقل للأعلى','السعر: من الأعلى للأقل']:['Featured','Name: A–Z','Name: Z–A','Price: Low to high','Price: High to low'];
+  $('sortProducts').querySelectorAll('option').forEach((o,i)=>o.textContent=sortLabels[i]||o.textContent);
  $('search').placeholder=ar?'🔍 ابحث عن المنتجات أو الفئات...':'🔍 Search products or categories...';
  // Update static page labels using stable text values.
  const exact={
@@ -412,6 +495,19 @@ function isCategoryCover(p){
 }
 function visibleCategoryProducts(category){
   return products.filter(p=>String(p.category||"").trim()===category&&!isCategoryCover(p));
+}
+function currentProductList(){
+  const q=$("search").value.toLowerCase().trim();
+  const list=visibleCategoryProducts(active).filter(p=>`${p.name||""} ${translateProduct(p.name||"")} ${p.description||""} ${translateProduct(p.description||"")}`.toLowerCase().includes(q));
+  const sort=$("sortProducts")?.value||"default";
+  if(sort==="az")list.sort((x,y)=>String(x.name||"").localeCompare(String(y.name||"")));
+  if(sort==="za")list.sort((x,y)=>String(y.name||"").localeCompare(String(x.name||"")));
+  if(sort==="price-low"||sort==="price-high")list.sort((x,y)=>{
+    const px=Number(String(priceOptions(x)[0]?.price??0).replace(/[^0-9.-]/g,""))||0;
+    const py=Number(String(priceOptions(y)[0]?.price??0).replace(/[^0-9.-]/g,""))||0;
+    return sort==="price-low"?px-py:py-px;
+  });
+  return list;
 }
 
 function renderCats(){
@@ -474,10 +570,11 @@ function stockLabel(p){
  return anyAvailable?'':(catalogueLanguage==='ar'?'نفذت الكمية':'Out of stock');
 }
 function selectedOption(p){const opts=priceOptions(p);if(!opts.length)return {label:'',price:'',key:'1',pieces:1};return opts.find(o=>o.key===selectedUnits[productKey(p)]&&unitAvailable(p,o))||opts.find(o=>unitAvailable(p,o))||opts[0];}
-function selectPrice(i,key){const list=visibleCategoryProducts(active).filter(p=>`${p.name||''} ${p.description||''}`.toLowerCase().includes($('search').value.toLowerCase().trim()));const p=list[i];if(!p)return;selectedUnits[productKey(p)]=key;renderProducts();}
+function selectPrice(i,key){const p=currentProductList()[i];if(!p)return;selectedUnits[productKey(p)]=key;renderProducts();}
 function renderProducts(){
- const q=$("search").value.toLowerCase().trim();
- const a=visibleCategoryProducts(active).filter(p=>`${p.name||""} ${translateProduct(p.name||"")} ${p.description||""} ${translateProduct(p.description||"")}`.toLowerCase().includes(q));
+ const a=currentProductList();
+ const resultCount=$("productResultCount");
+ if(resultCount)resultCount.textContent=`${a.length} ${a.length===1?"product":"products"}`;
  $("productGrid").innerHTML=a.length?a.map((p,i)=>`
  <article class="product">
   <img src="${esc(p.photo||"")}" loading="lazy" decoding="async" alt="${esc(p.name)}" onclick="zoomProduct(this.src,this.alt)">
@@ -485,7 +582,6 @@ function renderProducts(){
    <div class="name">${esc(translateProduct(p.name))}</div>
    ${p.description?`<div class="desc">${esc(translateProduct(p.description))}</div>`:""}
    ${priceOptions(p).length?`<div class="priceChoices">${priceOptions(p).map(o=>`<button type="button" class="priceChoice ${selectedOption(p).key===o.key?'active':''}" ${unitAvailable(p,o)?'':'disabled'} onclick="selectPrice(${i},'${o.key}')">${esc(ui(o.label))}<small>$${esc(String(o.price).replace(/^\$/,''))}</small></button>`).join('')}</div>`:''}
-   }
    <div class="qtyrow">
     <button class="qtybtn" onclick="changeQty(${i},-1)">−</button>
     <div class="qty" id="q_${i}">1</div>
@@ -498,16 +594,14 @@ function renderProducts(){
 
 function changeQty(i,n){
  const el=$("q_"+i); let q=Math.max(1,(parseInt(el.textContent)||1)+n);
- const query=$("search").value.toLowerCase().trim();
- const list=visibleCategoryProducts(active).filter(p=>`${p.name||""} ${p.description||""}`.toLowerCase().includes(query));
+ const list=currentProductList();
  const p=list[i],option=p?selectedOption(p):null;
  if(p&&option&&stockTracked(p)){const available=Math.floor(stockRemainingPieces(p)/Math.max(1,Number(option.pieces)||1));q=Math.min(q,Math.max(1,available));}
  el.textContent=q;
 }
 function addToCart(i){
  const q=Math.max(1,parseInt($("q_"+i)?.textContent)||1);
- const query=$("search").value.toLowerCase().trim();
- const list=visibleCategoryProducts(active).filter(p=>`${p.name||""} ${p.description||""}`.toLowerCase().includes(query));
+ const list=currentProductList();
  const p=list[i];if(!p)return;
  const option=selectedOption(p),factor=Math.max(1,Number(option.pieces)||1);
  if(!unitAvailable(p,option)){alert(catalogueLanguage==='ar'?'هذه الوحدة غير متوفرة حالياً.':'This selling unit is out of stock. Please choose Packet or Pc.');return;}
@@ -652,6 +746,7 @@ $("sendWhatsApp").onclick=async()=>{
 };
 
 $("search").oninput=()=>{$("products").style.display==="block"?renderProducts():renderCats()};
+$("sortProducts").onchange=()=>renderProducts();
 
 $("back").onclick=()=>{
   if(history.state && history.state.page==="category") history.back();
