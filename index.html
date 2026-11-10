@@ -751,7 +751,7 @@ $("sendWhatsApp").onclick=async()=>{
     return;
   }
   if(!address&&!deliveryCoords){error.textContent="Please enter an address or share your delivery location.";return;}
-  const items=cart.map(x=>({id:x.p.id??x.p._supabaseId??null,product_id:x.p.id??x.p._supabaseId??null,name:translateProduct(x.p.name),unit:ui(x.unit),unit_key:x.unitKey,quantity:x.qty,stock_tracked:stockTracked(x.p),stock_pieces_per_unit:Math.max(1,Number(x.piecesPerUnit)||1),stock_deduction_pieces:stockTracked(x.p)?x.qty*Math.max(1,Number(x.piecesPerUnit)||1):null,unit_price:parseMoney(x.unitPrice??x.p.price),line_total:parseMoney(x.unitPrice??x.p.price)*x.qty}));
+  const items=cart.map(x=>({id:x.p.id??x.p._supabaseId??null,product_id:x.p.id??x.p._supabaseId??null,name:translateProduct(x.p.name),category:x.p.category||'',description:translateProduct(x.p.description||''),size:x.p.size||x.p.specification||x.p.specs||'',photo:x.p.photo||'',unit:ui(x.unit),unit_key:x.unitKey,quantity:x.qty,stock_tracked:stockTracked(x.p),stock_pieces_per_unit:Math.max(1,Number(x.piecesPerUnit)||1),stock_deduction_pieces:stockTracked(x.p)?x.qty*Math.max(1,Number(x.piecesPerUnit)||1):null,unit_price:parseMoney(x.unitPrice??x.p.price),line_total:parseMoney(x.unitPrice??x.p.price)*x.qty}));
   const total=items.reduce((sum,x)=>sum+x.line_total,0);
   const btn=$("sendWhatsApp");btn.disabled=true;btn.textContent="Saving order…";
   try{
