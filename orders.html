@@ -31,6 +31,8 @@
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   const $ = id => document.getElementById(id);
   let orders = [];
+  let catalogueProducts = [];
+  let catalogueLoaded = false;
   let refreshTimer = null;
   let loadingOrders = false;
   const orderStatuses = [['new','New'],['confirmed','Confirmed'],['preparing','Preparing'],['out_for_delivery','Out for delivery'],['delivered','Delivered'],['cancelled','Cancelled']];
@@ -80,6 +82,7 @@
         return;
       }
       orders=data||[];
+      await loadProductCatalogue();
       updateStats();
       renderOrders();
       if(silent) clearMessage('dashMsg');
@@ -88,8 +91,59 @@
     }
   }
   function updateStats(){$('totalCount').textContent=orders.length;$('newCount').textContent=orders.filter(o=>o.order_status==='new').length;$('deliveryCount').textContent=orders.filter(o=>o.order_status==='out_for_delivery').length;$('doneCount').textContent=orders.filter(o=>o.order_status==='delivered').length;}
+  // Recover photos/descriptions for historical orders that were saved before
+  // order items began storing a photo snapshot. Prefer the live catalogue, then
+  // merge the bundled products.json as a fallback for products no longer live.
+  const CATALOGUE_URL='https://gaphiedcwueunmfssisz.supabase.co';
+  const CATALOGUE_KEY='sb_publishable_XnMvCbQGs2tGHXQa5Cjbew_vTTM7ubG';
+  const META_PRODUCT_ID='00000000-0000-4000-8000-000000000001';
+  async function loadProductCatalogue(){
+    if(catalogueLoaded)return;
+    catalogueLoaded=true;
+    const byId=new Map(),byName=new Map();
+    const addProducts=list=>{
+      (Array.isArray(list)?list:[]).forEach(p=>{
+        if(!p||typeof p!=='object')return;
+        const id=String(p.id||p._supabaseId||'').trim();
+        const name=normalName(p.name||p.product_name||'');
+        if(id)byId.set(id,p);
+        if(name)byName.set(name,p);
+      });
+    };
+    try{
+      const r=await fetch(CATALOGUE_URL+'/rest/v1/wp_products?select=id,product_data&order=sort_order.asc',{
+        headers:{apikey:CATALOGUE_KEY,Authorization:'Bearer '+CATALOGUE_KEY},cache:'no-store'
+      });
+      if(!r.ok)throw new Error('Live catalogue unavailable: '+r.status);
+      const rows=await r.json();
+      addProducts(rows.filter(x=>x.id!==META_PRODUCT_ID&&!(x.product_data&&x.product_data._wp_meta)).map(x=>({...((x.product_data&&typeof x.product_data==='object')?x.product_data:{}),id:x.id,_supabaseId:x.id})));
+    }catch(e){console.warn('Could not load live catalogue for old order photos.',e);}
+    try{
+      const r=await fetch('./products.json?order-photo-cache='+Date.now(),{cache:'no-store'});
+      if(r.ok){const d=await r.json();addProducts(Array.isArray(d)?d:d.products);}
+    }catch(e){console.warn('Could not load products.json fallback for old order photos.',e);}
+    catalogueProducts=[...byId.values()];
+    // Keep the name map too: old records may have no product UUID.
+    catalogueProducts._byName=byName;
+    catalogueProducts._byId=byId;
+  }
+  function normalName(v){return String(v||'').normalize('NFKC').toLowerCase().replace(/[\u064B-\u065F\u0670]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();}
+  function resolvedItems(o){
+    const list=Array.isArray(o&&o.items)?o.items:[];
+    return list.map(it=>{
+      const id=String(it.product_id||it.id||'').trim();
+      const key=normalName(it.name||it.product_name||'');
+      const product=(id&&catalogueProducts._byId&&catalogueProducts._byId.get(id))||
+        (key&&catalogueProducts._byName&&catalogueProducts._byName.get(key))||null;
+      return {...(product||{}),...it,
+        photo:it.photo||it.image||it.image_url||(product&&(product.photo||product.image||product.image_url))||'',
+        description:it.description||it.size|| (product&&(product.description||product.size||product.specification||product.specs))||'',
+        category:it.category||(product&&product.category)||''
+      };
+    });
+  }
   function orderItemsHtml(o){
-    const items=Array.isArray(o.items)?o.items:[];
+    const items=resolvedItems(o);
     if(!items.length)return '<div class="items">No item details saved.</div>';
     return items.map(it=>{
       const name=it.name||it.product_name||'Item';
@@ -118,7 +172,7 @@
     if(!o)return;
     const w=window.open('','_blank');
     if(!w){alert('Please allow pop-ups for this site to print the order.');return;}
-    const items=Array.isArray(o.items)?o.items:[];
+    const items=resolvedItems(o);
     const rows=items.map((it,i)=>{const image=it.photo||it.image||it.image_url||'';const name=it.name||it.product_name||'Item';const desc=[it.category,it.description,it.size].filter(Boolean).join(' · ');const qty=it.quantity??it.qty??1;return `<tr><td>${i+1}</td><td>${image?`<img class="product-photo" src="${esc(image)}" alt="${esc(name)}">`:''}</td><td><b>${esc(name)}</b>${desc?`<div class="desc">${esc(desc)}</div>`:''}<div class="desc">${esc(it.unit||'')}</div></td><td>${esc(qty)}</td><td>${esc(money(it.unit_price??it.price,o.currency))}</td><td>${esc(money(it.line_total??((Number(it.unit_price??it.price)||0)*Number(qty)),o.currency))}</td></tr>`;}).join('');
     const map=mapsLink(o);
     const logoUrl=new URL('logo.png',window.location.href).href;
