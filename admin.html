@@ -155,6 +155,9 @@ h2{letter-spacing:-.2px}
 .admin-nav button .nav-icon{width:22px;text-align:center;font-size:17px}
 .admin-main{min-width:0}
 .admin-page{display:none;min-width:0}
+.admin-embedded-frame{width:100%;height:calc(100vh - 190px);min-height:680px;border:1px solid #dbe5f0;border-radius:16px;background:#fff;display:block}
+.admin-frame-actions{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+.admin-frame-actions button{margin:0}
 .admin-page.active{display:block}
 .admin-page>.panel{margin-bottom:14px}
 .admin-page-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:2px 2px 14px}
@@ -1439,7 +1442,7 @@ importInput.addEventListener('change', async e=>{
     }catch(syncErr){
       console.error('Supabase import sync failed:',syncErr);
       render();
-      alert('The JSON was imported on this device ('+products.length+' products), but Supabase sync failed: '+(syncErr.message||'Unknown error')+'\n\nYour imported catalogue is kept locally. Please do not re-import repeatedly; check the error and retry sync after fixing it.');
+      alert('The JSON was imported on this device ('+products.length+' products), but Supabase sync failed: '+(syncErr.message||'Unknown error')+'.\n.\nYour imported catalogue is kept locally. Please do not re-import repeatedly; check the error and retry sync after fixing it.');
       show('⚠️ Imported locally; Supabase sync needs attention.');
     }
   }catch(err){
@@ -1569,6 +1572,10 @@ setupVisualDesigner();
   const categories=makePage('categories','Categories','Organize category names and storefront order.');
   const design=makePage('design','Storefront Design','Customize the public catalogue appearance and product presentation.');
   const settings=makePage('settings','Business Settings','Manage your business identity and order contact settings.');
+   const quotations=makePage('quotations','Quotations','Review customer quotation requests and prepare formal quotations.');
+   const orders=makePage('orders','Orders','Manage customer orders and order fulfilment.');
+   const tracking=makePage('tracking','Delivery Tracking','Monitor delivery and driver location.');
+   const preview=makePage('preview','Full-screen Catalogue Preview','Preview the complete customer-facing White Pack catalogue inside Admin.');
 
   const statGrid=document.createElement('div');statGrid.className='admin-stat-grid';
   statGrid.innerHTML='<div class="admin-stat"><div class="stat-label">CATALOGUE PRODUCTS</div><div class="stat-value" id="proStatProducts">0</div><div class="stat-sub">Products saved</div></div><div class="admin-stat"><div class="stat-label">CATEGORIES</div><div class="stat-value" id="proStatCategories">0</div><div class="stat-sub">Product groups</div></div><div class="admin-stat"><div class="stat-label">STOCK TRACKING</div><div class="stat-value" id="proStatStock">0</div><div class="stat-sub">Products with stock set</div></div><div class="admin-stat"><div class="stat-label">TOTAL REMAIN</div><div class="stat-value" id="proStatRemain">0</div><div class="stat-sub">Pieces in stock</div></div>';
@@ -1579,11 +1586,27 @@ setupVisualDesigner();
   categories.append(categoryPanel);
   design.append(designer);
   settings.append(settingsPanelWrap);
+  function addEmbeddedPage(page,src,label){
+    const actions=document.createElement('div');actions.className='admin-frame-actions';
+    const reload=document.createElement('button');reload.className='secondary';reload.type='button';reload.textContent='↻ Refresh';reload.onclick=()=>{const frame=page.querySelector('iframe');if(frame)frame.src=frame.src;};
+    const open=document.createElement('button');open.className='secondary';open.type='button';open.textContent='↗ Open separately';open.onclick=()=>window.open(src,'_blank','noopener');
+    actions.append(reload,open);
+    const frame=document.createElement('iframe');frame.className='admin-embedded-frame';frame.title=label;frame.src=src;frame.loading='lazy';frame.referrerPolicy='same-origin';page.append(actions,frame);
+    if(page===preview){
+      const full=document.createElement('button');full.className='primary';full.type='button';full.textContent='⛶ Full screen preview';
+      full.onclick=async()=>{try{if(frame.requestFullscreen)await frame.requestFullscreen();else window.open(src,'_blank','noopener');}catch(_){window.open(src,'_blank','noopener');}};
+      actions.append(full);
+    }
+  }
+  addEmbeddedPage(quotations,'quotation.html','White Pack Quotations');
+  addEmbeddedPage(orders,'orders.html','White Pack Orders');
+  addEmbeddedPage(tracking,'driver-tracking.html','White Pack Driver Tracking');
+  addEmbeddedPage(preview,'index.html?adminPreview=1','Full-screen White Pack Catalogue');
   shell.append(sidebar,workspace);
   editor.prepend(shell);
 
   const items=[
-    ['dashboard','⌂','Overview'],['products','▦','Products'],['categories','▤','Categories'],['design','✦','Store Design'],['settings','⚙','Settings']
+    ['dashboard','⌂','Overview'],['products','▦','Products'],['categories','▤','Categories'],['design','✦','Store Design'],['quotations','▧','Quotations'],['orders','▣','Orders'],['tracking','⌖','Tracking'],['preview','◫','Catalogue Preview'],['settings','⚙','Settings']
   ];
   function activate(id){
     workspace.querySelectorAll('.admin-page').forEach(p=>p.classList.toggle('active',p.id==='adminPage-'+id));

@@ -99,6 +99,12 @@ footer{text-align:center;color:var(--muted);font-size:11px;margin:18px 0}
   <div class="row"><button class="primary" id="loginBtn" onclick="signIn()">Sign in and load products</button></div><div id="authStatus" class="hint" role="status"></div>
  </section>
  <div id="app" class="hidden">
+   <section class="panel" id="requestInboxPanel">
+    <h2>📥 Customer quotation requests</h2>
+    <p class="hint">Requests submitted from the public catalogue appear here. They do not reserve or deduct inventory. Open a request to prepare the formal quotation.</p>
+    <div class="row"><button class="secondary" type="button" onclick="fetchQuoteRequests()">↻ Refresh requests</button><span id="requestInboxCount" class="hint"></span></div>
+    <div id="requestInbox" style="margin-top:10px"><p class="hint">Loading requests…</p></div>
+   </section>
   <section class="panel" id="archivePanel">
    <h2>📁 Client &amp; quotation archive</h2>
    <p class="hint">Search saved quotations by client name, phone or quotation number. Cloud archive is shared across devices after sign-in.</p>
@@ -170,7 +176,7 @@ async function signIn(){
   catalogue=rows.filter(r=>r.id!==META_ID&&!(r.product_data&&r.product_data._wp_meta===true)).map(r=>({...r.product_data,_id:r.id}));
   // Product access is governed by the same Supabase Auth/RLS policies as admin.html.
   $('authPanel').classList.add('hidden');$('app').classList.remove('hidden');
-  $('authStatus').textContent='';initQuote(meta?.product_data);renderProducts();await fetchArchive();$('archiveSearch').addEventListener('input',renderArchive);
+  $('authStatus').textContent='';initQuote(meta?.product_data);renderProducts();await fetchArchive();await fetchQuoteRequests();$('archiveSearch').addEventListener('input',renderArchive);
  }catch(e){session=null;$('authStatus').textContent='Could not connect: '+e.message;$('authStatus').style.color='#b42318';}
  finally{$('loginBtn').disabled=false;}
 }
@@ -274,6 +280,50 @@ function quotePayload(){
  client:{name:val('clientName'),contact:val('contact'),phone:val('phone'),email:val('clientEmail'),address:val('address')},
  subject:val('subject'),items:items.map(x=>({...x,unitOptions:(x.unitOptions||[]).map(u=>({...u}))})),
  discountPercent:c.discount,fee:c.fee,subtotal:c.subtotal,discountAmount:c.discountAmount,total:c.total,notes:val('notes')};
+}
+let quoteRequestCache=[];
+async function fetchQuoteRequests(){
+ try{
+  const rows=await api(SUPABASE_URL+'/rest/v1/wp_quote_requests?select=id,request_number,customer_name,customer_phone,delivery_address,notes,items,total,currency,status,created_at&order=created_at.desc&limit=100',
+   {headers:apiHeaders(session?.access_token)});
+  quoteRequestCache=Array.isArray(rows)?rows:[];
+  renderQuoteRequests();
+ }catch(e){
+  $('requestInbox').innerHTML='<p class="hint">Could not load customer requests. Run wp_quote_requests_setup.sql and confirm the authenticated read policy is enabled. '+esc(e.message)+'</p>';
+ }
+}
+function renderQuoteRequests(){
+ $('requestInboxCount').textContent=quoteRequestCache.length+' request(s)';
+ $('requestInbox').innerHTML=quoteRequestCache.map(r=>{
+  const items=Array.isArray(r.items)?r.items:[];
+  const preview=items.slice(0,4).map(x=>`${esc(x.name)} × ${esc(x.quantity)} ${esc(x.unit||'')}`).join('<br>');
+  return `<article class="panel" style="padding:12px;margin:9px 0;border:1px solid #e4e7ec;box-shadow:none">
+   <div class="row" style="justify-content:space-between"><b>Request #${esc(r.request_number||String(r.id).slice(0,8))} · ${esc(r.customer_name)}</b><span class="pill">${esc(r.status||'new')}</span></div>
+   <div class="hint">${esc(r.created_at?new Date(r.created_at).toLocaleString():'')} · ${esc(r.customer_phone||'')}</div>
+   <div style="margin-top:8px">${preview}${items.length>4?`<br>+ ${items.length-4} more item(s)`:''}</div>
+   <div class="hint" style="margin-top:6px">${items.length} item(s) · ${esc(r.currency||'USD')} ${Number(r.total||0).toFixed(2)}${r.delivery_address?' · '+esc(r.delivery_address):''}</div>
+   ${r.notes?`<div class="hint">Notes: ${esc(r.notes)}</div>`:''}
+   <div class="row"><button class="primary" type="button" onclick="openQuoteRequest('${esc(r.id)}')">Open in quotation builder</button><button class="secondary" type="button" onclick="setQuoteRequestStatus('${esc(r.id)}','reviewed')">Mark reviewed</button></div>
+  </article>`;
+ }).join('')||'<p class="hint">No customer quotation requests yet.</p>';
+}
+function openQuoteRequest(id){
+ const r=quoteRequestCache.find(x=>String(x.id)===String(id));if(!r)return;
+ const rows=Array.isArray(r.items)?r.items:[];
+ items=rows.map(x=>({sourceId:x.product_id||null,name:x.name||'Product',description:'',category:x.category||'Products',photo:x.photo||'',unit:x.unit||'Unit',unitOptions:[{label:x.unit||'Unit',price:Number(x.unit_price)||0}],qty:Number(x.quantity)||1,price:Number(x.unit_price)||0}));
+ activeArchiveId=null;
+ $('clientName').value=r.customer_name||'';$('contact').value='';$('phone').value=r.customer_phone||'';
+ $('clientEmail').value='';$('address').value=r.delivery_address||'';
+ $('notes').value=r.notes||'Customer request #'+(r.request_number||'');
+ $('currency').value=r.currency||'USD';$('discount').value='0';$('fee').value='0';
+ renderCart();$('saveStatus').textContent='Loaded customer request #'+(r.request_number||'')+'. Review prices and details, then save the formal quotation.';
+ $('quoteDate').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function setQuoteRequestStatus(id,status){
+ try{
+  await api(SUPABASE_URL+'/rest/v1/wp_quote_requests?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{...apiHeaders(session.access_token),'Prefer':'return=minimal'},body:JSON.stringify({status})});
+  const r=quoteRequestCache.find(x=>String(x.id)===String(id));if(r)r.status=status;renderQuoteRequests();
+ }catch(e){alert('Could not update request status: '+e.message);}
 }
 let archiveCache=[];
 async function fetchArchive(){
